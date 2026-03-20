@@ -1,16 +1,33 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from "react";
+import TabBar from "@/components/layout/TabBar";
+import DashboardView from "@/components/views/DashboardView";
+import TasksView from "@/components/views/TasksView";
+import ExpensesView from "@/components/views/ExpensesView";
+import MarketView from "@/components/views/MarketView";
+import DocsView from "@/components/views/DocsView";
 
-// IMPORTANT: Fully REPLACE this with your own code
-const PlaceholderIndex = () => {
-  // PLACEHOLDER: Replace this entire return statement with the user's app.
-  // The inline background color is intentionally not part of the design system.
+const Index = () => {
+  const [activeTab, setActiveTab] = useState("home");
+
+  const renderView = () => {
+    switch (activeTab) {
+      case "home": return <DashboardView />;
+      case "tasks": return <TasksView />;
+      case "expenses": return <ExpensesView />;
+      case "market": return <MarketView />;
+      case "docs": return <DocsView />;
+      default: return <DashboardView />;
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#fcfbf8' }}>
-      <img data-lovable-blank-page-placeholder="REMOVE_THIS" src="/placeholder.svg" alt="Your app will live here!" />
+    <div className="min-h-screen bg-background max-w-lg mx-auto relative">
+      <div className="pb-20">
+        {renderView()}
+      </div>
+      <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
     </div>
   );
 };
-
-const Index = PlaceholderIndex;
 
 export default Index;
