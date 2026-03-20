@@ -3,10 +3,11 @@ import { Send, Bot, User, Loader2, Plus, Trash2, ChevronLeft, MoreVertical } fro
 import { cn } from "@/lib/utils";
 
 type Msg = { role: "user" | "assistant"; content: string };
-type Conversation = { id: string; title: string; messages: Msg[]; createdAt: string };
+type Conversation = { id: string; title: string; messages: Msg[]; createdAt: string; lastActiveAt: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sparky-chat`;
 const STORAGE_KEY = "sparky-chat-history";
+const TWELVE_HOURS = 12 * 60 * 60 * 1000;
 
 const loadConversations = (): Conversation[] => {
   try {
@@ -32,23 +33,20 @@ const ChatView = () => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Generate a smart title from the first user message
   const generateTitle = (msgs: Msg[]): string => {
     const firstUser = msgs.find(m => m.role === "user");
     if (!firstUser) return "Nova conversa";
     const text = firstUser.content.trim();
-    // Truncate to first sentence or 50 chars
     const sentence = text.split(/[.!?\n]/)[0].trim();
     if (sentence.length <= 50) return sentence;
     return sentence.slice(0, 47) + "...";
   };
 
-  // Save current conversation whenever messages change
   useEffect(() => {
     if (!activeId || messages.length === 0) return;
     setConversations(prev => {
       const updated = prev.map(c =>
-        c.id === activeId ? { ...c, messages, title: generateTitle(messages) } : c
+        c.id === activeId ? { ...c, messages, title: generateTitle(messages), lastActiveAt: new Date().toISOString() } : c
       );
       saveConversations(updated);
       return updated;
@@ -57,7 +55,8 @@ const ChatView = () => {
 
   const startNewChat = useCallback(() => {
     const id = crypto.randomUUID();
-    const conv: Conversation = { id, title: "Nova conversa", messages: [], createdAt: new Date().toISOString() };
+    const now = new Date().toISOString();
+    const conv: Conversation = { id, title: "Nova conversa", messages: [], createdAt: now, lastActiveAt: now };
     setConversations(prev => {
       const updated = [conv, ...prev];
       saveConversations(updated);
@@ -95,9 +94,22 @@ const ChatView = () => {
     setShowMenu(false);
   };
 
-  // Auto-create new chat on first load if none active
+  // On load: resume last active chat if within 12h, otherwise start new
   useEffect(() => {
-    if (!activeId) startNewChat();
+    if (!activeId) {
+      const convs = loadConversations();
+      if (convs.length > 0) {
+        const latest = convs[0];
+        const lastActive = new Date(latest.lastActiveAt || latest.createdAt).getTime();
+        const now = Date.now();
+        if (now - lastActive < TWELVE_HOURS && latest.messages.length > 0) {
+          setActiveId(latest.id);
+          setMessages(latest.messages);
+          return;
+        }
+      }
+      startNewChat();
+    }
   }, []);
 
   const send = async () => {

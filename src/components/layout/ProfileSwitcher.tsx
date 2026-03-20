@@ -2,9 +2,10 @@ import { useState, useRef } from "react";
 import {
   ChevronDown, Check, UserPlus, User, Trophy, Crown, Star,
   Settings, Users, LogOut, Gift, Camera, Mail, Calendar, X,
-  Image, Sparkles, Clock
+  Image, Sparkles, Clock, Trash2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 
 interface Prize {
   name: string;
@@ -21,7 +22,7 @@ interface Profile {
   email: string;
   points: number;
   role: "admin" | "member";
-  avatar?: string; // base64 or URL
+  avatar?: string;
 }
 
 const defaultProfiles: Profile[] = [
@@ -41,6 +42,7 @@ const inspirationalQuotes = [
 type SubView = null | "profile" | "prizes" | "members" | "ranking";
 
 const ProfileSwitcher = () => {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [profiles, setProfiles] = useState<Profile[]>(defaultProfiles);
   const [active, setActive] = useState("erick");
@@ -48,15 +50,14 @@ const ProfileSwitcher = () => {
   const [addingProfile, setAddingProfile] = useState(false);
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Prizes state - per profile
   const [allPrizes, setAllPrizes] = useState<Record<string, Prize[]>>({});
   const [showNewPrize, setShowNewPrize] = useState(false);
   const [prizeName, setPrizeName] = useState("");
   const [prizeCost, setPrizeCost] = useState("100");
 
-  // Profile edit state
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
 
@@ -78,6 +79,12 @@ const ProfileSwitcher = () => {
     setAddingProfile(false);
     setNewName("");
     setNewEmail("");
+  };
+
+  const handleDeleteProfile = (id: string) => {
+    if (id === defaultProfiles[0].id) return; // Can't delete first profile
+    setProfiles(prev => prev.filter(p => p.id !== id));
+    if (active === id) setActive(defaultProfiles[0].id);
   };
 
   const handleAddPrize = () => {
@@ -109,6 +116,12 @@ const ProfileSwitcher = () => {
     reader.readAsDataURL(file);
   };
 
+  const handleLogout = () => {
+    setShowLogoutConfirm(false);
+    closeAll();
+    navigate("/login");
+  };
+
   const openSubView = (view: SubView) => {
     setSubView(view);
     if (view === "profile") {
@@ -122,13 +135,12 @@ const ProfileSwitcher = () => {
     setSubView(null);
     setAddingProfile(false);
     setShowNewPrize(false);
+    setShowLogoutConfirm(false);
   };
 
   const renderAvatar = (profile: Profile, size: string, textSize: string) => {
     if (profile.avatar) {
-      return (
-        <img src={profile.avatar} alt={profile.name} className={cn(size, "rounded-full object-cover")} />
-      );
+      return <img src={profile.avatar} alt={profile.name} className={cn(size, "rounded-full object-cover")} />;
     }
     return (
       <div className={cn(size, "rounded-full bg-gradient-to-br flex items-center justify-center font-bold text-white", textSize, profile.color)}>
@@ -136,6 +148,25 @@ const ProfileSwitcher = () => {
       </div>
     );
   };
+
+  // Logout confirmation modal
+  if (showLogoutConfirm) {
+    return (
+      <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+        <div className="w-full max-w-sm card-zelo space-y-4 text-center">
+          <div className="flex h-14 w-14 mx-auto items-center justify-center rounded-full bg-destructive/15">
+            <LogOut size={24} className="text-destructive" />
+          </div>
+          <h3 className="text-lg font-bold">Sair da conta?</h3>
+          <p className="text-sm text-muted-foreground">Tem certeza que deseja sair? Você será redirecionado para a tela de login.</p>
+          <div className="flex gap-2">
+            <button onClick={() => setShowLogoutConfirm(false)} className="flex-1 rounded-xl border border-border py-3 text-sm font-medium text-muted-foreground active:scale-[0.98]">Cancelar</button>
+            <button onClick={handleLogout} className="flex-1 rounded-xl bg-destructive py-3 text-sm font-semibold text-destructive-foreground active:scale-[0.98]">Sair</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Sub-view: Ranking
   if (subView === "ranking") {
@@ -152,7 +183,6 @@ const ProfileSwitcher = () => {
             </div>
           </div>
 
-          {/* Inspiration */}
           <div className="card-zelo border-warning/20 bg-warning/5">
             <div className="flex items-start gap-3">
               <Sparkles size={18} className="text-warning shrink-0 mt-0.5" />
@@ -160,10 +190,8 @@ const ProfileSwitcher = () => {
             </div>
           </div>
 
-          {/* Podium top 3 */}
           {sorted.length >= 3 && (
             <div className="flex items-end justify-center gap-3 py-4">
-              {/* 2nd place */}
               <div className="flex flex-col items-center">
                 {renderAvatar(sorted[1], "h-12 w-12", "text-sm")}
                 <p className="text-xs font-semibold mt-1">{sorted[1].name}</p>
@@ -172,7 +200,6 @@ const ProfileSwitcher = () => {
                 </div>
                 <div className="bg-muted/60 rounded-t-lg w-16 h-14 mt-2 flex items-center justify-center text-lg font-bold text-muted-foreground">2º</div>
               </div>
-              {/* 1st place */}
               <div className="flex flex-col items-center">
                 <Crown size={16} className="text-warning mb-1" />
                 {renderAvatar(sorted[0], "h-14 w-14", "text-base")}
@@ -182,7 +209,6 @@ const ProfileSwitcher = () => {
                 </div>
                 <div className="bg-warning/20 rounded-t-lg w-16 h-20 mt-2 flex items-center justify-center text-lg font-bold text-warning">1º</div>
               </div>
-              {/* 3rd place */}
               <div className="flex flex-col items-center">
                 {renderAvatar(sorted[2], "h-11 w-11", "text-xs")}
                 <p className="text-xs font-semibold mt-1">{sorted[2].name}</p>
@@ -194,7 +220,6 @@ const ProfileSwitcher = () => {
             </div>
           )}
 
-          {/* Full ranking list */}
           <p className="text-label px-1">CLASSIFICAÇÃO GERAL</p>
           <div className="space-y-2">
             {sorted.map((member, i) => {
@@ -246,18 +271,8 @@ const ProfileSwitcher = () => {
           <div className="card-zelo flex flex-col items-center py-6">
             <div className="relative">
               {renderAvatar(current, "h-20 w-20", "text-2xl")}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                className="hidden"
-                onChange={handlePhotoUpload}
-              />
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="absolute bottom-0 right-0 h-7 w-7 rounded-full bg-primary flex items-center justify-center text-white"
-              >
+              <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoUpload} />
+              <button onClick={() => fileInputRef.current?.click()} className="absolute bottom-0 right-0 h-7 w-7 rounded-full bg-primary flex items-center justify-center text-white">
                 <Camera size={12} />
               </button>
             </div>
@@ -336,7 +351,7 @@ const ProfileSwitcher = () => {
                 <p className="text-xs font-medium">19/03/2026</p>
               </div>
               <p className="text-[10px] text-muted-foreground/70 italic text-center pt-1">
-                🐱 Sparky — inspirado no gatinho que dá nome ao projeto
+                🐱 Sparky (Faísca) — inspirado no gatinho que dá nome ao projeto.
               </p>
             </div>
           </div>
@@ -415,7 +430,6 @@ const ProfileSwitcher = () => {
             </div>
           )}
 
-          {/* New Prize Modal */}
           {showNewPrize && (
             <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
               <div className="w-full max-w-sm card-zelo space-y-4">
@@ -437,11 +451,8 @@ const ProfileSwitcher = () => {
                       type="text"
                       inputMode="numeric"
                       value={prizeCost}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/\D/g, "");
-                        setPrizeCost(val);
-                      }}
-                      className="flex-1 rounded-xl border border-border bg-muted/30 px-3 py-2.5 text-sm outline-none focus:border-primary [appearance:textfield]"
+                      onChange={(e) => setPrizeCost(e.target.value.replace(/\D/g, ""))}
+                      className="flex-1 rounded-xl border border-border bg-muted/30 px-3 py-2.5 text-sm outline-none focus:border-primary"
                     />
                     <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2.5 py-1.5 text-[10px] font-bold text-warning">
                       <Star size={8} /> {prizeCost || 0}
@@ -475,7 +486,6 @@ const ProfileSwitcher = () => {
             </div>
           </div>
 
-          {/* Invite Code */}
           <div className="card-zelo space-y-2">
             <div className="flex items-center justify-between">
               <div>
@@ -491,7 +501,6 @@ const ProfileSwitcher = () => {
             </div>
           </div>
 
-          {/* Stats */}
           <div className="grid grid-cols-3 gap-2">
             <div className="card-zelo flex flex-col items-center py-3">
               <Users size={16} className="text-primary mb-1" />
@@ -510,7 +519,6 @@ const ProfileSwitcher = () => {
             </div>
           </div>
 
-          {/* Admins */}
           <div>
             <p className="text-label mb-2 px-1 flex items-center gap-1.5"><Crown size={10} className="text-warning" /> ADMINISTRADORES</p>
             <div className="space-y-2">
@@ -533,7 +541,6 @@ const ProfileSwitcher = () => {
             </div>
           </div>
 
-          {/* Members */}
           <div>
             <p className="text-label mb-2 px-1 flex items-center gap-1.5"><User size={10} className="text-muted-foreground" /> MEMBROS</p>
             {members.length === 0 ? (
@@ -568,10 +575,7 @@ const ProfileSwitcher = () => {
 
   return (
     <div className="relative">
-      <button
-        onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 active:scale-95 transition-transform"
-      >
+      <button onClick={() => setOpen(!open)} className="flex items-center gap-1.5 active:scale-95 transition-transform">
         {renderAvatar(current, "h-8 w-8", "text-xs")}
         <ChevronDown size={14} className={cn("text-muted-foreground transition-transform", open && "rotate-180")} />
       </button>
@@ -580,7 +584,6 @@ const ProfileSwitcher = () => {
         <>
           <div className="fixed inset-0 z-40" onClick={closeAll} />
           <div className="absolute right-0 top-11 z-50 w-72 rounded-2xl border border-border bg-card p-3 shadow-xl shadow-black/30 fade-in-up">
-            {/* User Header */}
             <div className="flex items-center gap-3 mb-3">
               {renderAvatar(current, "h-11 w-11", "text-sm")}
               <div className="flex-1 min-w-0">
@@ -589,7 +592,6 @@ const ProfileSwitcher = () => {
               </div>
             </div>
 
-            {/* Stats */}
             <div className="grid grid-cols-2 gap-2 mb-3">
               <div className="rounded-xl bg-muted/40 p-2.5 flex items-center gap-2">
                 <Star size={14} className="text-warning" />
@@ -609,7 +611,6 @@ const ProfileSwitcher = () => {
 
             <div className="h-px bg-border mb-2" />
 
-            {/* Navigation */}
             <button onClick={() => openSubView("profile")} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-muted/50 transition-colors active:scale-[0.97]">
               <User size={16} className="text-muted-foreground" />
               <span className="text-sm font-medium">Meu Perfil</span>
@@ -633,24 +634,32 @@ const ProfileSwitcher = () => {
 
             <div className="h-px bg-border my-2" />
 
-            {/* Profile Switcher */}
             <p className="text-[9px] text-muted-foreground font-semibold tracking-wider px-3 mb-1">PERFIS</p>
             {profiles.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => { setActive(p.id); setOpen(false); }}
-                className={cn(
-                  "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors active:scale-[0.97]",
-                  active === p.id ? "bg-primary/10" : "hover:bg-muted/50"
+              <div key={p.id} className="flex items-center gap-1">
+                <button
+                  onClick={() => { setActive(p.id); setOpen(false); }}
+                  className={cn(
+                    "flex flex-1 items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors active:scale-[0.97]",
+                    active === p.id ? "bg-primary/10" : "hover:bg-muted/50"
+                  )}
+                >
+                  {renderAvatar(p, "h-7 w-7", "text-[10px]")}
+                  <span className="text-sm font-medium flex-1">{p.name}</span>
+                  {active === p.id && <Check size={14} className="text-primary" />}
+                </button>
+                {/* Delete button - only for non-original profiles */}
+                {p.id !== defaultProfiles[0].id && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDeleteProfile(p.id); }}
+                    className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 active:scale-95 transition-all"
+                  >
+                    <Trash2 size={12} />
+                  </button>
                 )}
-              >
-                {renderAvatar(p, "h-7 w-7", "text-[10px]")}
-                <span className="text-sm font-medium flex-1">{p.name}</span>
-                {active === p.id && <Check size={14} className="text-primary" />}
-              </button>
+              </div>
             ))}
 
-            {/* Add Profile */}
             {addingProfile ? (
               <div className="mt-2 space-y-2 rounded-xl border border-border p-3">
                 <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Nome" className="w-full rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm outline-none focus:border-primary" />
@@ -670,7 +679,10 @@ const ProfileSwitcher = () => {
             )}
 
             <div className="h-px bg-border my-2" />
-            <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors active:scale-[0.97]">
+            <button
+              onClick={() => setShowLogoutConfirm(true)}
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors active:scale-[0.97]"
+            >
               <LogOut size={16} />
               <span className="text-sm font-medium">Sair da conta</span>
             </button>
