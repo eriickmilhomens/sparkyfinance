@@ -6,6 +6,7 @@ import PluggyConnectModal from "./PluggyConnectModal";
 const SyncBanner = () => {
   const [expenseModalOpen, setExpenseModalOpen] = useState(false);
   const [expenseModalType, setExpenseModalType] = useState<"expense" | "income">("expense");
+  const [pluggyOpen, setPluggyOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDespesa = () => {
