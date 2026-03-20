@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Plus, Settings, CreditCard } from "lucide-react";
 import AddExpenseModal from "@/components/expenses/AddExpenseModal";
 import FinancialSettingsModal from "@/components/expenses/FinancialSettingsModal";
-import DebtManagementModal from "@/components/expenses/DebtManagementModal";
+import CreditCardManager from "@/components/expenses/CreditCardManager";
 import VisaoGeralTab from "@/components/expenses/VisaoGeralTab";
 import ExtratoTab from "@/components/expenses/ExtratoTab";
 import PlanejamentoTab from "@/components/expenses/PlanejamentoTab";
@@ -13,7 +13,7 @@ const tabs = ["Visão Geral", "Extrato", "Planejamento"];
 const ExpensesView = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [debtOpen, setDebtOpen] = useState(false);
+  const [cardsOpen, setCardsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("Visão Geral");
 
   const renderTab = () => {
@@ -37,7 +37,7 @@ const ExpensesView = () => {
               <Settings size={18} />
             </button>
             <button
-              onClick={() => setDebtOpen(true)}
+              onClick={() => setCardsOpen(true)}
               className="rounded-lg p-2 text-muted-foreground hover:text-foreground active:scale-95 transition-all"
             >
               <CreditCard size={18} />
@@ -74,7 +74,7 @@ const ExpensesView = () => {
 
       <AddExpenseModal open={modalOpen} onClose={() => setModalOpen(false)} type="expense" />
       <FinancialSettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
-      <DebtManagementModal open={debtOpen} onClose={() => setDebtOpen(false)} />
+      <CreditCardManager open={cardsOpen} onClose={() => setCardsOpen(false)} />
     </>
   );
 };
