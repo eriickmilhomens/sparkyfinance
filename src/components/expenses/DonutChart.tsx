@@ -37,11 +37,10 @@ const DonutChart = () => {
               </Pie>
             </PieChart>
           </ResponsiveContainer>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-[9px] text-muted-foreground">Total</span>
-            <span className="text-xs font-bold tabular-nums">R$ {fmt(total)}</span>
-          </div>
         </div>
+        <p className="text-center text-[10px] text-muted-foreground mt-1">
+          Total: <span className="text-foreground font-bold text-xs tabular-nums">R$ {fmt(total)}</span>
+        </p>
         <div className="flex flex-col gap-2.5 flex-1">
           {data.map((entry) => (
             <div key={entry.name} className="flex items-center gap-2">
