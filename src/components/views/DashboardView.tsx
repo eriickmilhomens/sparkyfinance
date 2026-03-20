@@ -4,6 +4,7 @@ import SpendingOverview from "@/components/dashboard/SpendingOverview";
 import ShoppingCard from "@/components/dashboard/ShoppingCard";
 import RankingCard from "@/components/dashboard/RankingCard";
 import TasksCard from "@/components/dashboard/TasksCard";
+import SuggestionsCard from "@/components/dashboard/SuggestionsCard";
 
 const DashboardView = () => {
   return (
@@ -11,6 +12,7 @@ const DashboardView = () => {
       <Header />
       <BalanceCard />
       <SpendingOverview />
+      <SuggestionsCard />
       <ShoppingCard />
       <RankingCard />
       <div>
