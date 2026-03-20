@@ -1,9 +1,17 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   ChevronDown, Check, UserPlus, User, Trophy, Crown, Star,
-  Settings, Users, LogOut, Gift, Camera, Mail, Calendar, X
+  Settings, Users, LogOut, Gift, Camera, Mail, Calendar, X,
+  Image, Sparkles, Clock
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+interface Prize {
+  name: string;
+  cost: number;
+  redeemedBy?: string;
+  redeemedAt?: string;
+}
 
 interface Profile {
   id: string;
@@ -13,6 +21,7 @@ interface Profile {
   email: string;
   points: number;
   role: "admin" | "member";
+  avatar?: string; // base64 or URL
 }
 
 const defaultProfiles: Profile[] = [
@@ -21,7 +30,15 @@ const defaultProfiles: Profile[] = [
   { id: "casa", name: "Casa", initials: "C", color: "from-amber-500 to-amber-500/60", email: "casa@sparky.com", points: 15, role: "member" },
 ];
 
-type SubView = null | "profile" | "prizes" | "members";
+const inspirationalQuotes = [
+  "💡 Riqueza não é ter muito, é precisar de pouco.",
+  "🚀 Pequenos hábitos financeiros geram grandes resultados.",
+  "🎯 Quem controla o dinheiro, controla o futuro.",
+  "🌟 Cada centavo economizado é um passo para a liberdade.",
+  "🔥 Disciplina hoje, colheita amanhã.",
+];
+
+type SubView = null | "profile" | "prizes" | "members" | "ranking";
 
 const ProfileSwitcher = () => {
   const [open, setOpen] = useState(false);
@@ -31,18 +48,24 @@ const ProfileSwitcher = () => {
   const [addingProfile, setAddingProfile] = useState(false);
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Prizes state
-  const [prizes, setPrizes] = useState<{ name: string; cost: number }[]>([]);
+  // Prizes state - per profile
+  const [allPrizes, setAllPrizes] = useState<Record<string, Prize[]>>({});
   const [showNewPrize, setShowNewPrize] = useState(false);
   const [prizeName, setPrizeName] = useState("");
-  const [prizeCost, setPrizeCost] = useState(100);
+  const [prizeCost, setPrizeCost] = useState("100");
 
   // Profile edit state
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
 
   const current = profiles.find((p) => p.id === active)!;
+  const prizes = allPrizes[active] || [];
+
+  const setPrizes = (newPrizes: Prize[]) => {
+    setAllPrizes(prev => ({ ...prev, [active]: newPrizes }));
+  };
 
   const handleAddProfile = () => {
     if (!newName.trim()) return;
@@ -59,10 +82,31 @@ const ProfileSwitcher = () => {
 
   const handleAddPrize = () => {
     if (!prizeName.trim()) return;
-    setPrizes([...prizes, { name: prizeName, cost: prizeCost }]);
+    const cost = parseInt(prizeCost) || 0;
+    setPrizes([...prizes, { name: prizeName, cost }]);
     setPrizeName("");
-    setPrizeCost(100);
+    setPrizeCost("100");
     setShowNewPrize(false);
+  };
+
+  const handleRedeemPrize = (index: number) => {
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const updated = prizes.map((p, i) =>
+      i === index ? { ...p, redeemedBy: current.name, redeemedAt: dateStr } : p
+    );
+    setPrizes(updated);
+  };
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const base64 = ev.target?.result as string;
+      setProfiles(profiles.map(p => p.id === active ? { ...p, avatar: base64 } : p));
+    };
+    reader.readAsDataURL(file);
   };
 
   const openSubView = (view: SubView) => {
@@ -80,6 +124,112 @@ const ProfileSwitcher = () => {
     setShowNewPrize(false);
   };
 
+  const renderAvatar = (profile: Profile, size: string, textSize: string) => {
+    if (profile.avatar) {
+      return (
+        <img src={profile.avatar} alt={profile.name} className={cn(size, "rounded-full object-cover")} />
+      );
+    }
+    return (
+      <div className={cn(size, "rounded-full bg-gradient-to-br flex items-center justify-center font-bold text-white", textSize, profile.color)}>
+        {profile.initials}
+      </div>
+    );
+  };
+
+  // Sub-view: Ranking
+  if (subView === "ranking") {
+    const sorted = [...profiles].sort((a, b) => b.points - a.points);
+    const quote = inspirationalQuotes[Math.floor(Math.random() * inspirationalQuotes.length)];
+    return (
+      <div className="fixed inset-0 z-[60] bg-background/95 backdrop-blur-sm overflow-y-auto">
+        <div className="max-w-lg mx-auto px-4 py-4 space-y-4">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setSubView(null)} className="text-muted-foreground hover:text-foreground"><ChevronDown size={20} className="rotate-90" /></button>
+            <div>
+              <h1 className="text-lg font-bold">Ranking do Grupo</h1>
+              <p className="text-xs text-muted-foreground">Compare seu desempenho com os outros membros</p>
+            </div>
+          </div>
+
+          {/* Inspiration */}
+          <div className="card-zelo border-warning/20 bg-warning/5">
+            <div className="flex items-start gap-3">
+              <Sparkles size={18} className="text-warning shrink-0 mt-0.5" />
+              <p className="text-xs text-foreground/80 italic leading-relaxed">{quote}</p>
+            </div>
+          </div>
+
+          {/* Podium top 3 */}
+          {sorted.length >= 3 && (
+            <div className="flex items-end justify-center gap-3 py-4">
+              {/* 2nd place */}
+              <div className="flex flex-col items-center">
+                {renderAvatar(sorted[1], "h-12 w-12", "text-sm")}
+                <p className="text-xs font-semibold mt-1">{sorted[1].name}</p>
+                <div className="bg-muted rounded-lg px-3 py-1 mt-1">
+                  <span className="text-xs font-bold text-warning">{sorted[1].points} pts</span>
+                </div>
+                <div className="bg-muted/60 rounded-t-lg w-16 h-14 mt-2 flex items-center justify-center text-lg font-bold text-muted-foreground">2º</div>
+              </div>
+              {/* 1st place */}
+              <div className="flex flex-col items-center">
+                <Crown size={16} className="text-warning mb-1" />
+                {renderAvatar(sorted[0], "h-14 w-14", "text-base")}
+                <p className="text-xs font-bold mt-1">{sorted[0].name}</p>
+                <div className="bg-warning/15 rounded-lg px-3 py-1 mt-1">
+                  <span className="text-xs font-bold text-warning">{sorted[0].points} pts</span>
+                </div>
+                <div className="bg-warning/20 rounded-t-lg w-16 h-20 mt-2 flex items-center justify-center text-lg font-bold text-warning">1º</div>
+              </div>
+              {/* 3rd place */}
+              <div className="flex flex-col items-center">
+                {renderAvatar(sorted[2], "h-11 w-11", "text-xs")}
+                <p className="text-xs font-semibold mt-1">{sorted[2].name}</p>
+                <div className="bg-muted rounded-lg px-3 py-1 mt-1">
+                  <span className="text-xs font-bold text-warning">{sorted[2].points} pts</span>
+                </div>
+                <div className="bg-muted/40 rounded-t-lg w-16 h-10 mt-2 flex items-center justify-center text-lg font-bold text-muted-foreground">3º</div>
+              </div>
+            </div>
+          )}
+
+          {/* Full ranking list */}
+          <p className="text-label px-1">CLASSIFICAÇÃO GERAL</p>
+          <div className="space-y-2">
+            {sorted.map((member, i) => {
+              const isCurrent = member.id === active;
+              const diff = member.points - current.points;
+              return (
+                <div key={member.id} className={cn("card-zelo flex items-center gap-3", isCurrent && "border-primary/30")}>
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                    {i + 1}º
+                  </div>
+                  {renderAvatar(member, "h-10 w-10", "text-sm")}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-sm font-semibold">{member.name}</p>
+                      {isCurrent && <span className="text-[9px] rounded-full bg-primary/15 px-1.5 py-0.5 text-primary font-semibold">Você</span>}
+                    </div>
+                    {!isCurrent && (
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        {diff > 0 ? `${diff} pts à frente de você` : diff < 0 ? `${Math.abs(diff)} pts atrás de você` : "Mesma pontuação"}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 rounded-full bg-warning/15 px-2.5 py-1">
+                    {i === 0 ? <Trophy size={12} className="text-warning" /> : <Star size={12} className="text-warning" />}
+                    <span className="text-xs font-bold text-warning tabular-nums">{member.points} pts</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Sub-view: Meu Perfil
   if (subView === "profile") {
     return (
@@ -95,10 +245,19 @@ const ProfileSwitcher = () => {
 
           <div className="card-zelo flex flex-col items-center py-6">
             <div className="relative">
-              <div className={cn("h-20 w-20 rounded-full bg-gradient-to-br flex items-center justify-center text-2xl font-bold text-white", current.color)}>
-                {current.initials}
-              </div>
-              <button className="absolute bottom-0 right-0 h-7 w-7 rounded-full bg-primary flex items-center justify-center text-white">
+              {renderAvatar(current, "h-20 w-20", "text-2xl")}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={handlePhotoUpload}
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute bottom-0 right-0 h-7 w-7 rounded-full bg-primary flex items-center justify-center text-white"
+              >
                 <Camera size={12} />
               </button>
             </div>
@@ -177,19 +336,43 @@ const ProfileSwitcher = () => {
           ) : (
             <div className="space-y-2">
               {prizes.map((p, i) => (
-                <div key={i} className="card-zelo flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-warning/15">
-                    <Gift size={18} className="text-warning" />
+                <div key={i} className="card-zelo space-y-2">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-warning/15">
+                      <Gift size={18} className="text-warning" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold">{p.name}</p>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-bold text-warning mt-1">
+                        <Star size={8} /> {p.cost} pontos
+                      </span>
+                    </div>
+                    <button onClick={() => setPrizes(prizes.filter((_, j) => j !== i))} className="h-8 w-8 rounded-lg bg-destructive/15 flex items-center justify-center text-destructive active:scale-95">
+                      <X size={14} />
+                    </button>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold">{p.name}</p>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-bold text-warning mt-1">
-                      <Star size={8} /> {p.cost} pontos
-                    </span>
-                  </div>
-                  <button onClick={() => setPrizes(prizes.filter((_, j) => j !== i))} className="h-8 w-8 rounded-lg bg-destructive/15 flex items-center justify-center text-destructive active:scale-95">
-                    <X size={14} />
-                  </button>
+
+                  {p.redeemedBy ? (
+                    <div className="flex items-center gap-2 rounded-lg bg-success/10 px-3 py-2">
+                      <Check size={12} className="text-success" />
+                      <p className="text-[10px] text-success">
+                        Resgatado por <span className="font-bold">{p.redeemedBy}</span> em {p.redeemedAt}
+                      </p>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleRedeemPrize(i)}
+                      disabled={current.points < p.cost}
+                      className={cn(
+                        "w-full rounded-lg py-2 text-xs font-semibold active:scale-[0.98] transition-all",
+                        current.points >= p.cost
+                          ? "bg-success/15 text-success hover:bg-success/25"
+                          : "bg-muted text-muted-foreground cursor-not-allowed"
+                      )}
+                    >
+                      {current.points >= p.cost ? "🎁 Resgatar Prêmio" : `Pontos insuficientes (${current.points}/${p.cost})`}
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -213,9 +396,18 @@ const ProfileSwitcher = () => {
                 <div>
                   <label className="text-[10px] text-muted-foreground font-medium mb-1 block">Custo em Pontos*</label>
                   <div className="flex items-center gap-2">
-                    <input type="number" value={prizeCost} onChange={(e) => setPrizeCost(Number(e.target.value))} className="flex-1 rounded-xl border border-border bg-muted/30 px-3 py-2.5 text-sm outline-none focus:border-primary" />
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={prizeCost}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, "");
+                        setPrizeCost(val);
+                      }}
+                      className="flex-1 rounded-xl border border-border bg-muted/30 px-3 py-2.5 text-sm outline-none focus:border-primary [appearance:textfield]"
+                    />
                     <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2.5 py-1.5 text-[10px] font-bold text-warning">
-                      <Star size={8} /> {prizeCost}
+                      <Star size={8} /> {prizeCost || 0}
                     </span>
                   </div>
                 </div>
@@ -287,9 +479,7 @@ const ProfileSwitcher = () => {
             <div className="space-y-2">
               {admins.map(p => (
                 <div key={p.id} className="card-zelo flex items-center gap-3">
-                  <div className={cn("h-10 w-10 rounded-full bg-gradient-to-br flex items-center justify-center text-sm font-bold text-white", p.color)}>
-                    {p.initials}
-                  </div>
+                  {renderAvatar(p, "h-10 w-10", "text-sm")}
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-semibold">{p.name}</p>
@@ -317,9 +507,7 @@ const ProfileSwitcher = () => {
               <div className="space-y-2">
                 {members.map(p => (
                   <div key={p.id} className="card-zelo flex items-center gap-3">
-                    <div className={cn("h-10 w-10 rounded-full bg-gradient-to-br flex items-center justify-center text-sm font-bold text-white", p.color)}>
-                      {p.initials}
-                    </div>
+                    {renderAvatar(p, "h-10 w-10", "text-sm")}
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-semibold">{p.name}</p>
@@ -347,9 +535,7 @@ const ProfileSwitcher = () => {
         onClick={() => setOpen(!open)}
         className="flex items-center gap-1.5 active:scale-95 transition-transform"
       >
-        <div className={cn("h-8 w-8 rounded-full bg-gradient-to-br flex items-center justify-center text-xs font-bold text-white", current.color)}>
-          {current.initials}
-        </div>
+        {renderAvatar(current, "h-8 w-8", "text-xs")}
         <ChevronDown size={14} className={cn("text-muted-foreground transition-transform", open && "rotate-180")} />
       </button>
 
@@ -359,9 +545,7 @@ const ProfileSwitcher = () => {
           <div className="absolute right-0 top-11 z-50 w-72 rounded-2xl border border-border bg-card p-3 shadow-xl shadow-black/30 fade-in-up">
             {/* User Header */}
             <div className="flex items-center gap-3 mb-3">
-              <div className={cn("h-11 w-11 rounded-full bg-gradient-to-br flex items-center justify-center text-sm font-bold text-white", current.color)}>
-                {current.initials}
-              </div>
+              {renderAvatar(current, "h-11 w-11", "text-sm")}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold truncate">{current.name}</p>
                 <p className="text-[10px] text-muted-foreground truncate">{current.email}</p>
@@ -393,7 +577,7 @@ const ProfileSwitcher = () => {
               <User size={16} className="text-muted-foreground" />
               <span className="text-sm font-medium">Meu Perfil</span>
             </button>
-            <button onClick={() => { closeAll(); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-muted/50 transition-colors active:scale-[0.97]">
+            <button onClick={() => openSubView("ranking")} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-muted/50 transition-colors active:scale-[0.97]">
               <Trophy size={16} className="text-muted-foreground" />
               <span className="text-sm font-medium">Ranking</span>
             </button>
@@ -423,9 +607,7 @@ const ProfileSwitcher = () => {
                   active === p.id ? "bg-primary/10" : "hover:bg-muted/50"
                 )}
               >
-                <div className={cn("h-7 w-7 rounded-full bg-gradient-to-br flex items-center justify-center text-[10px] font-bold text-white", p.color)}>
-                  {p.initials}
-                </div>
+                {renderAvatar(p, "h-7 w-7", "text-[10px]")}
                 <span className="text-sm font-medium flex-1">{p.name}</span>
                 {active === p.id && <Check size={14} className="text-primary" />}
               </button>
