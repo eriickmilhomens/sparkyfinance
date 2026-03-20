@@ -1,15 +1,21 @@
-import { TrendingDown, TrendingUp, Wallet, CreditCard, ArrowUpRight } from "lucide-react";
-import { BarChart, Bar, ResponsiveContainer, AreaChart, Area } from "recharts";
+import { TrendingUp, ShieldCheck, AlertTriangle, ArrowUpRight, Wallet, CreditCard, Calculator, Pencil, DollarSign, CalendarDays, CheckCircle2 } from "lucide-react";
+import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, CartesianGrid, BarChart, Bar, Tooltip, Legend } from "recharts";
 
-const weeklySpend = [
-  { d: "S", v: 85 }, { d: "T", v: 120 }, { d: "Q", v: 65 },
-  { d: "Q", v: 95 }, { d: "S", v: 150 }, { d: "S", v: 45 }, { d: "D", v: 70 },
-];
+const balanceHistory = Array.from({ length: 19 }, (_, i) => ({
+  d: i + 1,
+  v: i < 18 ? Math.floor(Math.random() * 40 + 10) : 600,
+}));
+// Make the line flat near 0 then spike at day 19
+for (let i = 0; i < 18; i++) balanceHistory[i].v = Math.floor(Math.random() * 30 + 5);
+balanceHistory[18].v = 600;
 
-const monthTrend = [
-  { d: "1", v: 4800 }, { d: "5", v: 4500 }, { d: "10", v: 4100 },
-  { d: "15", v: 3700 }, { d: "18", v: 3500 }, { d: "20", v: 3247 },
-];
+const entriesExitsData = Array.from({ length: 31 }, (_, i) => ({
+  day: i + 1,
+  entradas: 0,
+  saidas: 0,
+}));
+entriesExitsData[18] = { day: 19, entradas: 4200, saidas: 1800 };
+entriesExitsData[19] = { day: 20, entradas: 800, saidas: 2400 };
 
 const SpendingOverview = () => {
   return (
@@ -30,22 +36,12 @@ const SpendingOverview = () => {
         <p className="text-[11px] text-muted-foreground mt-2">
           Baseado no seu saldo de <span className="text-foreground font-medium">R$ 3.247,50</span> e <span className="text-foreground font-medium">12 dias</span> restantes
         </p>
-
-        {/* Mini sparkline */}
-        <div className="mt-3 h-16">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={monthTrend} margin={{ top: 2, right: 2, left: 2, bottom: 0 }}>
-              <defs>
-                <linearGradient id="spendGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="hsl(var(--success))" stopOpacity={0.25} />
-                  <stop offset="100%" stopColor="hsl(var(--success))" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <Area type="monotone" dataKey="v" stroke="hsl(var(--success))" strokeWidth={2} fill="url(#spendGrad)" dot={false} />
-            </AreaChart>
-          </ResponsiveContainer>
+        <div className="mt-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-background border border-border px-3 py-1 text-[11px] font-semibold text-primary cursor-pointer active:scale-95 transition-transform">
+            <Calculator size={12} />
+            Simular
+          </span>
         </div>
-        <p className="text-[10px] text-muted-foreground mt-1">Evolução do saldo no mês</p>
       </div>
 
       {/* Quick stats row */}
@@ -71,28 +67,131 @@ const SpendingOverview = () => {
           </div>
           <p className="text-lg font-bold tabular-nums">R$ 3.252</p>
           <span className="text-[10px] text-destructive font-medium flex items-center gap-0.5">
-            <TrendingDown size={10} /> +12% vs mês passado
+            <ArrowUpRight size={10} className="rotate-90" /> +12% vs mês passado
           </span>
         </div>
       </div>
 
-      {/* Weekly spending bar chart */}
+      {/* Balance History Line Chart */}
       <div className="card-zelo fade-in-up stagger-3">
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-xs font-semibold text-muted-foreground">Gastos da Semana</p>
-          <span className="text-[10px] text-foreground font-medium tabular-nums">R$ 630,00</span>
-        </div>
-        <div className="h-20">
+        <p className="text-label mb-0.5">HISTÓRICO DE SALDO</p>
+        <p className="text-[11px] text-muted-foreground mb-3">Evolução realizada até hoje</p>
+        <div className="h-44">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={weeklySpend} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-              <Bar dataKey="v" radius={[4, 4, 0, 0]} fill="hsl(var(--primary))" opacity={0.7} />
+            <AreaChart data={balanceHistory} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
+              <defs>
+                <linearGradient id="balHistGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                  <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(0 0% 15%)" vertical={false} />
+              <XAxis dataKey="d" tick={{ fontSize: 9, fill: "hsl(0 0% 55%)" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 9, fill: "hsl(0 0% 55%)" }} axisLine={false} tickLine={false} domain={[0, 800]} ticks={[0, 200, 400, 600, 800]} tickFormatter={(v: number) => `R$ ${v}`} />
+              <Area type="monotone" dataKey="v" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#balHistGrad)" dot={false} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Ritmo & Autonomia */}
+      <div className="card-zelo fade-in-up stagger-4">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15">
+              <ShieldCheck size={20} className="text-primary" />
+            </div>
+            <div>
+              <p className="text-label">RITMO & AUTONOMIA</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-lg font-bold">11 dias</p>
+            <p className="text-[10px] text-muted-foreground">de caixa</p>
+          </div>
+        </div>
+        <div className="h-2.5 w-full rounded-full bg-muted overflow-hidden">
+          <div className="h-full rounded-full bg-warning transition-all duration-700" style={{ width: "45%" }} />
+        </div>
+        <div className="flex justify-between mt-2">
+          <span className="text-[10px] text-muted-foreground">Faltam 12 dias no mês</span>
+          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-destructive">
+            <AlertTriangle size={10} /> Ritmo Acelerado
+          </span>
+        </div>
+      </div>
+
+      {/* Financial Grid Widgets */}
+      <div className="grid grid-cols-2 gap-2">
+        {/* Top Categorias */}
+        <div className="card-zelo fade-in-up stagger-1 col-span-1">
+          <p className="text-label mb-3">TOP CATEGORIAS</p>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15">
+              <Pencil size={12} className="text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-medium truncate">Personalizado</p>
+              <p className="text-sm font-bold tabular-nums">R$ 1.969</p>
+            </div>
+          </div>
+          <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+            <div className="h-full rounded-full bg-primary" style={{ width: "72%" }} />
+          </div>
+        </div>
+
+        {/* Maior Despesa + Próximas Contas */}
+        <div className="space-y-2 col-span-1">
+          <div className="card-zelo fade-in-up stagger-2">
+            <p className="text-label mb-1">MAIOR DESPESA</p>
+            <div className="flex items-center gap-2">
+              <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-destructive/15">
+                <DollarSign size={12} className="text-destructive" />
+              </div>
+              <div>
+                <p className="text-[10px] text-muted-foreground">Nubank</p>
+                <p className="text-sm font-bold text-destructive tabular-nums">R$ 790,71</p>
+              </div>
+            </div>
+          </div>
+          <div className="card-zelo fade-in-up stagger-3">
+            <p className="text-label mb-1">PRÓXIMAS CONTAS</p>
+            <div className="flex items-center gap-1.5 justify-center py-1">
+              <CheckCircle2 size={14} className="text-success" />
+              <p className="text-[11px] text-success font-medium">Tudo pago por enquanto!</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Entradas vs Saídas */}
+      <div className="card-zelo fade-in-up stagger-4">
+        <p className="text-label mb-3">ENTRADAS VS SAÍDAS</p>
+        <div className="h-40">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={entriesExitsData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(0 0% 15%)" vertical={false} />
+              <XAxis dataKey="day" tick={{ fontSize: 8, fill: "hsl(0 0% 55%)" }} axisLine={false} tickLine={false} interval={4} />
+              <YAxis tick={{ fontSize: 8, fill: "hsl(0 0% 55%)" }} axisLine={false} tickLine={false} tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`} />
+              <Tooltip
+                contentStyle={{ background: "hsl(0 0% 8.6%)", border: "1px solid hsl(0 0% 15%)", borderRadius: "12px", fontSize: "11px" }}
+                labelFormatter={(v) => `DIA ${v}`}
+                formatter={(value: number, name: string) => [`R$ ${value.toLocaleString("pt-BR")}`, name === "entradas" ? "Entradas" : "Saídas"]}
+              />
+              <Bar dataKey="entradas" fill="hsl(var(--success))" radius={[3, 3, 0, 0]} />
+              <Bar dataKey="saidas" fill="hsl(var(--destructive))" radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="flex justify-between mt-1.5">
-          {weeklySpend.map((d, i) => (
-            <span key={i} className="text-[9px] text-muted-foreground w-full text-center">{d.d}</span>
-          ))}
+        <div className="flex items-center gap-4 mt-2 justify-center">
+          <div className="flex items-center gap-1.5">
+            <div className="h-2 w-2 rounded-full bg-success" />
+            <span className="text-[10px] text-muted-foreground">Entradas</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="h-2 w-2 rounded-full bg-destructive" />
+            <span className="text-[10px] text-muted-foreground">Saídas</span>
+          </div>
         </div>
       </div>
     </div>
