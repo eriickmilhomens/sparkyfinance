@@ -1,14 +1,14 @@
 import { useState } from "react";
-import { Search, FolderOpen, Plus, Upload, Check, X } from "lucide-react";
+import { Search, FolderOpen, Plus, Upload, Check, X, FileText, ScrollText, BookOpen, Files, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const filters = [
-  { label: "Todos", active: true },
-  { label: "Conta", active: false },
-  { label: "Contrato", active: false },
-  { label: "Documento", active: false },
-  { label: "Manual", active: false },
-  { label: "Outros", active: false, icon: true },
+  { label: "Todos", icon: Files },
+  { label: "Conta", icon: FileText },
+  { label: "Contrato", icon: ScrollText },
+  { label: "Documento", icon: BookOpen },
+  { label: "Manual", icon: BookOpen },
+  { label: "Outros", icon: FolderOpen, highlight: true },
 ];
 
 const categories = ["Conta", "Contrato", "Documento", "Manual", "Outros"];
@@ -40,23 +40,26 @@ const DocsView = () => {
 
         {/* Filters */}
         <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-          {filters.map((f) => (
-            <button
-              key={f.label}
-              onClick={() => setActiveFilter(f.label)}
-              className={cn(
-                "flex-shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all active:scale-95",
-                activeFilter === f.label
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted/50 text-muted-foreground border border-border"
-              )}
-            >
-              <span className="flex items-center gap-1.5">
-                {f.icon && <FolderOpen size={12} className="text-warning" />}
-                {f.label}
-              </span>
-            </button>
-          ))}
+          {filters.map((f) => {
+            const Icon = f.icon;
+            return (
+              <button
+                key={f.label}
+                onClick={() => setActiveFilter(f.label)}
+                className={cn(
+                  "flex-shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all active:scale-95",
+                  activeFilter === f.label
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted/50 text-muted-foreground border border-border"
+                )}
+              >
+                <span className="flex items-center gap-1.5">
+                  <Icon size={12} className={f.highlight ? "text-warning" : ""} />
+                  {f.label}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Empty State */}

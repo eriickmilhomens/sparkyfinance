@@ -22,7 +22,6 @@ const BalanceCard = () => {
         <span className="inline-flex items-center rounded-full bg-success/15 px-2.5 py-0.5 text-xs font-semibold text-success">
           Pode gastar hoje: R$ 108,25
         </span>
-        <button className="text-[10px] text-primary font-medium">Simular</button>
       </div>
     </div>
   );

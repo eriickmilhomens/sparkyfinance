@@ -3,6 +3,7 @@ import TrendChart from "@/components/expenses/TrendChart";
 import DonutChart from "@/components/expenses/DonutChart";
 import PaceBar from "@/components/expenses/PaceBar";
 import BudgetAlert from "@/components/expenses/BudgetAlert";
+import SyncBanner from "@/components/expenses/SyncBanner";
 
 const balanceHistory = [
   { name: "Jan", value: 3200 }, { name: "Fev", value: 2800 },
@@ -24,6 +25,7 @@ const dailyPower = [
 
 const VisaoGeralTab = () => (
   <div className="space-y-3">
+    <SyncBanner />
     <BudgetAlert />
     <StatusCards />
     <TrendChart title="Histórico de Saldo" data={balanceHistory} color="hsl(var(--primary))" gradientId="balGrad" />
