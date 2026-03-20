@@ -1,4 +1,4 @@
-import { Home, CheckSquare, Wallet, FileText } from "lucide-react";
+import { Home, CheckSquare, Wallet, FileText, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TabBarProps {
@@ -9,6 +9,7 @@ interface TabBarProps {
 const tabs = [
   { id: "home", label: "Hoje", icon: Home },
   { id: "tasks", label: "Tarefas", icon: CheckSquare },
+  { id: "chat", label: "Sparky", icon: MessageCircle },
   { id: "expenses", label: "Despesas", icon: Wallet },
   { id: "docs", label: "Docs", icon: FileText },
 ];
