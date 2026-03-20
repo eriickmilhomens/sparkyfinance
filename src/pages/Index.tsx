@@ -5,6 +5,7 @@ import TasksView from "@/components/views/TasksView";
 import ExpensesView from "@/components/views/ExpensesView";
 import MarketView from "@/components/views/MarketView";
 import DocsView from "@/components/views/DocsView";
+import MembersView from "@/components/views/MembersView";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("home");
@@ -16,6 +17,7 @@ const Index = () => {
       case "expenses": return <ExpensesView />;
       case "market": return <MarketView />;
       case "docs": return <DocsView />;
+      case "members": return <MembersView />;
       default: return <DashboardView />;
     }
   };
