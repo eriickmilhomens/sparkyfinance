@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { TrendingUp, ShieldCheck, AlertTriangle, ArrowUpRight, Wallet, CreditCard, Calculator, Pencil, DollarSign, CalendarDays, CheckCircle2, ChevronUp, ChevronDown, X } from "lucide-react";
-import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, CartesianGrid, BarChart, Bar, Tooltip, Legend } from "recharts";
+import { TrendingUp, ShieldCheck, AlertTriangle, ArrowUpRight, Wallet, CreditCard, Calculator, Pencil, DollarSign, CalendarDays, CheckCircle2, X } from "lucide-react";
+import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, CartesianGrid, BarChart, Bar, Tooltip } from "recharts";
 
 const balanceHistory = Array.from({ length: 19 }, (_, i) => ({
   d: i + 1,
@@ -75,28 +75,22 @@ const SpendingOverview = () => {
               </button>
             </div>
 
-            {/* Input */}
+            {/* Input - only typing, no spinners */}
             <label className="text-[11px] text-muted-foreground mb-1.5 block">Valor da Compra (R$)</label>
             <div className="flex items-center gap-2 mb-5">
               <div className="flex-1 relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">R$</span>
                 <input
-                  type="number"
-                  min={0}
-                  step={10}
+                  type="text"
+                  inputMode="numeric"
                   value={simValue || ""}
-                  onChange={(e) => setSimValue(Math.max(0, Number(e.target.value)))}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^\d.,]/g, "").replace(",", ".");
+                    setSimValue(Math.max(0, Number(val) || 0));
+                  }}
                   placeholder="0,00"
-                  className="w-full rounded-xl border-2 border-primary bg-muted/50 pl-10 pr-12 py-3 text-sm font-medium outline-none tabular-nums placeholder:text-muted-foreground transition-all"
+                  className="w-full rounded-xl border-2 border-primary bg-muted/50 pl-10 pr-4 py-3 text-sm font-medium outline-none tabular-nums placeholder:text-muted-foreground transition-all"
                 />
-                <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex flex-col">
-                  <button onClick={() => setSimValue((v) => v + 50)} className="p-0.5 text-muted-foreground hover:text-foreground active:scale-90 transition-all">
-                    <ChevronUp size={14} />
-                  </button>
-                  <button onClick={() => setSimValue((v) => Math.max(0, v - 50))} className="p-0.5 text-muted-foreground hover:text-foreground active:scale-90 transition-all">
-                    <ChevronDown size={14} />
-                  </button>
-                </div>
               </div>
             </div>
 
@@ -171,9 +165,9 @@ const SpendingOverview = () => {
                   <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(0 0% 15%)" vertical={false} />
-              <XAxis dataKey="d" tick={{ fontSize: 9, fill: "hsl(0 0% 55%)" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 9, fill: "hsl(0 0% 55%)" }} axisLine={false} tickLine={false} domain={[0, 800]} ticks={[0, 200, 400, 600, 800]} tickFormatter={(v: number) => `R$ ${v}`} />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+              <XAxis dataKey="d" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} domain={[0, 800]} ticks={[0, 200, 400, 600, 800]} tickFormatter={(v: number) => `R$ ${v}`} />
               <Area type="monotone" dataKey="v" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#balHistGrad)" dot={false} />
             </AreaChart>
           </ResponsiveContainer>
@@ -254,11 +248,11 @@ const SpendingOverview = () => {
         <div className="h-40">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={entriesExitsData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(0 0% 15%)" vertical={false} />
-              <XAxis dataKey="day" tick={{ fontSize: 8, fill: "hsl(0 0% 55%)" }} axisLine={false} tickLine={false} interval={4} />
-              <YAxis tick={{ fontSize: 8, fill: "hsl(0 0% 55%)" }} axisLine={false} tickLine={false} tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`} />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+              <XAxis dataKey="day" tick={{ fontSize: 8, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} interval={4} />
+              <YAxis tick={{ fontSize: 8, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`} />
               <Tooltip
-                contentStyle={{ background: "hsl(0 0% 8.6%)", border: "1px solid hsl(0 0% 15%)", borderRadius: "12px", fontSize: "11px" }}
+                contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "12px", fontSize: "11px" }}
                 labelFormatter={(v) => `DIA ${v}`}
                 formatter={(value: number, name: string) => [fmt(value), name === "entradas" ? "Entradas" : "Saídas"]}
               />

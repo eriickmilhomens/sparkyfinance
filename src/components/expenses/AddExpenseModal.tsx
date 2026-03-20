@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Zap, Droplets, Wifi, Flame, ShoppingCart, UtensilsCrossed } from "lucide-react";
+import { X, Zap, Droplets, Wifi, Flame, ShoppingCart, UtensilsCrossed, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface AddExpenseModalProps {
@@ -15,6 +15,7 @@ const shortcuts = [
   { label: "Gás", icon: Flame, color: "bg-orange-500/20 text-orange-400" },
   { label: "Mercado", icon: ShoppingCart, color: "bg-success/20 text-success" },
   { label: "Delivery", icon: UtensilsCrossed, color: "bg-destructive/20 text-destructive" },
+  { label: "Cartão", icon: CreditCard, color: "bg-purple-500/20 text-purple-400" },
 ];
 
 const priorities = [
@@ -24,14 +25,25 @@ const priorities = [
   { id: "P4", label: "Opcional", desc: "Compras não essenciais" },
 ];
 
+const STORAGE_KEY = "sparky-credit-cards";
+
 const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalProps) => {
   const [selectedPriority, setSelectedPriority] = useState("P3");
   const [recurring, setRecurring] = useState(false);
   const [split, setSplit] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [installments, setInstallments] = useState("1");
+  const [selectedCardId, setSelectedCardId] = useState<string>("");
+
+  // Load credit cards for card category
+  const cards = (() => {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; }
+  })();
 
   const isIncome = type === "income";
+  const isCardCategory = selectedCategory === "Cartão";
   const title = isIncome ? "Adicionar Receita" : "Adicionar Despesa";
-  const saveLabel = isIncome ? "Salvar Receita • +10 pts" : "Salvar Despesa • +10 pts";
+  const saveLabel = isIncome ? "Salvar Receita • +10 pts" : isCardCategory ? "Lançar na Fatura • +10 pts" : "Salvar Despesa • +10 pts";
 
   if (!open) return null;
 
@@ -48,13 +60,17 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
 
         {/* Quick shortcuts - only for expenses */}
         {!isIncome && (
-          <div className="grid grid-cols-3 gap-2 mb-5">
+          <div className="grid grid-cols-4 gap-2 mb-5">
             {shortcuts.map((s) => {
               const Icon = s.icon;
               return (
                 <button
                   key={s.label}
-                  className={cn("flex flex-col items-center gap-1.5 rounded-xl p-3 transition-all active:scale-95", s.color)}
+                  onClick={() => setSelectedCategory(selectedCategory === s.label ? null : s.label)}
+                  className={cn(
+                    "flex flex-col items-center gap-1.5 rounded-xl p-3 transition-all active:scale-95",
+                    selectedCategory === s.label ? "ring-2 ring-primary " + s.color : s.color
+                  )}
                 >
                   <Icon size={20} />
                   <span className="text-[11px] font-medium">{s.label}</span>
@@ -73,10 +89,51 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
           />
           <input
             type="text"
+            inputMode="numeric"
             placeholder="Valor (R$)"
             className="w-full rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary transition-all tabular-nums"
           />
         </div>
+
+        {/* Card-specific options */}
+        {isCardCategory && (
+          <div className="space-y-3 mb-5 card-zelo !bg-purple-500/5 !border-purple-500/20">
+            <p className="text-xs font-semibold flex items-center gap-1.5">
+              <CreditCard size={14} className="text-purple-400" /> Opções do Cartão
+            </p>
+            {/* Select card */}
+            <div>
+              <label className="text-[10px] text-muted-foreground font-medium mb-1 block">Cartão</label>
+              <select
+                value={selectedCardId}
+                onChange={(e) => setSelectedCardId(e.target.value)}
+                className="w-full rounded-xl border border-border bg-muted/50 px-3 py-2.5 text-sm outline-none focus:border-primary"
+              >
+                <option value="">Selecione o cartão</option>
+                {cards.map((c: any) => (
+                  <option key={c.id} value={c.id}>{c.cardName} — {c.bankName}</option>
+                ))}
+              </select>
+            </div>
+            {/* Installments */}
+            <div>
+              <label className="text-[10px] text-muted-foreground font-medium mb-1 block">Parcelas</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={installments}
+                onChange={(e) => setInstallments(e.target.value.replace(/\D/g, "") || "1")}
+                placeholder="1"
+                className="w-full rounded-xl border border-border bg-muted/50 px-3 py-2.5 text-sm outline-none focus:border-primary"
+              />
+              {parseInt(installments) > 1 && (
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Compra será dividida em {installments}x nas próximas faturas
+                </p>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Priority - only for expenses */}
         {!isIncome && (
@@ -141,7 +198,7 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
         {/* Save */}
         <button className={cn(
           "w-full rounded-xl py-3.5 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] pulse-glow",
-          isIncome ? "bg-success" : "bg-primary"
+          isIncome ? "bg-success" : isCardCategory ? "bg-purple-600" : "bg-primary"
         )}>
           {saveLabel}
         </button>
