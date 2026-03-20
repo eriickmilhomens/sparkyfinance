@@ -1,11 +1,11 @@
-import { TrendingUp, ShieldCheck, AlertTriangle, ArrowUpRight, Wallet, CreditCard, Calculator, Pencil, DollarSign, CalendarDays, CheckCircle2 } from "lucide-react";
+import { useState } from "react";
+import { TrendingUp, ShieldCheck, AlertTriangle, ArrowUpRight, Wallet, CreditCard, Calculator, Pencil, DollarSign, CalendarDays, CheckCircle2, ChevronUp, ChevronDown, X } from "lucide-react";
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, CartesianGrid, BarChart, Bar, Tooltip, Legend } from "recharts";
 
 const balanceHistory = Array.from({ length: 19 }, (_, i) => ({
   d: i + 1,
   v: i < 18 ? Math.floor(Math.random() * 40 + 10) : 600,
 }));
-// Make the line flat near 0 then spike at day 19
 for (let i = 0; i < 18; i++) balanceHistory[i].v = Math.floor(Math.random() * 30 + 5);
 balanceHistory[18].v = 600;
 
@@ -17,7 +17,20 @@ const entriesExitsData = Array.from({ length: 31 }, (_, i) => ({
 entriesExitsData[18] = { day: 19, entradas: 4200, saidas: 1800 };
 entriesExitsData[19] = { day: 20, entradas: 800, saidas: 2400 };
 
+const SALDO = 3247.50;
+const DIAS_RESTANTES = 12;
+
 const SpendingOverview = () => {
+  const [simOpen, setSimOpen] = useState(false);
+  const [simValue, setSimValue] = useState(0);
+
+  const orcamentoDiarioAtual = SALDO / DIAS_RESTANTES;
+  const orcamentoDiarioNovo = Math.max(0, (SALDO - simValue) / DIAS_RESTANTES);
+  const reducao = orcamentoDiarioAtual - orcamentoDiarioNovo;
+
+  const formatCurrency = (v: number) =>
+    v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
   return (
     <div className="space-y-3">
       {/* Pode gastar hoje - hero card */}
@@ -37,12 +50,85 @@ const SpendingOverview = () => {
           Baseado no seu saldo de <span className="text-foreground font-medium">R$ 3.247,50</span> e <span className="text-foreground font-medium">12 dias</span> restantes
         </p>
         <div className="mt-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-background border border-border px-3 py-1 text-[11px] font-semibold text-primary cursor-pointer active:scale-95 transition-transform">
+          <button
+            onClick={() => setSimOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-full bg-background border border-border px-3 py-1 text-[11px] font-semibold text-primary cursor-pointer active:scale-95 transition-transform"
+          >
             <Calculator size={12} />
             Simular
-          </span>
+          </button>
         </div>
       </div>
+
+      {/* Simulator Modal */}
+      {simOpen && (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSimOpen(false)} />
+          <div className="relative w-full max-w-lg animate-slide-up rounded-t-3xl bg-card border-t border-border p-5 pb-8">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-bold">Simulador de Impacto</h2>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Veja como uma compra afeta seu orçamento diário até o fim do mês</p>
+              </div>
+              <button onClick={() => setSimOpen(false)} className="rounded-full p-1.5 text-muted-foreground hover:text-foreground active:scale-95 transition-all">
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Input */}
+            <label className="text-[11px] text-muted-foreground mb-1.5 block">Valor da Compra (R$)</label>
+            <div className="flex items-center gap-2 mb-5">
+              <div className="flex-1 relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">R$</span>
+                <input
+                  type="number"
+                  min={0}
+                  step={10}
+                  value={simValue || ""}
+                  onChange={(e) => setSimValue(Math.max(0, Number(e.target.value)))}
+                  placeholder="0,00"
+                  className="w-full rounded-xl border-2 border-primary bg-muted/50 pl-10 pr-12 py-3 text-sm font-medium outline-none tabular-nums placeholder:text-muted-foreground transition-all"
+                />
+                <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex flex-col">
+                  <button onClick={() => setSimValue((v) => v + 50)} className="p-0.5 text-muted-foreground hover:text-foreground active:scale-90 transition-all">
+                    <ChevronUp size={14} />
+                  </button>
+                  <button onClick={() => setSimValue((v) => Math.max(0, v - 50))} className="p-0.5 text-muted-foreground hover:text-foreground active:scale-90 transition-all">
+                    <ChevronDown size={14} />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Results */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between rounded-xl bg-muted/50 border border-border px-4 py-3">
+                <div>
+                  <p className="text-[10px] text-muted-foreground">Orçamento diário atual</p>
+                  <p className="text-sm font-bold tabular-nums text-success">{formatCurrency(orcamentoDiarioAtual)}</p>
+                </div>
+                <span className="text-[10px] text-muted-foreground">por dia</span>
+              </div>
+              <div className="flex items-center justify-between rounded-xl bg-muted/50 border border-border px-4 py-3">
+                <div>
+                  <p className="text-[10px] text-muted-foreground">Novo orçamento diário</p>
+                  <p className={`text-sm font-bold tabular-nums ${simValue > 0 ? "text-warning" : "text-success"}`}>{formatCurrency(orcamentoDiarioNovo)}</p>
+                </div>
+                <span className="text-[10px] text-muted-foreground">por dia</span>
+              </div>
+              {simValue > 0 && (
+                <div className="flex items-center justify-between rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3">
+                  <div>
+                    <p className="text-[10px] text-muted-foreground">Redução diária</p>
+                    <p className="text-sm font-bold tabular-nums text-destructive">- {formatCurrency(reducao)}</p>
+                  </div>
+                  <span className="text-[10px] text-destructive font-medium">por dia</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Quick stats row */}
       <div className="grid grid-cols-2 gap-2">
@@ -123,7 +209,6 @@ const SpendingOverview = () => {
 
       {/* Financial Grid Widgets */}
       <div className="grid grid-cols-2 gap-2">
-        {/* Top Categorias */}
         <div className="card-zelo fade-in-up stagger-1 col-span-1">
           <p className="text-label mb-3">TOP CATEGORIAS</p>
           <div className="flex items-center gap-2 mb-2">
@@ -140,7 +225,6 @@ const SpendingOverview = () => {
           </div>
         </div>
 
-        {/* Maior Despesa + Próximas Contas */}
         <div className="space-y-2 col-span-1">
           <div className="card-zelo fade-in-up stagger-2">
             <p className="text-label mb-1">MAIOR DESPESA</p>
