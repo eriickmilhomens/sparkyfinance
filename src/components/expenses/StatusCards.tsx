@@ -12,8 +12,8 @@ const StatusCards = () => {
       {statuses.map((s, i) => {
         const Icon = s.icon;
         return (
-          <div key={s.label} className={`card-zelo text-center fade-in-up stagger-${i + 1} !py-2.5 !px-2`}>
-            <div className="flex items-center justify-center gap-1 mb-0.5">
+          <div key={s.label} className={`card-zelo fade-in-up stagger-${i + 1} !py-2.5 !px-2`}>
+            <div className="flex items-center gap-1 mb-0.5">
               <Icon size={12} className={s.iconColor} />
               <p className="text-label">{s.label}</p>
             </div>

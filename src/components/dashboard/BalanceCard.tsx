@@ -18,10 +18,15 @@ const BalanceCard = () => {
       <p className="text-3xl font-extrabold tracking-tight tabular-nums">
         {visible ? "R$ 3.247,50" : "••••••"}
       </p>
-      <div className="mt-2 flex items-center gap-2">
-        <span className="inline-flex items-center rounded-full bg-success/15 px-2.5 py-0.5 text-xs font-semibold text-success">
-          Pode gastar hoje: R$ 108,25
-        </span>
+      <div className="mt-2 space-y-1">
+        <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+          <span>Receitas: <span className="text-success font-medium">R$ 6.500</span></span>
+          <span className="text-border">•</span>
+          <span>Despesas: <span className="text-destructive font-medium">R$ 3.252</span></span>
+        </div>
+        <p className="text-[10px] text-muted-foreground">
+          Livre após contas agendadas
+        </p>
       </div>
     </div>
   );
