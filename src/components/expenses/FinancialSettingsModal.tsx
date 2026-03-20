@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { X, Link2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import PluggyConnectModal from "./PluggyConnectModal";
 
 interface FinancialSettingsModalProps {
   open: boolean;
