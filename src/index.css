@@ -130,3 +130,6 @@
   background: hsl(0 0% 20%);
   border-radius: 2px;
 }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
