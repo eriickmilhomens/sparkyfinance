@@ -145,6 +145,25 @@ const ChatView = () => {
     }
   }, []);
 
+  const getUserContext = () => {
+    try {
+      const bal = JSON.parse(localStorage.getItem("sparky-balance") || "{}");
+      const cards = JSON.parse(localStorage.getItem("sparky-credit-cards") || "[]");
+      const goals = JSON.parse(localStorage.getItem("sparky-investment-goals") || "[]");
+      const chatStyle = localStorage.getItem("sparky-chat-style") || "";
+      return {
+        available: bal.available || 3247.50,
+        real: bal.real || 4832,
+        toPay: bal.toPay || 1584.50,
+        income: bal.income || 6500,
+        expenses: bal.expenses || 3252.50,
+        cards: cards.length > 0 ? cards.map((c: any) => `${c.cardName} (${c.bankName}): limite R$${c.limit}, usado R$${c.usedAmount || 0}`).join("; ") : "Nenhum cadastrado",
+        goals: goals.length > 0 ? goals.map((g: any) => `${g.name}: R$${g.savedAmount}/${g.targetAmount}`).join("; ") : "Nenhuma definida",
+        chatStyle,
+      };
+    } catch { return null; }
+  };
+
   const send = async () => {
     const text = input.trim();
     if (!text || isLoading) return;
@@ -161,7 +180,7 @@ const ChatView = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ messages: [...messages, userMsg] }),
+        body: JSON.stringify({ messages: [...messages, userMsg], userContext: getUserContext() }),
       });
 
       if (!resp.ok || !resp.body) throw new Error("Erro na resposta");
