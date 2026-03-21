@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { Mail, Lock, Eye, EyeOff, Phone, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
