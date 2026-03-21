@@ -2,11 +2,13 @@ import { useState, useRef } from "react";
 import { Wallet, TrendingDown, TrendingUp, ScanLine, Download, Target } from "lucide-react";
 import AddExpenseModal from "@/components/expenses/AddExpenseModal";
 import PluggyConnectModal from "./PluggyConnectModal";
+import ImportModal from "./ImportModal";
 
 const SyncBanner = () => {
   const [expenseModalOpen, setExpenseModalOpen] = useState(false);
   const [expenseModalType, setExpenseModalType] = useState<"expense" | "income">("expense");
   const [pluggyOpen, setPluggyOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDespesa = () => {
