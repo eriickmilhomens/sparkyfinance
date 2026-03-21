@@ -1,7 +1,9 @@
+import { useState, useRef } from "react";
 import { Sun, Moon } from "lucide-react";
 import ProfileSwitcher from "@/components/layout/ProfileSwitcher";
 import { useTheme } from "@/hooks/useTheme";
 import { useProfile } from "@/hooks/useProfile";
+import { toast } from "sonner";
 
 const CatIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -15,17 +17,41 @@ const CatIcon = () => (
   </svg>
 );
 
+const EASTER_EGG_MESSAGES = [
+  "🐱 Miau! Você me encontrou!",
+  "🐱 Psst... eu sou o Sparky, o gato financeiro!",
+  "🐱 Dica secreta: economize 30% do salário todo mês!",
+  "🐱 Estou de olho nas suas finanças... 👀",
+  "🐱 Você é persistente! Aqui vai um biscoito virtual 🍪",
+];
+
 const Header = () => {
   const { theme, toggleTheme } = useTheme();
   const { profile } = useProfile();
-  const firstName = profile?.name?.split(" ")[0] || "Usuário";
+  const clickCount = useRef(0);
+  const clickTimer = useRef<NodeJS.Timeout | null>(null);
+
+  const handleCatClick = () => {
+    clickCount.current += 1;
+    if (clickTimer.current) clearTimeout(clickTimer.current);
+    clickTimer.current = setTimeout(() => { clickCount.current = 0; }, 2000);
+
+    if (clickCount.current >= 7) {
+      clickCount.current = 0;
+      const msg = EASTER_EGG_MESSAGES[Math.floor(Math.random() * EASTER_EGG_MESSAGES.length)];
+      toast(msg, { duration: 4000 });
+    }
+  };
 
   return (
     <header className="flex items-center justify-between px-4 py-3">
       <div className="flex items-center gap-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+        <button
+          onClick={handleCatClick}
+          className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 active:scale-90 transition-transform"
+        >
           <CatIcon />
-        </div>
+        </button>
         <span className="text-lg font-bold tracking-tight">SPARKY</span>
       </div>
       <div className="flex items-center gap-3">

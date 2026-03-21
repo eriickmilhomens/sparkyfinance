@@ -4,10 +4,34 @@ import { useFinancialData, fmt } from "@/hooks/useFinancialData";
 const StatusCards = () => {
   const { data, available } = useFinancialData();
 
+  // Calculate "A Pagar" from current month expenses, or next month if all paid
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+
+  const currentMonthExpenses = data.transactions
+    .filter(t => {
+      const d = new Date(t.date);
+      return t.type === "expense" && d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    })
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  const nextMonth = (currentMonth + 1) % 12;
+  const nextYear = nextMonth === 0 ? currentYear + 1 : currentYear;
+  const nextMonthExpenses = data.transactions
+    .filter(t => {
+      const d = new Date(t.date);
+      return t.type === "expense" && d.getMonth() === nextMonth && d.getFullYear() === nextYear;
+    })
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  const aPagar = data.scheduled > 0 ? data.scheduled : (currentMonthExpenses > 0 ? currentMonthExpenses : nextMonthExpenses);
+  const aPagarLabel = data.scheduled > 0 ? "total agendado" : (currentMonthExpenses > 0 ? "gastos este mês" : "gastos próximo mês");
+
   const statuses = [
     { label: "Saldo Real", value: fmt(data.balance), color: "text-foreground", sub: "em conta agora", icon: PiggyBank, iconColor: "text-primary" },
-    { label: "A Pagar", value: fmt(data.scheduled), color: "text-warning", sub: "total agendado", icon: CalendarClock, iconColor: "text-warning" },
-    { label: "Saldo Disponível", value: fmt(available), color: "text-success", sub: "livre após todas as contas agendadas", icon: Banknote, iconColor: "text-success" },
+    { label: "A Pagar", value: fmt(aPagar), color: "text-warning", sub: aPagarLabel, icon: CalendarClock, iconColor: "text-warning" },
+    { label: "Saldo Disponível", value: fmt(available), color: "text-success", sub: "livre após contas", icon: Banknote, iconColor: "text-success" },
   ];
 
   return (

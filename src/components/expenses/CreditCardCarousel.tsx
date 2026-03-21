@@ -1,6 +1,8 @@
-import { useState } from "react";
-import { ChevronDown, Receipt, Calendar, DollarSign, ArrowLeft } from "lucide-react";
+import { useState, useCallback } from "react";
+import { ChevronDown, Receipt, Calendar, DollarSign, ArrowLeft, Trash2, Pencil, X, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useFinancialData } from "@/hooks/useFinancialData";
+import { toast } from "sonner";
 
 interface CardTransaction {
   id: string;
@@ -59,13 +61,84 @@ const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", curren
 const STORAGE_KEY = "sparky-credit-cards";
 
 const CreditCardCarousel = () => {
-  const [cards] = useState<CreditCardData[]>(() => {
+  const [cards, setCards] = useState<CreditCardData[]>(() => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; }
   });
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showPayment, setShowPayment] = useState(false);
   const [payFull, setPayFull] = useState(true);
   const [payAmount, setPayAmount] = useState("");
+  const [editingTx, setEditingTx] = useState<string | null>(null);
+  const [editDesc, setEditDesc] = useState("");
+  const [editValue, setEditValue] = useState("");
+
+  const { data, updateData } = useFinancialData();
+
+  const saveCards = useCallback((updated: CreditCardData[]) => {
+    setCards(updated);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  }, []);
+
+  const handleDeleteTx = (cardId: string, txId: string) => {
+    const updated = cards.map(c => {
+      if (c.id !== cardId) return c;
+      const tx = c.transactions.find(t => t.id === txId);
+      if (!tx) return c;
+      return {
+        ...c,
+        transactions: c.transactions.filter(t => t.id !== txId),
+        usedAmount: Math.max(0, c.usedAmount - tx.value),
+        invoiceAmount: Math.max(0, c.invoiceAmount - tx.value),
+      };
+    });
+    saveCards(updated);
+    // Also update global financial data
+    const tx = cards.find(c => c.id === cardId)?.transactions.find(t => t.id === txId);
+    if (tx) {
+      updateData({
+        expenses: Math.max(0, data.expenses - tx.value),
+        balance: data.balance + tx.value,
+        transactions: data.transactions.filter(t => !(t.description === tx.desc && t.category === "Cartão")),
+      });
+    }
+    toast.success("Transação removida!");
+  };
+
+  const handleEditTx = (cardId: string, txId: string) => {
+    const cleanedValue = editValue.replace(/[^\d.,]/g, "");
+    let newVal: number;
+    if (cleanedValue.includes(",")) {
+      newVal = parseFloat(cleanedValue.replace(/\./g, "").replace(",", ".")) || 0;
+    } else {
+      newVal = parseFloat(cleanedValue) || 0;
+    }
+    if (newVal <= 0 || !editDesc.trim()) return;
+
+    const updated = cards.map(c => {
+      if (c.id !== cardId) return c;
+      const oldTx = c.transactions.find(t => t.id === txId);
+      if (!oldTx) return c;
+      const diff = newVal - oldTx.value;
+      return {
+        ...c,
+        transactions: c.transactions.map(t => t.id === txId ? { ...t, desc: editDesc.trim(), value: newVal } : t),
+        usedAmount: Math.max(0, c.usedAmount + diff),
+        invoiceAmount: Math.max(0, c.invoiceAmount + diff),
+      };
+    });
+    saveCards(updated);
+
+    const oldTx = cards.find(c => c.id === cardId)?.transactions.find(t => t.id === txId);
+    if (oldTx) {
+      const diff = newVal - oldTx.value;
+      updateData({
+        expenses: Math.max(0, data.expenses + diff),
+        balance: data.balance - diff,
+      });
+    }
+    setEditingTx(null);
+    toast.success("Transação atualizada!");
+  };
 
   if (cards.length === 0) return null;
 
@@ -83,10 +156,10 @@ const CreditCardCarousel = () => {
 
     return (
       <div className="fixed inset-0 z-[60] flex items-end justify-center">
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { setExpandedId(null); setShowPayment(false); }} />
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { setExpandedId(null); setShowPayment(false); setEditingTx(null); }} />
         <div className="relative w-full max-w-lg animate-slide-up rounded-t-3xl bg-card border-t border-border p-5 pb-8 max-h-[90vh] overflow-y-auto">
           <div className="flex items-center gap-3 mb-4">
-            <button onClick={() => { setExpandedId(null); setShowPayment(false); }} className="rounded-full p-1.5 text-muted-foreground hover:text-foreground active:scale-95">
+            <button onClick={() => { setExpandedId(null); setShowPayment(false); setEditingTx(null); }} className="rounded-full p-1.5 text-muted-foreground hover:text-foreground active:scale-95">
               <ArrowLeft size={20} />
             </button>
             <div className="flex items-center gap-2.5 flex-1">
@@ -171,6 +244,7 @@ const CreditCardCarousel = () => {
             )}
           </div>
 
+          {/* Transactions with edit/delete */}
           <div className="card-zelo mb-4">
             <p className="text-xs font-semibold mb-2 flex items-center gap-1.5">
               <Receipt size={13} className="text-primary" /> Gastos do Mês
@@ -181,12 +255,39 @@ const CreditCardCarousel = () => {
             ) : (
               <div className="space-y-2">
                 {expandedCard.transactions.map(t => (
-                  <div key={t.id} className="flex justify-between items-center py-1.5 border-b border-border/50 last:border-0">
-                    <div>
-                      <p className="text-xs font-medium">{t.desc}</p>
-                      <p className="text-[10px] text-muted-foreground">{t.date} • {t.category}</p>
-                    </div>
-                    <p className="text-xs font-bold text-destructive">-{fmt(t.value)}</p>
+                  <div key={t.id} className="py-2 border-b border-border/50 last:border-0">
+                    {editingTx === t.id ? (
+                      <div className="space-y-2">
+                        <input value={editDesc} onChange={(e) => setEditDesc(e.target.value)}
+                          className="w-full rounded-lg border border-border bg-muted/30 px-2 py-1.5 text-xs outline-none focus:border-primary" />
+                        <input value={editValue} onChange={(e) => setEditValue(e.target.value.replace(/[^\d.,]/g, ""))}
+                          className="w-full rounded-lg border border-border bg-muted/30 px-2 py-1.5 text-xs outline-none focus:border-primary tabular-nums" placeholder="Valor" />
+                        <div className="flex gap-2">
+                          <button onClick={() => setEditingTx(null)} className="flex-1 rounded-lg border border-border py-1.5 text-[10px] text-muted-foreground">Cancelar</button>
+                          <button onClick={() => handleEditTx(expandedCard.id, t.id)} className="flex-1 rounded-lg bg-primary py-1.5 text-[10px] font-semibold text-primary-foreground flex items-center justify-center gap-1">
+                            <Check size={10} /> Salvar
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="text-xs font-medium">{t.desc}</p>
+                          <p className="text-[10px] text-muted-foreground">{t.date} • {t.category}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs font-bold text-destructive">-{fmt(t.value)}</p>
+                          <button onClick={() => { setEditingTx(t.id); setEditDesc(t.desc); setEditValue(String(t.value)); }}
+                            className="p-1 rounded text-muted-foreground hover:text-primary active:scale-90 transition-all">
+                            <Pencil size={12} />
+                          </button>
+                          <button onClick={() => handleDeleteTx(expandedCard.id, t.id)}
+                            className="p-1 rounded text-muted-foreground hover:text-destructive active:scale-90 transition-all">
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -257,7 +358,6 @@ const CreditCardCarousel = () => {
             >
               <div className="absolute -right-6 -top-6 h-20 w-20 rounded-full bg-white/5" />
               
-              {/* Header */}
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2.5">
                   <div className={cn("h-9 w-9 rounded-lg flex items-center justify-center text-white text-[10px] font-bold shadow-sm", bankInfo.color)}>
@@ -273,10 +373,8 @@ const CreditCardCarousel = () => {
                 </div>
               </div>
 
-              {/* Available */}
               <p className="text-lg font-bold mb-2">{fmt(available)}</p>
 
-              {/* Progress bar */}
               <div className="w-full h-2 rounded-full bg-muted/40 mb-2 overflow-hidden">
                 <div
                   className={cn(
@@ -287,13 +385,11 @@ const CreditCardCarousel = () => {
                 />
               </div>
 
-              {/* Footer */}
               <div className="flex justify-between items-center text-[10px]">
                 <span className="text-muted-foreground">Usado: {fmt(card.usedAmount)}</span>
                 <span className="font-bold">{usedPct}%</span>
               </div>
 
-              {/* Invoice info */}
               <div className="mt-2 pt-2 border-t border-border/30 flex justify-between items-center text-[10px]">
                 <span className="text-muted-foreground">Fatura (venc. {dueDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })})</span>
                 <span className="font-bold text-warning tabular-nums">{fmt(card.invoiceAmount)}</span>
