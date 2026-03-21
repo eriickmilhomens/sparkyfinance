@@ -214,7 +214,7 @@ const ProfileSwitcher = () => {
             </div>
           </div>
 
-          <div className="card-zelo border-warning/20 bg-warning/5">
+          <div className="card-zelo border-warning/20 bg-warning/5 border-l-warning">
             <div className="flex items-start gap-3">
               <Sparkles size={18} className="text-warning shrink-0 mt-0.5" />
               <p className="text-xs text-foreground/80 italic leading-relaxed">{quote}</p>
