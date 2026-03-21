@@ -183,7 +183,7 @@ const ExtratoTab = () => {
 
       {/* Grouped transaction list */}
       {Object.keys(grouped).length === 0 && (
-        <div className="card-zelo text-center py-8 fade-in-up border-l-primary">
+        <div className="card-zelo text-center py-8 fade-in-up">
           <p className="text-sm text-muted-foreground">Nenhuma transação neste período</p>
         </div>
       )}
