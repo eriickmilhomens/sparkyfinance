@@ -315,9 +315,9 @@ const CreditCardManager = ({ open, onClose }: Props) => {
               <label className="text-[10px] text-muted-foreground font-medium mb-2 block">Instituição Bancária*</label>
               <div className="grid grid-cols-4 gap-2">
                 {BANK_OPTIONS.map(bank => (
-                  <button key={bank.name} onClick={() => setNewBank(bank.name)}
+                  <button key={bank.name} onClick={() => { setNewBank(bank.name); setShowCustomBank(false); setCustomBankName(""); }}
                     className={cn("flex flex-col items-center gap-1 rounded-xl py-2.5 px-1 text-[10px] font-medium transition-all border",
-                      newBank === bank.name ? "border-primary bg-primary/10" : "border-border bg-muted/20 hover:border-primary/40")}>
+                      newBank === bank.name && !showCustomBank ? "border-primary bg-primary/10" : "border-border bg-muted/20 hover:border-primary/40")}>
                     <div className={cn("h-7 w-7 rounded-lg flex items-center justify-center text-white text-[9px] font-bold", bank.color)}>{bank.abbr}</div>
                     <span className="truncate w-full text-center">{bank.name}</span>
                   </button>
