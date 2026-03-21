@@ -74,7 +74,7 @@ const SuggestionsCard = () => {
       {dynamicTips.map((tip, i) => {
         const Icon = tip.icon;
         return (
-          <div key={`${tip.title}-${tipIndex}-${i}`} className={`card-zelo fade-in-up stagger-${i + 1} flex items-center gap-3 ${tip.color === "text-success" ? "border-l-success" : tip.color === "text-warning" ? "border-l-warning" : tip.color === "text-destructive" ? "border-l-destructive" : "border-l-primary"}`}>
+          <div key={`${tip.title}-${tipIndex}-${i}`} className={`card-zelo fade-in-up stagger-${i + 1} flex items-center gap-3`}>
             <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${tip.bg}`}>
               <Icon size={18} className={tip.color} />
             </div>
