@@ -1,8 +1,10 @@
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
+import { useFinancialData, fmt } from "@/hooks/useFinancialData";
 
 const BalanceCard = () => {
   const [visible, setVisible] = useState(true);
+  const { available, data } = useFinancialData();
 
   return (
     <div className="card-zelo fade-in-up">
@@ -16,13 +18,13 @@ const BalanceCard = () => {
         </button>
       </div>
       <p className="text-3xl font-extrabold tracking-tight tabular-nums">
-        {visible ? "R$ 3.247,50" : "••••••"}
+        {visible ? fmt(available) : "••••••"}
       </p>
       <div className="mt-2 space-y-1">
         <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-          <span>Receitas: <span className="text-success font-medium">R$ 6.500,00</span></span>
+          <span>Receitas: <span className="text-success font-medium">{fmt(data.income)}</span></span>
           <span className="text-border">•</span>
-          <span>Despesas: <span className="text-destructive font-medium">R$ 3.252,50</span></span>
+          <span>Despesas: <span className="text-destructive font-medium">{fmt(data.expenses)}</span></span>
         </div>
         <p className="text-[10px] text-muted-foreground">
           Livre após contas agendadas
