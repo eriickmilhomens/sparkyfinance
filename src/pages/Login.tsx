@@ -107,19 +107,16 @@ const Login = () => {
         ? { email, password }
         : { phone: `${countryCode}${phone.replace(/\D/g, "")}`, password };
 
-      const { error } = await supabase.auth.signInWithPassword(credentials);
+      const { data, error } = await supabase.auth.signInWithPassword(credentials);
       if (error) {
         if (error.message === "Invalid login credentials") {
           toast.error("E-mail ou senha incorretos");
         } else {
           toast.error(error.message);
         }
-      } else {
-        // Clear any demo/local data on real login
+      } else if (data.user) {
         localStorage.removeItem("sparky-demo-mode");
-        localStorage.removeItem("sparky-balance");
-        localStorage.removeItem("sparky-transactions");
-        localStorage.removeItem("sparky-chat-history");
+        syncLocalDataOwner(data.user.id);
         navigate("/");
       }
     } catch {

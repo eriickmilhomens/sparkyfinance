@@ -136,12 +136,11 @@ const Onboarding = () => {
         } else {
           toast.error(error.message);
         }
-      } else if (data.session) {
-        // Auto-confirmed: user is logged in, proceed to group selection
+      } else if (data.session && data.user) {
+        syncLocalDataOwner(data.user.id);
         toast.success("Conta criada com sucesso!");
         setStep("welcome");
       } else {
-        // Fallback: email confirmation required
         toast.success("Conta criada! Verifique seu e-mail para confirmar.");
         navigate("/login");
       }
