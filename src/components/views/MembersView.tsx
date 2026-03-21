@@ -194,7 +194,7 @@ const MembersView = () => {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 gap-2">
-        <div className="card-zelo fade-in-up stagger-3">
+        <div className="card-zelo fade-in-up stagger-3 border-l-primary">
           <div className="flex items-center gap-2 mb-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15">
               <Users size={14} className="text-primary" />
