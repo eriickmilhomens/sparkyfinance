@@ -2,8 +2,9 @@ import { useState, useRef, useEffect } from "react";
 import {
   ChevronDown, Check, UserPlus, User, Trophy, Crown, Star,
   Settings, Users, LogOut, Gift, Camera, Mail, Calendar, X,
-  Image, Sparkles, Clock, Trash2
+  Image, Sparkles, Clock, Trash2, Shield
 } from "lucide-react";
+import AdminPanel from "@/components/admin/AdminPanel";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,7 +37,7 @@ const inspirationalQuotes = [
   "🔥 Disciplina hoje, colheita amanhã.",
 ];
 
-type SubView = null | "profile" | "prizes" | "members" | "ranking";
+type SubView = null | "profile" | "prizes" | "members" | "ranking" | "admin";
 
 const ProfileSwitcher = () => {
   const navigate = useNavigate();
@@ -711,6 +712,11 @@ const ProfileSwitcher = () => {
     );
   }
 
+  // Sub-view: Admin Panel
+  if (subView === "admin") {
+    return <AdminPanel onClose={() => setSubView(null)} />;
+  }
+
   return (
     <div className="relative">
       <button onClick={() => setOpen(!open)} className="flex items-center gap-1.5 active:scale-95 transition-transform">
@@ -765,6 +771,12 @@ const ProfileSwitcher = () => {
             <div className="h-px bg-border my-2" />
             <p className="text-[9px] text-muted-foreground font-semibold tracking-wider px-3 mb-1">ADMINISTRAÇÃO</p>
 
+            {current?.role === "admin" && (
+              <button onClick={() => { openSubView("admin"); setOpen(false); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-primary/10 transition-colors active:scale-[0.97]">
+                <Shield size={16} className="text-primary" />
+                <span className="text-sm font-medium text-primary">Painel Admin</span>
+              </button>
+            )}
             <button onClick={() => openSubView("prizes")} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-muted/50 transition-colors active:scale-[0.97]">
               <Gift size={16} className="text-muted-foreground" />
               <span className="text-sm font-medium">Gerenciar Prêmios</span>
