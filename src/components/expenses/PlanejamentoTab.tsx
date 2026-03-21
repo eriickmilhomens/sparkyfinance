@@ -226,7 +226,7 @@ const PlanejamentoTab = () => {
       </div>
 
       {/* Investment Goals */}
-      <div className="card-zelo fade-in-up stagger-2" id="metas-investimento">
+      <div className="card-zelo fade-in-up stagger-2 border-l-success" id="metas-investimento">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-success/15">
