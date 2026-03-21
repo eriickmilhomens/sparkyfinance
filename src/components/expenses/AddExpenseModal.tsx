@@ -350,16 +350,26 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
         {/* Recurring day selector */}
         {recurring && (
           <div className="mb-5 card-zelo !bg-primary/5 !border-primary/20">
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-3">
               <Repeat size={14} className="text-primary" />
-              <p className="text-xs font-semibold">Repetir todo dia</p>
+              <p className="text-xs font-semibold">Repetir todo mês no dia</p>
             </div>
-            <div className="relative">
-              <select value={recurringDay} onChange={(e) => setRecurringDay(e.target.value)}
-                className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm font-medium text-foreground outline-none focus:border-primary transition-all appearance-none cursor-pointer">
-                {Array.from({ length: 31 }, (_, i) => <option key={i + 1} value={i + 1}>Dia {String(i + 1).padStart(2, "0")} de cada mês</option>)}
-              </select>
-              <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <div className="grid grid-cols-7 gap-1.5 mb-2">
+              {[1, 5, 10, 15, 20, 25, 28].map(d => (
+                <button key={d} onClick={() => setRecurringDay(String(d))}
+                  className={cn("rounded-xl py-2.5 text-xs font-semibold transition-all border",
+                    parseInt(recurringDay) === d ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-card text-muted-foreground hover:border-primary/40")}>
+                  {String(d).padStart(2, "0")}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-2">
+              <CalendarDays size={12} className="text-muted-foreground shrink-0" />
+              <input type="text" inputMode="numeric" value={recurringDay}
+                onChange={(e) => setRecurringDay(e.target.value.replace(/\D/g, "").slice(0, 2))}
+                placeholder="Dia"
+                className="flex-1 rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium text-center outline-none focus:border-primary transition-all" />
+              <span className="text-[10px] text-muted-foreground whitespace-nowrap">de cada mês</span>
             </div>
           </div>
         )}

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MoreVertical, Plus, X, CheckCircle2, Clock, Pencil, Trash2, CalendarDays, Info } from "lucide-react";
+import { MoreVertical, Plus, X, CheckCircle2, Clock, Pencil, Trash2, CalendarDays, Undo2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFinancialData, fmt } from "@/hooks/useFinancialData";
 import { usePoints } from "@/hooks/usePoints";
@@ -28,6 +28,7 @@ const PRESET_SUBS = [
   { name: "HBO Max", logo: "HB", color: "bg-purple-700" },
   { name: "Crunchyroll", logo: "CR", color: "bg-orange-500" },
   { name: "Xbox Game Pass", logo: "XB", color: "bg-green-600" },
+  { name: "PlayStation Plus", logo: "PS", color: "bg-blue-600" },
 ];
 
 const loadSubs = (): Subscription[] => {
@@ -45,6 +46,7 @@ const SubscriptionsCard = () => {
   const [newDueDay, setNewDueDay] = useState("10");
   const [newLogo, setNewLogo] = useState("");
   const [newColor, setNewColor] = useState("bg-primary");
+  const [showCustomInput, setShowCustomInput] = useState(false);
   const { data, updateData } = useFinancialData();
   const { awardPoints } = usePoints();
 
@@ -101,6 +103,20 @@ const SubscriptionsCard = () => {
     toast.success(`${sub.name} marcada como paga! +3 pts`);
   };
 
+  const handleUnmarkPaid = (id: string) => {
+    const sub = subs.find(s => s.id === id);
+    if (!sub || !sub.paid) return;
+    update(subs.map(s => s.id === id ? { ...s, paid: false } : s));
+    // Refund: remove from expenses, add back to balance
+    const updatedTx = data.transactions.filter(t => t.description !== `Assinatura: ${sub.name}`);
+    updateData({
+      expenses: Math.max(0, data.expenses - sub.amount),
+      balance: data.balance + sub.amount,
+      transactions: updatedTx,
+    });
+    toast.success(`${sub.name} desmarcada — estorno realizado`);
+  };
+
   const handleDelete = (id: string) => {
     update(subs.filter(s => s.id !== id));
     setMenuId(null);
@@ -115,6 +131,7 @@ const SubscriptionsCard = () => {
     setNewLogo(sub.logo);
     setNewColor(sub.color);
     setShowAdd(true);
+    setShowCustomInput(false);
     setMenuId(null);
   };
 
@@ -126,83 +143,124 @@ const SubscriptionsCard = () => {
     setNewDueDay("10");
     setNewLogo("");
     setNewColor("bg-primary");
+    setShowCustomInput(false);
   };
 
   const selectPreset = (preset: typeof PRESET_SUBS[0]) => {
     setNewName(preset.name);
     setNewLogo(preset.logo);
     setNewColor(preset.color);
+    setShowCustomInput(false);
   };
 
   const totalMonthly = subs.reduce((s, sub) => s + sub.amount, 0);
+  const paidCount = subs.filter(s => s.paid).length;
 
   return (
     <div className="space-y-3">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-bold">Assinaturas Ativas</p>
-          <p className="text-[10px] text-muted-foreground">{subs.length} serviço{subs.length !== 1 ? "s" : ""} · {fmt(totalMonthly)}/mês</p>
+          <p className="text-sm font-bold">Assinaturas</p>
+          <p className="text-[10px] text-muted-foreground">
+            {subs.length} serviço{subs.length !== 1 ? "s" : ""} · {fmt(totalMonthly)}/mês
+            {subs.length > 0 && ` · ${paidCount}/${subs.length} pagas`}
+          </p>
         </div>
-        <button onClick={() => setShowAdd(true)} className="flex items-center gap-1 rounded-lg bg-primary/10 px-2.5 py-1.5 text-[10px] font-semibold text-primary active:scale-95 transition-all">
-          <Plus size={12} /> Adicionar
+        <button onClick={() => { resetForm(); setShowAdd(true); }} className="flex items-center gap-1 rounded-xl bg-primary/10 px-3 py-1.5 text-[10px] font-semibold text-primary active:scale-95 transition-all">
+          <Plus size={12} /> Nova
         </button>
       </div>
 
       {subs.length === 0 ? (
-        <div className="card-zelo flex flex-col items-center py-6">
-          <CalendarDays size={24} className="text-muted-foreground mb-2" />
-          <p className="text-xs text-muted-foreground">Nenhuma assinatura cadastrada</p>
+        <div className="card-zelo flex flex-col items-center py-8 gap-2">
+          <div className="h-12 w-12 rounded-full bg-muted/50 flex items-center justify-center">
+            <CalendarDays size={22} className="text-muted-foreground" />
+          </div>
+          <p className="text-xs text-muted-foreground">Nenhuma assinatura</p>
+          <p className="text-[10px] text-muted-foreground">Adicione seus serviços recorrentes</p>
         </div>
       ) : (
         <div className="space-y-2">
           {subs.map(sub => {
             const daysLeft = getDaysLeft(sub.dueDay);
+            const isUrgent = !sub.paid && daysLeft <= 3;
             return (
-              <div key={sub.id} className={cn("card-zelo !p-3.5 transition-all", sub.paid ? "opacity-60" : "")}>
-                <div className="flex items-center gap-3">
-                  <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center text-white text-[10px] font-bold shrink-0", sub.color)}>
-                    {sub.logo}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold truncate">{sub.name}</p>
-                    <p className="text-xs text-muted-foreground tabular-nums">{fmt(sub.amount)}/mês</p>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    {!sub.paid && (
-                      <button onClick={() => handleMarkPaid(sub.id)} className="flex items-center gap-1 rounded-lg bg-success/10 px-2 py-1 text-[9px] font-semibold text-success active:scale-95 transition-all">
-                        <CheckCircle2 size={10} /> Pagar
-                      </button>
-                    )}
-                    <div className="relative">
-                      <button onClick={() => setMenuId(menuId === sub.id ? null : sub.id)} className="p-1 rounded-lg text-muted-foreground hover:text-foreground active:scale-95">
-                        <MoreVertical size={14} />
-                      </button>
-                      {menuId === sub.id && (
-                        <>
-                          <div className="fixed inset-0 z-10" onClick={() => setMenuId(null)} />
-                          <div className="absolute right-0 top-7 bg-card border border-border rounded-xl shadow-lg z-20 py-1 min-w-[120px]">
-                            <button onClick={() => startEdit(sub)} className="w-full px-3 py-2 text-xs flex items-center gap-2 hover:bg-muted">
-                              <Pencil size={12} /> Editar
-                            </button>
-                            <button onClick={() => handleDelete(sub.id)} className="w-full px-3 py-2 text-xs flex items-center gap-2 hover:bg-muted text-destructive">
-                              <Trash2 size={12} /> Excluir
-                            </button>
-                          </div>
-                        </>
+              <div key={sub.id} className={cn(
+                "card-zelo !p-0 overflow-hidden transition-all",
+                sub.paid && "opacity-70"
+              )}>
+                {/* Colored left accent */}
+                <div className="flex">
+                  <div className={cn("w-1 shrink-0 rounded-l-xl", sub.paid ? "bg-success" : isUrgent ? "bg-destructive" : "bg-warning")} />
+                  <div className="flex-1 p-3.5">
+                    <div className="flex items-center gap-3">
+                      {/* Logo */}
+                      <div className={cn("h-11 w-11 rounded-xl flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-sm", sub.color)}>
+                        {sub.logo}
+                      </div>
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold truncate">{sub.name}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <p className="text-xs font-semibold tabular-nums">{fmt(sub.amount)}<span className="text-muted-foreground font-normal">/mês</span></p>
+                          <span className="text-muted-foreground">·</span>
+                          <p className="text-[10px] text-muted-foreground">Dia {sub.dueDay}</p>
+                        </div>
+                      </div>
+                      {/* Actions */}
+                      <div className="flex items-center gap-1">
+                        {sub.paid ? (
+                          <button onClick={() => handleUnmarkPaid(sub.id)} className="flex items-center gap-1 rounded-xl bg-muted/50 px-2.5 py-1.5 text-[9px] font-semibold text-muted-foreground active:scale-95 transition-all" title="Desfazer pagamento">
+                            <Undo2 size={10} /> Estornar
+                          </button>
+                        ) : (
+                          <button onClick={() => handleMarkPaid(sub.id)} className="flex items-center gap-1 rounded-xl bg-success/15 px-2.5 py-1.5 text-[9px] font-semibold text-success active:scale-95 transition-all">
+                            <CheckCircle2 size={10} /> Pagar
+                          </button>
+                        )}
+                        <div className="relative">
+                          <button onClick={() => setMenuId(menuId === sub.id ? null : sub.id)} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground active:scale-95">
+                            <MoreVertical size={14} />
+                          </button>
+                          {menuId === sub.id && (
+                            <>
+                              <div className="fixed inset-0 z-10" onClick={() => setMenuId(null)} />
+                              <div className="absolute right-0 top-8 bg-card border border-border rounded-xl shadow-xl z-20 py-1 min-w-[130px]">
+                                <button onClick={() => startEdit(sub)} className="w-full px-3 py-2.5 text-xs flex items-center gap-2 hover:bg-muted transition-colors">
+                                  <Pencil size={12} /> Editar
+                                </button>
+                                <button onClick={() => handleDelete(sub.id)} className="w-full px-3 py-2.5 text-xs flex items-center gap-2 hover:bg-muted text-destructive transition-colors">
+                                  <Trash2 size={12} /> Excluir
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    {/* Status bar */}
+                    <div className="mt-2.5 flex items-center justify-between">
+                      <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[9px] font-semibold",
+                        sub.paid ? "bg-success/15 text-success" : isUrgent ? "bg-destructive/15 text-destructive" : "bg-warning/15 text-warning"
+                      )}>
+                        {sub.paid ? <><CheckCircle2 size={9} /> Pago este mês</> : <><Clock size={9} /> {daysLeft} dia{daysLeft !== 1 ? "s" : ""}</>}
+                      </span>
+                      {!sub.paid && isUrgent && (
+                        <span className="text-[9px] text-destructive font-medium animate-pulse">Vence em breve!</span>
                       )}
                     </div>
                   </div>
                 </div>
-                <div className="mt-2 flex items-center justify-between">
-                  <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-semibold",
-                    sub.paid ? "bg-success/15 text-success" : daysLeft <= 3 ? "bg-destructive/15 text-destructive" : "bg-warning/15 text-warning"
-                  )}>
-                    {sub.paid ? <><CheckCircle2 size={9} /> Pago este mês</> : <><Clock size={9} /> {daysLeft} dia{daysLeft !== 1 ? "s" : ""} restante{daysLeft !== 1 ? "s" : ""}</>}
-                  </span>
-                </div>
               </div>
             );
           })}
+
+          {/* Monthly summary */}
+          <div className="flex items-center justify-between px-1 pt-1">
+            <p className="text-[10px] text-muted-foreground">Total mensal</p>
+            <p className="text-xs font-bold">{fmt(totalMonthly)}</p>
+          </div>
         </div>
       )}
 
@@ -224,12 +282,19 @@ const SubscriptionsCard = () => {
                 <div className="flex flex-wrap gap-2">
                   {PRESET_SUBS.map(p => (
                     <button key={p.name} onClick={() => selectPreset(p)}
-                      className={cn("flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-medium border transition-all active:scale-95",
+                      className={cn("flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-[10px] font-medium border transition-all active:scale-95",
                         newName === p.name ? "border-primary bg-primary/10" : "border-border bg-muted/20")}>
                       <div className={cn("h-5 w-5 rounded flex items-center justify-center text-white text-[7px] font-bold", p.color)}>{p.logo}</div>
                       {p.name}
                     </button>
                   ))}
+                  {/* Outros button */}
+                  <button onClick={() => { setShowCustomInput(true); setNewName(""); setNewLogo(""); setNewColor("bg-primary"); }}
+                    className={cn("flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-[10px] font-medium border transition-all active:scale-95",
+                      showCustomInput ? "border-primary bg-primary/10" : "border-border bg-muted/20")}>
+                    <div className="h-5 w-5 rounded flex items-center justify-center bg-muted text-muted-foreground text-[7px] font-bold">+</div>
+                    Outros
+                  </button>
                 </div>
               </div>
             )}
@@ -237,7 +302,7 @@ const SubscriptionsCard = () => {
             <div className="space-y-3">
               <div>
                 <label className="text-[10px] text-muted-foreground font-medium mb-1 block">Nome do serviço</label>
-                <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Ex: Netflix" className="w-full rounded-xl border border-border bg-muted/30 px-3 py-2.5 text-sm outline-none focus:border-primary" />
+                <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Ex: Netflix, Gym, etc." className="w-full rounded-xl border border-border bg-muted/30 px-3 py-2.5 text-sm outline-none focus:border-primary" />
               </div>
               <div>
                 <label className="text-[10px] text-muted-foreground font-medium mb-1 block">Valor mensal</label>
@@ -247,8 +312,19 @@ const SubscriptionsCard = () => {
               </div>
               <div>
                 <label className="text-[10px] text-muted-foreground font-medium mb-1 block">Dia do pagamento</label>
-                <input type="text" inputMode="numeric" value={newDueDay} onChange={e => setNewDueDay(e.target.value.replace(/\D/g, "").slice(0, 2))}
-                  className="w-full rounded-xl border border-border bg-muted/30 px-3 py-2.5 text-sm outline-none focus:border-primary" />
+                <div className="grid grid-cols-7 gap-1.5">
+                  {[1, 5, 10, 15, 20, 25, 28].map(d => (
+                    <button key={d} onClick={() => setNewDueDay(String(d))}
+                      className={cn("rounded-xl py-2 text-xs font-medium transition-all border",
+                        parseInt(newDueDay) === d ? "border-primary bg-primary/10 text-primary" : "border-border bg-muted/20 text-muted-foreground")}>
+                      {d}
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-2">
+                  <input type="text" inputMode="numeric" value={newDueDay} onChange={e => setNewDueDay(e.target.value.replace(/\D/g, "").slice(0, 2))}
+                    placeholder="Ou digite o dia" className="w-full rounded-xl border border-border bg-muted/30 px-3 py-2 text-xs outline-none focus:border-primary text-center" />
+                </div>
               </div>
             </div>
 

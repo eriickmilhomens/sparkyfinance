@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { X, ArrowLeft, Plus, CreditCard, ChevronRight, Receipt, Calendar, DollarSign, Wallet, Building2 } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const BANK_DATA: Record<string, { color: string; abbr: string }> = {
@@ -48,6 +49,16 @@ const FLAG_OPTIONS = [
 ];
 
 const CARD_TYPES = ["Crédito", "Débito", "Múltiplo"];
+
+const RANDOM_COLORS = [
+  "bg-emerald-600", "bg-violet-600", "bg-rose-600", "bg-amber-600",
+  "bg-cyan-600", "bg-indigo-600", "bg-teal-600", "bg-fuchsia-600",
+  "bg-lime-600", "bg-pink-600",
+];
+
+const getRandomColor = () => RANDOM_COLORS[Math.floor(Math.random() * RANDOM_COLORS.length)];
+
+const capitalize = (s: string) => s.split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
 
 const getBankInfo = (name: string) => {
   const lower = name.toLowerCase();
@@ -98,11 +109,24 @@ const CreditCardManager = ({ open, onClose }: Props) => {
   const update = (updated: CreditCardData[]) => { setCards(updated); saveCards(updated); };
 
   const handleAddCard = () => {
-    const bankName = showCustomBank ? customBankName.trim() : newBank.trim();
-    if (!bankName || !newName.trim()) return;
+    const rawBankName = showCustomBank ? customBankName.trim() : newBank.trim();
+    if (!rawBankName || !newName.trim()) {
+      toast.error(!rawBankName ? "Selecione ou digite o banco" : "Preencha o nome do cartão");
+      return;
+    }
+    const bankName = capitalize(rawBankName);
     const limit = parseFloat(newLimit.replace(/\D/g, "")) / 100 || 0;
+
+    // For custom banks not in BANK_DATA, assign a random color
+    const isKnown = Object.keys(BANK_DATA).some(k => bankName.toLowerCase().includes(k));
+    if (!isKnown) {
+      const color = getRandomColor();
+      const abbr = bankName.slice(0, 2).toUpperCase();
+      BANK_DATA[bankName.toLowerCase()] = { color, abbr };
+    }
+
     const card: CreditCardData = {
-      id: crypto.randomUUID(), bankName, cardName: newName,
+      id: crypto.randomUUID(), bankName, cardName: capitalize(newName.trim()),
       cardType: newType, cardFlag: newFlag,
       limit, usedAmount: 0, invoiceAmount: 0,
       dueDay: parseInt(newDueDay) || 10, closeDay: parseInt(newCloseDay) || 3,
@@ -112,6 +136,7 @@ const CreditCardManager = ({ open, onClose }: Props) => {
     update([...cards, card]);
     setNewBank(""); setCustomBankName(""); setShowCustomBank(false); setNewName(""); setNewLimit(""); setNewDueDay("10"); setNewCloseDay("3"); setNewType("Crédito"); setNewFlag("");
     setShowAdd(false);
+    toast.success("Cartão salvo com sucesso!");
   };
 
   const handlePayInvoice = (cardId: string) => {
