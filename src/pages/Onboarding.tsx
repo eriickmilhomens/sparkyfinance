@@ -257,11 +257,18 @@ const Onboarding = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
       <div className="flex flex-col items-center gap-3 mb-10 fade-in-up">
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
+        <button
+          type="button"
+          onClick={handleLogoTap}
+          className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 active:scale-95 transition-transform select-none"
+        >
           <CatLogo />
-        </div>
+        </button>
         <span className="text-2xl font-extrabold tracking-tight">SPARKY</span>
         <p className="text-sm text-muted-foreground">Crie sua conta para começar</p>
+        {tapCount >= 3 && tapCount < 7 && (
+          <p className="text-[10px] text-muted-foreground/50 animate-pulse">{7 - tapCount} toques para modo demo</p>
+        )}
       </div>
 
       <div className="flex gap-1 rounded-xl bg-muted/50 p-1 w-full max-w-sm mb-4 fade-in-up stagger-1">
