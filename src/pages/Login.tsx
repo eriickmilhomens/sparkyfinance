@@ -86,12 +86,16 @@ const Login = () => {
       const { error } = await supabase.auth.signInWithPassword(credentials);
       if (error) {
         if (error.message === "Invalid login credentials") {
-          toast.error("Credenciais incorretas");
+          toast.error("E-mail ou senha incorretos");
         } else {
           toast.error(error.message);
         }
       } else {
+        // Clear any demo/local data on real login
         localStorage.removeItem("sparky-demo-mode");
+        localStorage.removeItem("sparky-balance");
+        localStorage.removeItem("sparky-transactions");
+        localStorage.removeItem("sparky-chat-history");
         navigate("/");
       }
     } catch {
