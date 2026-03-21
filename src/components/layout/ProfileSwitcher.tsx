@@ -771,7 +771,7 @@ const ProfileSwitcher = () => {
             <div className="h-px bg-border my-2" />
             <p className="text-[9px] text-muted-foreground font-semibold tracking-wider px-3 mb-1">ADMINISTRAÇÃO</p>
 
-            {current?.role === "admin" && (
+            {current?.role === "admin" && current?.email === "admin@sparky.app" && !isDemo && (
               <button onClick={() => { openSubView("admin"); setOpen(false); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-primary/10 transition-colors active:scale-[0.97]">
                 <Shield size={16} className="text-primary" />
                 <span className="text-sm font-medium text-primary">Painel Admin</span>

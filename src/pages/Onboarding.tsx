@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Users, LogIn, Mail, Lock, Eye, EyeOff, User, Phone, ChevronDown } from "lucide-react";
+import { Users, LogIn, Mail, Lock, Eye, EyeOff, User, Phone, ChevronDown, Copy, CheckCircle2, PartyPopper } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -53,6 +53,9 @@ const Onboarding = () => {
   const [joiningGroup, setJoiningGroup] = useState(false);
   const [tapCount, setTapCount] = useState(0);
   const [tapTimer, setTapTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const [groupPopup, setGroupPopup] = useState<{ show: boolean; inviteCode: string }>({ show: false, inviteCode: "" });
+  const [welcomePopup, setWelcomePopup] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
   const navigate = useNavigate();
 
   const handleLogoTap = useCallback(() => {
@@ -145,7 +148,15 @@ const Onboarding = () => {
     }
   };
 
-  const handleCreateGroup = () => {
+  const handleCreateGroup = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data } = await supabase.from("profiles").select("invite_code").eq("user_id", user.id).single();
+      if (data?.invite_code) {
+        setGroupPopup({ show: true, inviteCode: data.invite_code });
+        return;
+      }
+    }
     navigate("/");
   };
 
@@ -181,12 +192,13 @@ const Onboarding = () => {
     }
 
     setJoiningGroup(false);
-    toast.success("Você entrou no grupo com sucesso!");
-    navigate("/");
+    setWelcomePopup(true);
   };
 
+  let content: React.ReactNode;
+
   if (step === "join") {
-    return (
+    content = (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
         <div className="flex flex-col items-center gap-3 mb-10 fade-in-up">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
@@ -216,10 +228,8 @@ const Onboarding = () => {
         </div>
       </div>
     );
-  }
-
-  if (step === "welcome") {
-    return (
+  } else if (step === "welcome") {
+    content = (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
         <div className="flex flex-col items-center gap-3 mb-10 fade-in-up">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
@@ -252,9 +262,8 @@ const Onboarding = () => {
         </p>
       </div>
     );
-  }
-
-  return (
+  } else {
+    content = (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
       <div className="flex flex-col items-center gap-3 mb-10 fade-in-up">
         <button
@@ -392,6 +401,67 @@ const Onboarding = () => {
         <button onClick={() => navigate("/login")} className="text-primary font-medium">Fazer login</button>
       </p>
     </div>
+    );
+  }
+
+  return (
+    <>
+      {content}
+
+      {/* Group Created Popup */}
+      {groupPopup.show && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm px-6">
+          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 space-y-4 text-center shadow-xl">
+            <div className="flex h-16 w-16 mx-auto items-center justify-center rounded-full bg-success/15">
+              <CheckCircle2 size={32} className="text-success" />
+            </div>
+            <h3 className="text-lg font-bold">Grupo criado com sucesso! 🎉</h3>
+            <p className="text-sm text-muted-foreground">Compartilhe o código abaixo com amigos para que eles entrem no seu grupo:</p>
+            <div className="flex items-center justify-center gap-2">
+              <span className="font-mono text-xl font-bold tracking-widest text-primary bg-primary/10 px-4 py-2 rounded-xl">
+                {groupPopup.inviteCode}
+              </span>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(groupPopup.inviteCode);
+                  setCopiedCode(true);
+                  setTimeout(() => setCopiedCode(false), 2000);
+                }}
+                className="p-2 rounded-lg hover:bg-muted transition-colors active:scale-95"
+              >
+                {copiedCode ? <CheckCircle2 size={18} className="text-success" /> : <Copy size={18} className="text-muted-foreground" />}
+              </button>
+            </div>
+            {copiedCode && <p className="text-xs text-success font-medium">Código copiado!</p>}
+            <button
+              onClick={() => { setGroupPopup({ show: false, inviteCode: "" }); navigate("/"); }}
+              className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground active:scale-[0.98] transition-all"
+            >
+              Começar a usar o Sparky
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Welcome Popup after joining group */}
+      {welcomePopup && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm px-6">
+          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 space-y-4 text-center shadow-xl">
+            <div className="flex h-16 w-16 mx-auto items-center justify-center rounded-full bg-primary/15">
+              <PartyPopper size={32} className="text-primary" />
+            </div>
+            <h3 className="text-lg font-bold">Bem-vindo ao grupo! 🥳</h3>
+            <p className="text-sm text-muted-foreground">Você entrou com sucesso! Agora vocês podem compartilhar e organizar as finanças juntos.</p>
+            <button
+              onClick={() => { setWelcomePopup(false); navigate("/"); }}
+              className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground active:scale-[0.98] transition-all"
+            >
+              Curtir o app!
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
