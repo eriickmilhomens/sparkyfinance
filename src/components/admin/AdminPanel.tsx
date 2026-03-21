@@ -28,6 +28,7 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
   const [activeTab, setActiveTab] = useState<AdminTab>("users");
   const [searchQuery, setSearchQuery] = useState("");
   const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [resultPopup, setResultPopup] = useState<{ show: boolean; success: boolean; message: string }>({ show: false, success: false, message: "" });
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -118,11 +119,12 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
       }
 
       const data = await res.json();
-      toast.success(`${data.deleted} usuários removidos`);
       setDeleteAllConfirm(false);
+      setResultPopup({ show: true, success: true, message: `${data.deleted} usuário(s) removido(s) com sucesso!` });
       fetchUsers();
     } catch (e: any) {
-      toast.error(e.message || "Erro ao deletar usuários");
+      setDeleteAllConfirm(false);
+      setResultPopup({ show: true, success: false, message: e.message || "Erro ao deletar usuários. Tente novamente." });
     } finally {
       setActionLoading(false);
     }
@@ -571,6 +573,32 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
                 {actionLoading ? "Removendo..." : "Sim, deletar todos"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Result popup */}
+      {resultPopup.show && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="w-full max-w-sm card-zelo space-y-4 text-center">
+            <div className={cn("flex h-14 w-14 mx-auto items-center justify-center rounded-full", resultPopup.success ? "bg-success/15" : "bg-destructive/15")}>
+              {resultPopup.success ? (
+                <UserCheck size={24} className="text-success" />
+              ) : (
+                <AlertTriangle size={24} className="text-destructive" />
+              )}
+            </div>
+            <h3 className="text-base font-bold">{resultPopup.success ? "Operação concluída!" : "Falha na operação"}</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">{resultPopup.message}</p>
+            <button
+              onClick={() => setResultPopup({ show: false, success: false, message: "" })}
+              className={cn(
+                "w-full rounded-xl py-3 text-sm font-semibold active:scale-[0.98]",
+                resultPopup.success ? "bg-primary text-primary-foreground" : "bg-destructive text-destructive-foreground"
+              )}
+            >
+              Entendido
+            </button>
           </div>
         </div>
       )}
