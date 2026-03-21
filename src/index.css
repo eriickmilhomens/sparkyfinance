@@ -132,7 +132,7 @@
   }
 
   .card-zelo {
-    @apply bg-card rounded-2xl border border-border p-4;
+    @apply bg-card rounded-2xl border border-border p-4 border-l-4 border-l-primary;
   }
 
   .text-value {

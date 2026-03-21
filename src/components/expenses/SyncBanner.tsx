@@ -64,7 +64,7 @@ const SyncBanner = ({ onNavigateToMetas, hideSyncBanner }: SyncBannerProps) => {
 
       {/* Sync Banner — hidden when prop is true */}
       {!hideSyncBanner && (
-        <div className="card-zelo fade-in-up flex items-center gap-3">
+        <div className="card-zelo fade-in-up flex items-center gap-3 border-l-primary">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-primary/30 bg-primary/10">
             <Wallet size={18} className="text-primary" />
           </div>

@@ -56,7 +56,7 @@ const SyncStatusBanner = () => {
   if (!manualMode || dismissed) return null;
 
   return (
-    <div className="card-zelo !border-warning/30 !bg-warning/5 fade-in-up flex items-start gap-3">
+    <div className="card-zelo !border-warning/30 !bg-warning/5 fade-in-up flex items-start gap-3 border-l-warning">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-warning/15">
         <WifiOff size={16} className="text-warning" />
       </div>

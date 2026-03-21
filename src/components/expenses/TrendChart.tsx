@@ -12,7 +12,7 @@ const fmt = (v: number) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2 
 
 const TrendChart = ({ title, data, color, gradientId, legend }: TrendChartProps) => {
   return (
-    <div className="card-zelo fade-in-up">
+    <div className="card-zelo fade-in-up" style={{ borderLeftColor: color }}>
       <p className="text-xs font-semibold text-muted-foreground mb-1">{title}</p>
       {legend && <p className="text-[10px] text-muted-foreground/70 mb-3">{legend}</p>}
       <div className="h-32">

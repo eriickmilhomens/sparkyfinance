@@ -25,6 +25,7 @@ const FinancialStatusCard = () => {
       message: "Seus gastos estão dentro do orçamento saudável. Continue assim!",
       bg: "bg-success/10",
       border: "border-success/25",
+      borderLeft: "border-l-success",
       iconBg: "bg-success/15",
       iconColor: "text-success",
       titleColor: "text-success",
@@ -35,6 +36,7 @@ const FinancialStatusCard = () => {
       message: `Você está gastando ${overBudgetPct}% acima do seu orçamento saudável. Considere reduzir despesas não essenciais.`,
       bg: "bg-warning/10",
       border: "border-warning/25",
+      borderLeft: "border-l-warning",
       iconBg: "bg-warning/15",
       iconColor: "text-warning",
       titleColor: "text-warning",
@@ -45,6 +47,7 @@ const FinancialStatusCard = () => {
       message: `Você está gastando ${overBudgetPct}% acima do limite saudável. Ação imediata recomendada para evitar endividamento.`,
       bg: "bg-destructive/10",
       border: "border-destructive/25",
+      borderLeft: "border-l-destructive",
       iconBg: "bg-destructive/15",
       iconColor: "text-destructive",
       titleColor: "text-destructive",
@@ -55,7 +58,7 @@ const FinancialStatusCard = () => {
   const Icon = c.icon;
 
   return (
-    <div className={`rounded-2xl border ${c.border} ${c.bg} p-3.5 fade-in-up`}>
+    <div className={`rounded-2xl border ${c.border} ${c.bg} p-3.5 fade-in-up border-l-4 ${c.borderLeft}`}>
       <div className="flex items-start gap-3">
         <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${c.iconBg}`}>
           <Icon size={18} className={c.iconColor} />

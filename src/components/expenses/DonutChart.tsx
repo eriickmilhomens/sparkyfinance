@@ -35,7 +35,7 @@ const DonutChart = () => {
     : [...categoryData, ...(categoryData.length < 6 ? [{ name: "__gray", value: total * 0.001, color: GRAY }] : [])];
 
   return (
-    <div className="card-zelo fade-in-up">
+    <div className="card-zelo fade-in-up border-l-primary">
       <p className="text-xs font-semibold text-muted-foreground mb-1">Distribuição de Gastos</p>
       <p className="text-[10px] text-muted-foreground/70 mb-3">
         {total === 0

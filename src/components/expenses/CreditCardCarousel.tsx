@@ -174,17 +174,17 @@ const CreditCardCarousel = () => {
           </div>
 
           <div className="grid grid-cols-2 gap-2 mb-4">
-            <div className="card-zelo !py-3">
+            <div className="card-zelo !py-3 border-l-primary">
               <p className="text-[10px] text-muted-foreground">Limite</p>
               <p className="text-sm font-bold">{fmt(expandedCard.limit)}</p>
             </div>
-            <div className="card-zelo !py-3">
+            <div className="card-zelo !py-3 border-l-success">
               <p className="text-[10px] text-muted-foreground">Disponível</p>
               <p className="text-sm font-bold text-success">{fmt(available)}</p>
             </div>
           </div>
 
-          <div className="card-zelo mb-4 space-y-2">
+          <div className="card-zelo mb-4 space-y-2 border-l-warning">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
                 <Calendar size={14} className="text-warning" />
@@ -201,7 +201,7 @@ const CreditCardCarousel = () => {
             </div>
           </div>
 
-          <div className="card-zelo mb-4">
+          <div className="card-zelo mb-4 border-l-warning">
             <div className="flex justify-between items-center mb-3">
               <div>
                 <p className="text-xs font-semibold">Fatura Atual</p>
@@ -245,7 +245,7 @@ const CreditCardCarousel = () => {
           </div>
 
           {/* Transactions with edit/delete */}
-          <div className="card-zelo mb-4">
+          <div className="card-zelo mb-4 border-l-primary">
             <p className="text-xs font-semibold mb-2 flex items-center gap-1.5">
               <Receipt size={13} className="text-primary" /> Gastos do Mês
             </p>
@@ -295,7 +295,7 @@ const CreditCardCarousel = () => {
           </div>
 
           {expandedCard.futureInvoices.length > 0 && (
-            <div className="card-zelo mb-4">
+            <div className="card-zelo mb-4 border-l-warning">
               <p className="text-xs font-semibold mb-2 flex items-center gap-1.5">
                 <Calendar size={13} className="text-warning" /> Faturas Futuras
               </p>
@@ -311,7 +311,7 @@ const CreditCardCarousel = () => {
           )}
 
           {expandedCard.paidInvoices.length > 0 && (
-            <div className="card-zelo">
+            <div className="card-zelo border-l-success">
               <p className="text-xs font-semibold mb-2 flex items-center gap-1.5">
                 <DollarSign size={13} className="text-success" /> Faturas Pagas
               </p>

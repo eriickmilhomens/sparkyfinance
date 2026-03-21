@@ -75,7 +75,7 @@ const SpendingOverview = ({ hideValues = false }: SpendingOverviewProps) => {
   return (
     <div className="space-y-3">
       {/* Pode gastar hoje */}
-      <div className="card-zelo fade-in-up relative overflow-hidden">
+      <div className="card-zelo fade-in-up relative overflow-hidden border-l-success">
         <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-success/5" />
         <div className="absolute -right-2 -top-2 h-12 w-12 rounded-full bg-success/8" />
         <p className="text-label mb-1">Pode Gastar Hoje</p>
@@ -146,7 +146,7 @@ const SpendingOverview = ({ hideValues = false }: SpendingOverviewProps) => {
 
       {/* Quick stats row */}
       <div className="grid grid-cols-2 gap-2">
-        <div className="card-zelo fade-in-up stagger-1">
+        <div className="card-zelo fade-in-up stagger-1 border-l-success">
           <div className="flex items-center gap-2 mb-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15"><Wallet size={14} className="text-primary" /></div>
             <span className="text-[10px] text-muted-foreground font-medium">Receita Mensal</span>
@@ -154,7 +154,7 @@ const SpendingOverview = ({ hideValues = false }: SpendingOverviewProps) => {
           <p className="text-lg font-bold tabular-nums">{hideValues ? masked : fmt(data.income)}</p>
           {hasData && !hideValues && (<span className="text-[10px] text-success font-medium flex items-center gap-0.5"><ArrowUpRight size={10} /> Receita registrada</span>)}
         </div>
-        <div className="card-zelo fade-in-up stagger-2">
+        <div className="card-zelo fade-in-up stagger-2 border-l-destructive">
           <div className="flex items-center gap-2 mb-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-destructive/15"><CreditCard size={14} className="text-destructive" /></div>
             <span className="text-[10px] text-muted-foreground font-medium">Gasto Mensal</span>
@@ -166,7 +166,7 @@ const SpendingOverview = ({ hideValues = false }: SpendingOverviewProps) => {
 
       {/* Balance History */}
       {hasData && balanceHistory.length > 1 && (
-        <div className="card-zelo fade-in-up stagger-3">
+        <div className="card-zelo fade-in-up stagger-3 border-l-primary">
           <p className="text-label mb-0.5">HISTÓRICO DE SALDO</p>
           <p className="text-[11px] text-muted-foreground mb-3">Evolução realizada até hoje</p>
           <div className="h-44">
@@ -193,7 +193,7 @@ const SpendingOverview = ({ hideValues = false }: SpendingOverviewProps) => {
 
       {/* Entradas vs Saídas */}
       {hasData && (
-        <div className="card-zelo fade-in-up stagger-4">
+        <div className="card-zelo fade-in-up stagger-4 border-l-primary">
           <p className="text-label mb-3">ENTRADAS VS SAÍDAS</p>
           <div className="h-40">
             <ResponsiveContainer width="100%" height="100%">

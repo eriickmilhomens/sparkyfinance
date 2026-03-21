@@ -24,7 +24,7 @@ const PaceBar = () => {
   };
 
   return (
-    <div className="card-zelo fade-in-up">
+    <div className={`card-zelo fade-in-up ${accelerated ? "border-l-destructive" : "border-l-success"}`}>
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5">
           <Gauge size={12} className="text-muted-foreground" />

@@ -65,7 +65,7 @@ const MembersView = () => {
       </div>
 
       {/* Your Points Card */}
-      <div className="card-zelo fade-in-up relative overflow-hidden">
+      <div className="card-zelo fade-in-up relative overflow-hidden border-l-warning">
         <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-warning/5" />
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
@@ -105,7 +105,7 @@ const MembersView = () => {
       </div>
 
       {/* Points System Explainer */}
-      <div className="card-zelo fade-in-up stagger-1">
+      <div className="card-zelo fade-in-up stagger-1 border-l-primary">
         <button
           onClick={() => setShowPointsGuide(!showPointsGuide)}
           className="w-full flex items-center justify-between"
@@ -177,7 +177,7 @@ const MembersView = () => {
       </div>
 
       {/* Group Code */}
-      <div className="card-zelo fade-in-up stagger-2">
+      <div className="card-zelo fade-in-up stagger-2 border-l-primary">
         <p className="text-label mb-2">CÓDIGO DE CONVITE DO GRUPO</p>
         <div className="flex items-center gap-3">
           <span className="flex-1 rounded-xl bg-muted/50 border border-border px-4 py-3 text-lg font-mono font-bold tracking-[0.3em] text-center">
@@ -194,7 +194,7 @@ const MembersView = () => {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 gap-2">
-        <div className="card-zelo fade-in-up stagger-3">
+        <div className="card-zelo fade-in-up stagger-3 border-l-primary">
           <div className="flex items-center gap-2 mb-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15">
               <Users size={14} className="text-primary" />
@@ -203,7 +203,7 @@ const MembersView = () => {
           </div>
           <p className="text-2xl font-bold">{members.length || 1}</p>
         </div>
-        <div className="card-zelo fade-in-up stagger-4">
+        <div className="card-zelo fade-in-up stagger-4 border-l-warning">
           <div className="flex items-center gap-2 mb-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-warning/15">
               <Shield size={14} className="text-warning" />
@@ -217,7 +217,7 @@ const MembersView = () => {
       {/* Members Ranking */}
       <div className="fade-in-up stagger-4">
         <p className="text-label mb-2 px-1">RANKING DO GRUPO</p>
-        <div className="card-zelo !p-0 divide-y divide-border">
+        <div className="card-zelo !p-0 divide-y divide-border border-l-warning">
           {members.length === 0 && profile && (
             <div className="flex items-center gap-3 px-4 py-3.5">
               <div className="relative">
@@ -278,7 +278,7 @@ const MembersView = () => {
       {recentActivity.length > 0 && (
         <div className="fade-in-up">
           <p className="text-label mb-2 px-1">ATIVIDADE RECENTE</p>
-          <div className="card-zelo !p-0 divide-y divide-border">
+          <div className="card-zelo !p-0 divide-y divide-border border-l-success">
             {recentActivity.map((entry, i) => {
               const rule = POINTS_RULES.find(r => r.id === entry.ruleId);
               return (

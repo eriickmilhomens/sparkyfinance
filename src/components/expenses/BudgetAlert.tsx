@@ -10,7 +10,7 @@ const BudgetAlert = () => {
   const pct = Math.round((data.expenses / data.income) * 100 - 100);
 
   return (
-    <div className="flex items-start gap-3 rounded-2xl border border-destructive/30 bg-destructive/10 p-3 fade-in-up">
+    <div className="flex items-start gap-3 rounded-2xl border border-destructive/30 bg-destructive/10 p-3 fade-in-up border-l-4 border-l-destructive">
       <div className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-destructive/20">
         <AlertCircle size={14} className="text-destructive" />
       </div>

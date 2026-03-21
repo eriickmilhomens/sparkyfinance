@@ -166,7 +166,7 @@ const PlanejamentoTab = () => {
   return (
     <div className="space-y-3">
       {/* Savings goal radial */}
-      <div className="card-zelo fade-in-up">
+      <div className="card-zelo fade-in-up border-l-success">
         <div className="flex items-center gap-2 mb-1">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-success/15">
             <PiggyBank size={14} className="text-success" />
@@ -202,7 +202,7 @@ const PlanejamentoTab = () => {
       </div>
 
       {/* Smart Tips */}
-      <div className="card-zelo fade-in-up stagger-1">
+      <div className="card-zelo fade-in-up stagger-1 border-l-warning">
         <div className="flex items-center gap-2 mb-3">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-warning/15">
             <Lightbulb size={14} className="text-warning" />
@@ -226,7 +226,7 @@ const PlanejamentoTab = () => {
       </div>
 
       {/* Investment Goals */}
-      <div className="card-zelo fade-in-up stagger-2" id="metas-investimento">
+      <div className="card-zelo fade-in-up stagger-2 border-l-success" id="metas-investimento">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-success/15">
@@ -306,7 +306,7 @@ const PlanejamentoTab = () => {
       </div>
 
       {/* Budget by category */}
-      <div className="card-zelo fade-in-up stagger-3">
+      <div className="card-zelo fade-in-up stagger-3 border-l-primary">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Target size={14} className="text-primary" />
@@ -342,7 +342,7 @@ const PlanejamentoTab = () => {
 
       {/* Planned vs Real */}
       {totalBudget > 0 && (
-        <div className="card-zelo fade-in-up stagger-4">
+        <div className="card-zelo fade-in-up stagger-4 border-l-warning">
           <div className="flex items-center gap-2 mb-3">
             <Calendar size={14} className="text-warning" />
             <p className="text-xs font-semibold">Planejado vs Real</p>

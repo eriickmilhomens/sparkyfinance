@@ -49,7 +49,7 @@ const BalanceCard = ({ onVisibilityChange }: BalanceCardProps) => {
   };
 
   return (
-    <div className="card-zelo fade-in-up">
+    <div className="card-zelo fade-in-up border-l-primary">
       <div className="flex items-center justify-between mb-1">
         <span className="text-label">Saldo Disponível</span>
         <div className="flex items-center gap-2">

@@ -184,7 +184,7 @@ const ProfileSwitcher = () => {
   if (showLogoutConfirm) {
     return (
       <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-        <div className="w-full max-w-sm card-zelo space-y-4 text-center">
+        <div className="w-full max-w-sm card-zelo space-y-4 text-center border-l-destructive">
           <div className="flex h-14 w-14 mx-auto items-center justify-center rounded-full bg-destructive/15">
             <LogOut size={24} className="text-destructive" />
           </div>
@@ -214,7 +214,7 @@ const ProfileSwitcher = () => {
             </div>
           </div>
 
-          <div className="card-zelo border-warning/20 bg-warning/5">
+          <div className="card-zelo border-warning/20 bg-warning/5 border-l-warning">
             <div className="flex items-start gap-3">
               <Sparkles size={18} className="text-warning shrink-0 mt-0.5" />
               <p className="text-xs text-foreground/80 italic leading-relaxed">{quote}</p>
@@ -257,7 +257,7 @@ const ProfileSwitcher = () => {
               const isCurrent = member.id === active;
               const diff = member.points - current.points;
               return (
-                <div key={member.id} className={cn("card-zelo flex items-center gap-3", isCurrent && "border-primary/30")}>
+                <div key={member.id} className={cn("card-zelo flex items-center gap-3", isCurrent ? "border-primary/30 border-l-primary" : i === 0 ? "border-l-warning" : "border-l-primary")}>
                   <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
                     {i + 1}º
                   </div>
@@ -526,7 +526,7 @@ const ProfileSwitcher = () => {
           ) : (
             <div className="space-y-2">
               {prizes.map((p, i) => (
-                <div key={i} className="card-zelo space-y-2">
+                <div key={i} className="card-zelo space-y-2 border-l-warning">
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-warning/15">
                       <Gift size={18} className="text-warning" />
@@ -645,7 +645,7 @@ const ProfileSwitcher = () => {
               <p className="text-lg font-bold">{profiles.length}</p>
               <p className="text-[9px] text-muted-foreground">Total</p>
             </div>
-            <div className="card-zelo flex flex-col items-center py-3">
+            <div className="card-zelo flex flex-col items-center py-3 border-l-warning">
               <Crown size={16} className="text-warning mb-1" />
               <p className="text-lg font-bold">{admins.length}</p>
               <p className="text-[9px] text-muted-foreground">Admins</p>
