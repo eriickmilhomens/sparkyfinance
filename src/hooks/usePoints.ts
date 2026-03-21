@@ -38,69 +38,74 @@ export const usePoints = () => {
   const currentPoints = profile?.points || 0;
   const log = getLog();
 
-  // Check if a rule was already awarded today or this month
-  const wasAwardedToday = (ruleId: string) => {
-    const today = new Date().toISOString().slice(0, 10);
-    return log.some(e => e.ruleId === ruleId && e.date === today);
-  };
-
-  const wasAwardedThisMonth = (ruleId: string) => {
-    const monthKey = new Date().toISOString().slice(0, 7);
-    return log.some(e => e.ruleId === ruleId && e.date.startsWith(monthKey));
-  };
-
   const awardPoints = useCallback(async (ruleId: string, description?: string) => {
     const rule = POINTS_RULES.find(r => r.id === ruleId);
     if (!rule) return 0;
 
+    // Always read fresh log to avoid stale closure
+    const freshLog = getLog();
+    const today = new Date().toISOString().slice(0, 10);
+    const monthKey = today.slice(0, 7);
+
     // Prevent double-awarding
     const monthlyRules = ["save_10", "save_20", "month_green", "no_impulse"];
-    if (monthlyRules.includes(ruleId) && wasAwardedThisMonth(ruleId)) return 0;
+    if (monthlyRules.includes(ruleId) && freshLog.some(e => e.ruleId === ruleId && e.date.startsWith(monthKey))) return 0;
 
-    const dailyRules = ["bill_paid", "invest_deposit", "streak_7"];
-    if (dailyRules.includes(ruleId) && wasAwardedToday(ruleId)) return 0;
+    // For bill_paid, allow multiple per day (one per unique description)
+    if (ruleId === "bill_paid" && description) {
+      if (freshLog.some(e => e.ruleId === ruleId && e.date === today && e.description === description)) return 0;
+    } else {
+      const dailyRules = ["invest_deposit", "streak_7"];
+      if (dailyRules.includes(ruleId) && freshLog.some(e => e.ruleId === ruleId && e.date === today)) return 0;
+    }
 
     const entry: PointsEntry = {
       ruleId,
       points: rule.points,
-      date: new Date().toISOString().slice(0, 10),
+      date: today,
       description: description || rule.label,
     };
 
-    const newLog = [...log, entry];
+    const newLog = [...freshLog, entry];
     saveLog(newLog);
 
-    // Update profile points in database
-    const newTotal = currentPoints + rule.points;
+    // Read fresh profile points to accumulate correctly
+    const freshPoints = profile?.points || 0;
+    const newTotal = freshPoints + rule.points;
     if (!isDemo && profile) {
       await updateProfile({ points: newTotal });
     }
 
     return rule.points;
-  }, [currentPoints, profile, isDemo, updateProfile, log]);
+  }, [profile, isDemo, updateProfile]);
 
-  const removePoints = useCallback(async (ruleId: string) => {
+  const removePoints = useCallback(async (ruleId: string, description?: string) => {
     const rule = POINTS_RULES.find(r => r.id === ruleId);
     if (!rule) return 0;
 
-    // Find and remove the most recent log entry for this rule
-    const logCopy = [...getLog()];
+    // Always read fresh log
+    const freshLog = getLog();
     let idx = -1;
-    for (let i = logCopy.length - 1; i >= 0; i--) {
-      if (logCopy[i].ruleId === ruleId) { idx = i; break; }
+    for (let i = freshLog.length - 1; i >= 0; i--) {
+      if (freshLog[i].ruleId === ruleId) {
+        if (description && freshLog[i].description !== description) continue;
+        idx = i;
+        break;
+      }
     }
     if (idx === -1) return 0;
 
-    logCopy.splice(idx, 1);
-    saveLog(logCopy);
+    freshLog.splice(idx, 1);
+    saveLog(freshLog);
 
-    const newTotal = Math.max(0, currentPoints - rule.points);
+    const freshPoints = profile?.points || 0;
+    const newTotal = Math.max(0, freshPoints - rule.points);
     if (!isDemo && profile) {
       await updateProfile({ points: newTotal });
     }
 
     return rule.points;
-  }, [currentPoints, profile, isDemo, updateProfile]);
+  }, [profile, isDemo, updateProfile]);
 
   // Calculate monthly earnings
   const monthKey = new Date().toISOString().slice(0, 7);
