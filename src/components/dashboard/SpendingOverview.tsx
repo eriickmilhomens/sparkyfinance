@@ -43,10 +43,19 @@ const SpendingOverview = ({ hideValues = false }: SpendingOverviewProps) => {
   const [simOpen, setSimOpen] = useState(false);
   const [simValue, setSimValue] = useState(0);
   const [infoPopup, setInfoPopup] = useState<string | null>(null);
+  const [editingPercent, setEditingPercent] = useState(false);
+  const [spendPercent, setSpendPercent] = useState(() => {
+    const saved = localStorage.getItem("sparky-spend-percent");
+    return saved ? Number(saved) : 20;
+  });
   const { data, available, daysLeft } = useFinancialData();
 
+  useEffect(() => {
+    localStorage.setItem("sparky-spend-percent", String(spendPercent));
+  }, [spendPercent]);
+
   const hasData = data.balance > 0 || data.income > 0 || data.expenses > 0;
-  const spendablePool = Math.max(0, available * 0.2);
+  const spendablePool = Math.max(0, available * (spendPercent / 100));
   const dailyBudget = daysLeft > 0 ? spendablePool / daysLeft : 0;
   const orcamentoDiarioNovo = Math.max(0, (spendablePool - simValue) / daysLeft);
   const reducao = dailyBudget - orcamentoDiarioNovo;
