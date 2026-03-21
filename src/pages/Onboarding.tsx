@@ -192,8 +192,7 @@ const Onboarding = () => {
     }
 
     setJoiningGroup(false);
-    toast.success("Você entrou no grupo com sucesso!");
-    navigate("/");
+    setWelcomePopup(true);
   };
 
   if (step === "join") {
