@@ -525,8 +525,8 @@ const ProfileSwitcher = () => {
               </div>
             </div>
             <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/30 px-4 py-3">
-              <span className="flex-1 text-center text-lg font-mono font-bold tracking-[0.3em]">RFL45QUH</span>
-              <button onClick={() => navigator.clipboard.writeText("RFL45QUH")} className="text-primary active:scale-95">
+              <span className="flex-1 text-center text-lg font-mono font-bold tracking-[0.3em]">{dbProfile?.invite_code || "------"}</span>
+              <button onClick={() => navigator.clipboard.writeText(dbProfile?.invite_code || "")} className="text-primary active:scale-95">
                 <Check size={16} />
               </button>
             </div>
