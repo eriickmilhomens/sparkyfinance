@@ -52,6 +52,21 @@ const Onboarding = () => {
   const [joiningGroup, setJoiningGroup] = useState(false);
   const navigate = useNavigate();
 
+  // Redirect if already authenticated (e.g. after Google OAuth redirect)
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session) {
+        navigate("/");
+      }
+    });
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session && step === "register") {
+        navigate("/");
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [navigate, step]);
+
   const selectedCountry = COUNTRIES.find(c => c.code === countryCode) || COUNTRIES[0];
 
   const handleRegister = async (e: React.FormEvent) => {
