@@ -165,7 +165,13 @@ const SpendingOverview = ({ hideValues = false }: SpendingOverviewProps) => {
 
       {/* Quick stats row */}
       <div className="grid grid-cols-2 gap-2">
-        <div className="card-zelo fade-in-up stagger-1 border-l-4 border-l-success">
+        <div className="card-zelo fade-in-up stagger-1 border-l-4 border-l-success relative">
+          <button
+            onClick={() => setInfoPopup("receita")}
+            className="absolute top-2 right-2 p-0.5 rounded text-muted-foreground/50 hover:text-muted-foreground active:scale-90 transition-all"
+          >
+            <Info size={11} />
+          </button>
           <div className="flex items-center gap-2 mb-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15"><Wallet size={14} className="text-primary" /></div>
             <span className="text-[10px] text-muted-foreground font-medium">Receita Mensal</span>
@@ -173,7 +179,13 @@ const SpendingOverview = ({ hideValues = false }: SpendingOverviewProps) => {
           <p className="text-lg font-bold tabular-nums">{hideValues ? masked : fmt(data.income)}</p>
           {hasData && !hideValues && (<span className="text-[10px] text-success font-medium flex items-center gap-0.5"><ArrowUpRight size={10} /> Receita registrada</span>)}
         </div>
-        <div className="card-zelo fade-in-up stagger-2 border-l-4 border-l-destructive">
+        <div className="card-zelo fade-in-up stagger-2 border-l-4 border-l-destructive relative">
+          <button
+            onClick={() => setInfoPopup("gasto")}
+            className="absolute top-2 right-2 p-0.5 rounded text-muted-foreground/50 hover:text-muted-foreground active:scale-90 transition-all"
+          >
+            <Info size={11} />
+          </button>
           <div className="flex items-center gap-2 mb-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-destructive/15"><CreditCard size={14} className="text-destructive" /></div>
             <span className="text-[10px] text-muted-foreground font-medium">Gasto Mensal</span>
@@ -182,6 +194,18 @@ const SpendingOverview = ({ hideValues = false }: SpendingOverviewProps) => {
           {hasData && !hideValues && (<span className="text-[10px] text-destructive font-medium flex items-center gap-0.5"><ArrowUpRight size={10} className="rotate-90" /> Despesas registradas</span>)}
         </div>
       </div>
+
+      {infoPopup && (
+        <InfoPopup
+          title={infoPopup === "receita" ? "Receita Mensal" : "Gasto Mensal"}
+          message={
+            infoPopup === "receita"
+              ? "A Receita Mensal representa o total de entradas financeiras registradas no mês atual. Inclui salários, freelances, rendimentos e qualquer outra fonte de renda que você tenha adicionado. Esse valor é atualizado automaticamente a cada novo lançamento de receita."
+              : "O Gasto Mensal representa o total de despesas registradas no mês atual. Inclui contas fixas, compras, assinaturas e qualquer saída de dinheiro que você tenha lançado. Acompanhe esse valor para manter o controle do seu orçamento."
+          }
+          onClose={() => setInfoPopup(null)}
+        />
+      )}
 
       {/* Balance History */}
       {hasData && balanceHistory.length > 1 && (

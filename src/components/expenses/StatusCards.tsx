@@ -60,6 +60,10 @@ const StatusCards = () => {
       title: "Saldo Real",
       message: "O Saldo Real representa o valor total que você possui em conta neste momento. Ele é atualizado automaticamente conforme você registra receitas, despesas, pagamentos de faturas e ajustes manuais. É o valor bruto antes de descontar contas pendentes.",
     },
+    apagar: {
+      title: "Contas a Pagar",
+      message: "O valor A Pagar representa o total de despesas agendadas ou registradas para o mês atual que ainda precisam ser quitadas. Inclui contas fixas, faturas de cartão e qualquer compromisso financeiro pendente. Ao marcar como pago, o valor é automaticamente descontado do saldo e você ganha pontos de recompensa.",
+    },
     disponivel: {
       title: "Saldo Disponível",
       message: "O Saldo Disponível é o valor que sobra após descontar todas as contas agendadas e pendentes do seu saldo real. Este é o valor que você realmente pode gastar sem comprometer suas obrigações financeiras do mês.",

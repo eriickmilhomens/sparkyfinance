@@ -11,7 +11,10 @@ const RankingCard = () => {
   if (!profile) return null;
 
   const isUserLeader = members.length > 0 && members.find(m => m.user_id === profile.user_id && isLeader(m));
-  const roleLabel = isUserLeader ? "Líder" : currentUserRank > 0 ? `${currentUserRank}º lugar` : "Membro";
+  const roleLabel = isUserLeader ? "Líder" : currentUserRank > 0 ? `${currentUserRank}º lugar` : "Líder";
+
+  // Show leader info even when alone
+  const displayMembers = members.length > 0 ? members : [];
 
   return (
     <div className="card-zelo fade-in-up stagger-2">
@@ -34,9 +37,13 @@ const RankingCard = () => {
         {monthlyEarnings > 0 && (
           <p className="text-[10px] text-success font-medium">+{monthlyEarnings} pontos este mês</p>
         )}
-        {members.length > 1 && (
+        {displayMembers.length > 1 ? (
           <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-            <Users size={10} /> {members.length} membros
+            <Users size={10} /> {displayMembers.length} membros
+          </p>
+        ) : (
+          <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+            <Users size={10} /> Apenas você no grupo
           </p>
         )}
       </div>
