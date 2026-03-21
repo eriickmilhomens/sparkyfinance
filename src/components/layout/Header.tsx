@@ -28,7 +28,7 @@ const Header = () => {
         </div>
         <div className="flex items-center gap-2">
           <span className="text-lg font-bold tracking-tight">SPARKY</span>
-          <span className="text-xs text-muted-foreground hidden sm:inline">Olá, {firstName}</span>
+          <span className="text-xs text-muted-foreground">Olá, {firstName}</span>
         </div>
       </div>
       <div className="flex items-center gap-3">
