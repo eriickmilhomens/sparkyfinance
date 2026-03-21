@@ -278,7 +278,7 @@ const MembersView = () => {
       {recentActivity.length > 0 && (
         <div className="fade-in-up">
           <p className="text-label mb-2 px-1">ATIVIDADE RECENTE</p>
-          <div className="card-zelo !p-0 divide-y divide-border">
+          <div className="card-zelo !p-0 divide-y divide-border border-l-success">
             {recentActivity.map((entry, i) => {
               const rule = POINTS_RULES.find(r => r.id === entry.ruleId);
               return (

@@ -311,7 +311,7 @@ const CreditCardCarousel = () => {
           )}
 
           {expandedCard.paidInvoices.length > 0 && (
-            <div className="card-zelo">
+            <div className="card-zelo border-l-success">
               <p className="text-xs font-semibold mb-2 flex items-center gap-1.5">
                 <DollarSign size={13} className="text-success" /> Faturas Pagas
               </p>
