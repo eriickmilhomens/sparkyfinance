@@ -23,7 +23,6 @@ const SuggestionsCard = () => {
 
   const hasFinancialData = data.balance > 0 || data.income > 0 || data.expenses > 0;
 
-  // Rotate tips every 30 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       setTipIndex(prev => (prev + 1) % ALL_TIPS.length);
@@ -60,7 +59,6 @@ const SuggestionsCard = () => {
       });
     }
 
-    // Always add a rotating general tip
     tips.push(ALL_TIPS[tipIndex]);
 
     return tips.slice(0, 2);
@@ -102,8 +100,8 @@ const SuggestionsCard = () => {
       </div>
 
       <div className="card-zelo fade-in-up stagger-4 flex items-center gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-success/15">
-          <MessageCircle size={18} className="text-success" />
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted">
+          <MessageCircle size={18} className="text-muted-foreground" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold">Assistente no WhatsApp</p>
@@ -111,9 +109,9 @@ const SuggestionsCard = () => {
         </div>
         <button
           onClick={() => setWhatsappPopup(true)}
-          className="shrink-0 rounded-lg bg-success px-3 py-1.5 text-[10px] font-bold text-success-foreground active:scale-95 transition-transform"
+          className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-[10px] font-medium text-muted-foreground active:scale-95 transition-transform"
         >
-          Ativar
+          Desativado
         </button>
       </div>
 
@@ -146,24 +144,16 @@ const SuggestionsCard = () => {
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setWhatsappPopup(false)} />
           <div className="relative w-[85%] max-w-sm rounded-2xl bg-card border border-border p-5 shadow-xl animate-scale-in">
             <div className="flex flex-col items-center text-center gap-3">
-              <div className="h-14 w-14 rounded-full bg-success/15 flex items-center justify-center">
-                <MessageCircle size={24} className="text-success" />
+              <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center">
+                <MessageCircle size={24} className="text-muted-foreground" />
               </div>
-              <h3 className="text-base font-bold">Ativar Assistente WhatsApp</h3>
+              <h3 className="text-base font-bold">Em desenvolvimento</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Envie uma mensagem para nosso número no WhatsApp e comece a lançar gastos e consultar seu saldo diretamente pelo app!
+                O assistente no WhatsApp ainda não está disponível. Em breve teremos novidades! Por enquanto, use o Sparky IA dentro do app 🐱
               </p>
-              <a
-                href="https://wa.me/MESSAGE_NUMBER"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full rounded-xl bg-success py-2.5 text-xs font-bold text-success-foreground active:scale-[0.98] transition-all mt-1 text-center"
-              >
-                Abrir no WhatsApp
-              </a>
               <button
                 onClick={() => setWhatsappPopup(false)}
-                className="w-full rounded-xl border border-border py-2.5 text-xs font-medium text-muted-foreground active:scale-[0.98] transition-all"
+                className="w-full rounded-xl border border-border py-2.5 text-xs font-medium text-muted-foreground active:scale-[0.98] transition-all mt-1"
               >
                 <ArrowLeft size={12} className="inline mr-1" />
                 Voltar
