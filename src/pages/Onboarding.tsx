@@ -200,7 +200,7 @@ const Onboarding = () => {
 
   if (step === "join") {
     content = (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
+      <div className="bg-background flex flex-col items-center justify-center px-6" style={{ minHeight: '100dvh', paddingTop: 'env(safe-area-inset-top, 20px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         <div className="flex flex-col items-center gap-3 mb-10 fade-in-up">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
             <LogIn size={28} className="text-primary" />
@@ -231,7 +231,7 @@ const Onboarding = () => {
     );
   } else if (step === "welcome") {
     content = (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
+      <div className="bg-background flex flex-col items-center justify-center px-6" style={{ minHeight: '100dvh', paddingTop: 'env(safe-area-inset-top, 20px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         <div className="flex flex-col items-center gap-3 mb-10 fade-in-up">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
             <CatLogo />
@@ -265,7 +265,7 @@ const Onboarding = () => {
     );
   } else {
     content = (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
+    <div className="bg-background flex flex-col items-center justify-center px-6" style={{ minHeight: '100dvh', paddingTop: 'env(safe-area-inset-top, 20px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
       <div className="flex flex-col items-center gap-3 mb-10 fade-in-up">
         <button
           type="button"

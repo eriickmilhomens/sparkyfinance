@@ -127,7 +127,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
+    <div className="bg-background flex flex-col items-center justify-center px-6" style={{ minHeight: '100dvh', paddingTop: 'env(safe-area-inset-top, 20px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
       <div className="flex flex-col items-center gap-3 mb-10 fade-in-up">
         <button
           type="button"

@@ -65,7 +65,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background relative mx-auto max-w-lg lg:max-w-4xl xl:max-w-6xl transition-all">
+    <div className="bg-background relative mx-auto max-w-lg lg:max-w-4xl xl:max-w-6xl transition-all" style={{ minHeight: '100dvh', paddingTop: 'env(safe-area-inset-top, 20px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
       <div className="pb-20">
         {renderView()}
       </div>

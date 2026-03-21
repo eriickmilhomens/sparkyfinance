@@ -27,7 +27,7 @@ export default defineConfig(({ mode }) => ({
         name: "Sparky - Controle Financeiro",
         short_name: "Sparky",
         description: "Seu controle financeiro inteligente",
-        theme_color: "#3b82f6",
+        theme_color: "#0a0a0a",
         background_color: "#0a0a0a",
         display: "standalone",
         orientation: "portrait",
