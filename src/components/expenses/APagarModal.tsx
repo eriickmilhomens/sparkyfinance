@@ -46,9 +46,10 @@ const APagarModal = ({ open, onClose }: APagarModalProps) => {
       newPaid.delete(id);
       toast.info("Conta desmarcada como paga");
     } else {
-      // Mark as paid
+      // Mark as paid — award points
       newPaid.add(id);
-      toast.success("Conta marcada como paga!");
+      awardPoints("bill_paid", `Pagou: ${bill.description}`);
+      toast.success("Conta marcada como paga! +2 pts 💳");
     }
     setPaidIds(newPaid);
     localStorage.setItem("sparky-paid-bills", JSON.stringify([...newPaid]));
