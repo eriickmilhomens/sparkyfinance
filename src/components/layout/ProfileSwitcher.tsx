@@ -714,7 +714,11 @@ const ProfileSwitcher = () => {
   return (
     <div className="relative">
       <button onClick={() => setOpen(!open)} className="flex items-center gap-1.5 active:scale-95 transition-transform">
-        {renderAvatar(current, "h-8 w-8", "text-xs")}
+        {isLoading ? (
+          <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
+        ) : (
+          renderAvatar(current!, "h-8 w-8", "text-xs")
+        )}
         <ChevronDown size={14} className={cn("text-muted-foreground transition-transform", open && "rotate-180")} />
       </button>
 
