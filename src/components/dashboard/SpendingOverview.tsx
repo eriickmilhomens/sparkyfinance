@@ -51,8 +51,7 @@ const SpendingOverview = ({ hideValues = false }: SpendingOverviewProps) => {
   });
   const { data, available, daysLeft } = useFinancialData();
 
-  useDockVisibility(simOpen);
-  useDockVisibility(infoPopup !== null);
+  useDockVisibility(simOpen || infoPopup !== null);
 
   useEffect(() => {
     localStorage.setItem("sparky-spend-percent", String(spendPercent));

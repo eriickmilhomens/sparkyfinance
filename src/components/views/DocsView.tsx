@@ -48,6 +48,8 @@ const DocsView = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const addFileInputRef = useRef<HTMLInputElement>(null);
 
+  useDockVisibility(uploadOpen || previewUrl !== null || deleteConfirmId !== null);
+
   const filteredDocs = docs.filter(d => {
     const matchCat = activeFilter === "Todos" || d.category === activeFilter;
     const matchSearch = !search || d.name.toLowerCase().includes(search.toLowerCase()) || d.tags.toLowerCase().includes(search.toLowerCase());
