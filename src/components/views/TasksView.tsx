@@ -121,8 +121,7 @@ const TasksView = () => {
                 key={i}
                 className={cn(
                   "card-zelo flex items-center gap-3 fade-in-up",
-                  `stagger-${i + 1}`,
-                  i === 0 ? "border-l-warning border-warning/30" : i === 1 ? "border-l-primary" : i === 2 ? "border-l-success" : ""
+                  `stagger-${i + 1}`
                 )}
               >
                 <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
