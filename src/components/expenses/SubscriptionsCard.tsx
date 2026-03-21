@@ -48,7 +48,7 @@ const SubscriptionsCard = () => {
   const [newColor, setNewColor] = useState("bg-primary");
   const [showCustomInput, setShowCustomInput] = useState(false);
   const { data, updateData } = useFinancialData();
-  const { awardPoints } = usePoints();
+  const { awardPoints, removePoints } = usePoints();
 
   const update = (updated: Subscription[]) => { setSubs(updated); saveSubs(updated); };
 
