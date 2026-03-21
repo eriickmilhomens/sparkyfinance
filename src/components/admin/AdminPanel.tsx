@@ -28,6 +28,7 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
   const [activeTab, setActiveTab] = useState<AdminTab>("users");
   const [searchQuery, setSearchQuery] = useState("");
   const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [resultPopup, setResultPopup] = useState<{ show: boolean; success: boolean; message: string }>({ show: false, success: false, message: "" });
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
