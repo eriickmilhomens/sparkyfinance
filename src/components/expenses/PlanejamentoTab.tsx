@@ -36,6 +36,11 @@ const tips = [
   { title: "Reduza delivery", desc: "Cozinhar mais vezes por semana pode economizar bastante no final do mês.", icon: "🍳" },
   { title: "Revise assinaturas", desc: "Cancele serviços que não usa para economizar mensalmente.", icon: "📺" },
   { title: "Energia em horário reduzido", desc: "Use eletrodomésticos após 22h para reduzir a conta de luz em até 15%.", icon: "⚡" },
+  { title: "Compras no atacado", desc: "Itens de uso frequente saem mais baratos em atacarejos.", icon: "🛒" },
+  { title: "Metas semanais", desc: "Dividir o orçamento em semanas facilita o controle dos gastos.", icon: "📅" },
+  { title: "Cashback e cupons", desc: "Use apps de cashback e cupons para economizar nas compras do dia a dia.", icon: "💰" },
+  { title: "Transporte alternativo", desc: "Considere caronas, bicicleta ou transporte público para economizar.", icon: "🚲" },
+  { title: "Lista de compras", desc: "Ir ao mercado com lista reduz compras por impulso em até 40%.", icon: "📝" },
 ];
 
 const goalTypes = [
