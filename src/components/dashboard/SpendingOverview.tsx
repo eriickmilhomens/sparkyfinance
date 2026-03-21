@@ -146,7 +146,7 @@ const SpendingOverview = ({ hideValues = false }: SpendingOverviewProps) => {
 
       {/* Quick stats row */}
       <div className="grid grid-cols-2 gap-2">
-        <div className="card-zelo fade-in-up stagger-1 border-l-success">
+        <div className="card-zelo fade-in-up stagger-1 border-l-4 border-l-success">
           <div className="flex items-center gap-2 mb-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15"><Wallet size={14} className="text-primary" /></div>
             <span className="text-[10px] text-muted-foreground font-medium">Receita Mensal</span>
