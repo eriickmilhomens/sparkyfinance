@@ -184,7 +184,7 @@ const CreditCardCarousel = () => {
             </div>
           </div>
 
-          <div className="card-zelo mb-4 space-y-2">
+          <div className="card-zelo mb-4 space-y-2 border-l-warning">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
                 <Calendar size={14} className="text-warning" />
