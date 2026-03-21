@@ -473,7 +473,7 @@ const ProfileSwitcher = () => {
                 </div>
                 <div>
                   <label className="text-[10px] text-muted-foreground font-medium mb-1 block">Nome do Prêmio*</label>
-                  <input value={prizeName} onChange={(e) => setPrizeName(e.target.value)} placeholder="Ex: Sorvete Extra" className="w-full rounded-xl border border-border bg-muted/30 px-3 py-2.5 text-sm outline-none focus:border-primary" />
+                  <input value={prizeName} onChange={(e) => setPrizeName(e.target.value)} placeholder="Ex: Sorveteria" className="w-full rounded-xl border border-border bg-muted/30 px-3 py-2.5 text-sm outline-none focus:border-primary" />
                 </div>
                 <div>
                   <label className="text-[10px] text-muted-foreground font-medium mb-1 block">Custo em Pontos*</label>
