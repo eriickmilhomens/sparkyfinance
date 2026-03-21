@@ -14,6 +14,15 @@ const achievements = [
   { icon: Zap, label: "Economia rápida", desc: "Economize R$ 100,00 em uma semana", pts: 15, color: "text-warning", bg: "bg-warning/15", progress: 72, total: 100 },
 ];
 
+// Styled checkmark SVG for completed achievements
+const CompletedBadge = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="shrink-0">
+    <circle cx="12" cy="12" r="10" fill="hsl(var(--success))" opacity="0.2" />
+    <circle cx="12" cy="12" r="8" fill="hsl(var(--success))" opacity="0.3" />
+    <path d="M8 12.5l2.5 2.5 5.5-5.5" stroke="hsl(var(--success))" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
 const TasksView = () => {
   return (
     <div className="px-4 pb-24 space-y-4">
@@ -22,7 +31,6 @@ const TasksView = () => {
         <p className="text-xs text-muted-foreground mt-1">Compita com sua família e ganhe pontos por bons hábitos financeiros</p>
       </div>
 
-      {/* Ranking */}
       <div>
         <p className="text-label mb-2 px-1">RANKING DO GRUPO</p>
         <div className="space-y-2">
@@ -57,7 +65,6 @@ const TasksView = () => {
         </div>
       </div>
 
-      {/* Conquistas / Incentivos */}
       <div>
         <p className="text-label mb-2 px-1">CONQUISTAS & INCENTIVOS</p>
         <p className="text-[10px] text-muted-foreground mb-3 px-1">
@@ -86,9 +93,12 @@ const TasksView = () => {
                         style={{ width: `${pctDone}%` }}
                       />
                     </div>
-                    <p className="text-[9px] text-muted-foreground mt-1 tabular-nums">
-                      {isDone ? "✅ Conquistado!" : `${pctDone}% concluído`}
-                    </p>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      {isDone && <CompletedBadge />}
+                      <p className="text-[9px] text-muted-foreground tabular-nums">
+                        {isDone ? "Conquistado!" : `${pctDone}% concluído`}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>

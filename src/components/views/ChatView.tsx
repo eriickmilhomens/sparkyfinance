@@ -3,7 +3,7 @@ import { Send, Bot, User, Loader2, Plus, Trash2, ChevronLeft, MoreVertical } fro
 import { cn } from "@/lib/utils";
 
 type Msg = { role: "user" | "assistant"; content: string };
-type Conversation = { id: string; title: string; messages: Msg[]; createdAt: string; lastActiveAt: string };
+type Conversation = { id: string; title: string; summary: string; messages: Msg[]; createdAt: string; lastActiveAt: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sparky-chat`;
 const STORAGE_KEY = "sparky-chat-history";
@@ -11,12 +11,45 @@ const TWELVE_HOURS = 12 * 60 * 60 * 1000;
 
 const loadConversations = (): Conversation[] => {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]").map((c: any) => ({
+      ...c,
+      summary: c.summary || "",
+    }));
   } catch { return []; }
 };
 
 const saveConversations = (convs: Conversation[]) => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(convs));
+};
+
+const generateTitle = (msgs: Msg[]): string => {
+  const firstUser = msgs.find(m => m.role === "user");
+  if (!firstUser) return "Nova conversa";
+  const text = firstUser.content.trim();
+  // Capitalize first letter, end with period
+  let sentence = text.split(/[!?\n]/)[0].trim();
+  if (sentence.length > 45) sentence = sentence.slice(0, 42) + "...";
+  sentence = sentence.charAt(0).toUpperCase() + sentence.slice(1);
+  if (!sentence.endsWith(".") && !sentence.endsWith("...")) sentence += ".";
+  return sentence;
+};
+
+const generateSummary = (msgs: Msg[]): string => {
+  if (msgs.length === 0) return "";
+  const topics: string[] = [];
+  const userMsgs = msgs.filter(m => m.role === "user");
+  if (userMsgs.length === 0) return "";
+
+  // Get first and last user message for context
+  const first = userMsgs[0].content.trim().slice(0, 60);
+  let summary = first.charAt(0).toUpperCase() + first.slice(1);
+  if (userMsgs.length > 1) {
+    const count = userMsgs.length;
+    summary += ` (+${count - 1} mensagens)`;
+  }
+  if (!summary.endsWith(".")) summary += ".";
+  if (summary.length > 80) summary = summary.slice(0, 77) + "...";
+  return summary;
 };
 
 const ChatView = () => {
@@ -27,26 +60,18 @@ const ChatView = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [showNewChatConfirm, setShowNewChatConfirm] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const generateTitle = (msgs: Msg[]): string => {
-    const firstUser = msgs.find(m => m.role === "user");
-    if (!firstUser) return "Nova conversa";
-    const text = firstUser.content.trim();
-    const sentence = text.split(/[.!?\n]/)[0].trim();
-    if (sentence.length <= 50) return sentence;
-    return sentence.slice(0, 47) + "...";
-  };
-
   useEffect(() => {
     if (!activeId || messages.length === 0) return;
     setConversations(prev => {
       const updated = prev.map(c =>
-        c.id === activeId ? { ...c, messages, title: generateTitle(messages), lastActiveAt: new Date().toISOString() } : c
+        c.id === activeId ? { ...c, messages, title: generateTitle(messages), summary: generateSummary(messages), lastActiveAt: new Date().toISOString() } : c
       );
       saveConversations(updated);
       return updated;
@@ -56,7 +81,7 @@ const ChatView = () => {
   const startNewChat = useCallback(() => {
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
-    const conv: Conversation = { id, title: "Nova conversa", messages: [], createdAt: now, lastActiveAt: now };
+    const conv: Conversation = { id, title: "Nova conversa", summary: "", messages: [], createdAt: now, lastActiveAt: now };
     setConversations(prev => {
       const updated = [conv, ...prev];
       saveConversations(updated);
@@ -65,7 +90,16 @@ const ChatView = () => {
     setActiveId(id);
     setMessages([]);
     setShowHistory(false);
+    setShowNewChatConfirm(false);
   }, []);
+
+  const handleNewChatClick = () => {
+    if (messages.length > 0) {
+      setShowNewChatConfirm(true);
+    } else {
+      startNewChat();
+    }
+  };
 
   const openConversation = (conv: Conversation) => {
     setActiveId(conv.id);
@@ -94,7 +128,6 @@ const ChatView = () => {
     setShowMenu(false);
   };
 
-  // On load: resume last active chat if within 12h, otherwise start new
   useEffect(() => {
     if (!activeId) {
       const convs = loadConversations();
@@ -178,6 +211,30 @@ const ChatView = () => {
     }
   };
 
+  // Confirmation popup for new chat
+  const NewChatConfirmPopup = () => (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowNewChatConfirm(false)} />
+      <div className="relative w-[85%] max-w-sm rounded-2xl bg-card border border-border p-5 shadow-xl animate-scale-in">
+        <div className="flex flex-col items-center text-center gap-3">
+          <div className="h-12 w-12 rounded-full bg-primary/15 flex items-center justify-center">
+            <Plus size={22} className="text-primary" />
+          </div>
+          <h3 className="text-base font-bold">Nova conversa?</h3>
+          <p className="text-xs text-muted-foreground">A conversa atual será salva no histórico. Deseja iniciar uma nova?</p>
+          <div className="flex gap-2 w-full mt-2">
+            <button onClick={() => setShowNewChatConfirm(false)} className="flex-1 rounded-xl border border-border py-2.5 text-xs font-medium text-muted-foreground active:scale-[0.98] transition-all">
+              Cancelar
+            </button>
+            <button onClick={startNewChat} className="flex-1 rounded-xl bg-primary py-2.5 text-xs font-bold text-primary-foreground active:scale-[0.98] transition-all">
+              Criar nova
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   // History sidebar view
   if (showHistory) {
     return (
@@ -221,8 +278,11 @@ const ChatView = () => {
               >
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium truncate">{conv.title}</p>
-                  <p className="text-[10px] text-muted-foreground">
-                    {new Date(conv.createdAt).toLocaleDateString("pt-BR")}
+                  {conv.summary && (
+                    <p className="text-[10px] text-muted-foreground truncate mt-0.5">{conv.summary}</p>
+                  )}
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    {new Date(conv.createdAt).toLocaleDateString("pt-BR")} • {conv.messages.length} msgs
                   </p>
                 </div>
                 <button
@@ -250,6 +310,7 @@ const ChatView = () => {
 
   return (
     <div className="flex flex-col h-[calc(100vh-5rem)]">
+      {showNewChatConfirm && <NewChatConfirmPopup />}
       {/* Header */}
       <div className="px-4 pt-3 pb-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -265,7 +326,7 @@ const ChatView = () => {
           <button onClick={() => setShowHistory(true)} className="p-2 rounded-full hover:bg-muted active:scale-95 text-muted-foreground" title="Histórico">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           </button>
-          <button onClick={startNewChat} className="p-2 rounded-full hover:bg-muted active:scale-95 text-muted-foreground" title="Nova conversa">
+          <button onClick={handleNewChatClick} className="p-2 rounded-full hover:bg-muted active:scale-95 text-muted-foreground" title="Nova conversa">
             <Plus size={18} />
           </button>
         </div>

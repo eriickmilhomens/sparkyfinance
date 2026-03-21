@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Users, LogIn, Copy, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const CatLogo = () => (
   <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -14,22 +15,41 @@ const CatLogo = () => (
   </svg>
 );
 
+const VALID_CODES = ["RFL45QUH", "SPARKY01", "DEMO2026"];
+
 const Onboarding = () => {
   const [step, setStep] = useState<"welcome" | "join">("welcome");
   const [code, setCode] = useState("");
-  const [copied, setCopied] = useState(false);
+  const [codeError, setCodeError] = useState("");
   const navigate = useNavigate();
 
-  const generatedCode = "RFL45QUH";
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(generatedCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCreateGroup = () => {
+    // Check if user is logged in
+    const profiles = (() => {
+      try { return JSON.parse(localStorage.getItem("sparky-profiles") || "[]"); } catch { return []; }
+    })();
+    if (profiles.length === 0) {
+      toast.error("Crie uma conta antes de criar um grupo");
+      navigate("/login");
+      return;
+    }
+    navigate("/");
   };
 
-  const handleCreateGroup = () => { navigate("/"); };
-  const handleJoinGroup = () => { navigate("/"); };
+  const handleJoinGroup = () => {
+    const trimmed = code.trim().toUpperCase();
+    if (trimmed.length < 6) {
+      setCodeError("Código deve ter pelo menos 6 caracteres");
+      return;
+    }
+    if (!VALID_CODES.includes(trimmed)) {
+      setCodeError("Código inválido. Verifique e tente novamente.");
+      return;
+    }
+    setCodeError("");
+    toast.success("Você entrou no grupo com sucesso!");
+    navigate("/");
+  };
 
   if (step === "join") {
     return (
@@ -42,8 +62,19 @@ const Onboarding = () => {
           <p className="text-sm text-muted-foreground text-center">Insira o código de convite para sincronizar dados com outros membros</p>
         </div>
         <div className="w-full max-w-sm space-y-4 fade-in-up stagger-1">
-          <input type="text" placeholder="Código de convite (ex: RFL45QUH)" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} maxLength={8}
-            className="w-full rounded-xl border border-border bg-muted/50 px-4 py-3.5 text-sm text-center font-mono tracking-widest uppercase outline-none placeholder:text-muted-foreground placeholder:tracking-normal placeholder:font-sans focus:border-primary focus:ring-1 focus:ring-primary transition-all" />
+          <div>
+            <input
+              type="text"
+              placeholder="código de convite ex: rfl45quh"
+              value={code}
+              onChange={(e) => { setCode(e.target.value.toUpperCase()); setCodeError(""); }}
+              maxLength={8}
+              className="w-full rounded-xl border border-border bg-muted/50 px-4 py-3.5 text-sm text-center font-mono tracking-widest uppercase outline-none placeholder:text-muted-foreground placeholder:tracking-normal placeholder:font-sans placeholder:normal-case placeholder:lowercase focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+            />
+            {codeError && (
+              <p className="text-[11px] text-destructive mt-1.5 text-center">{codeError}</p>
+            )}
+          </div>
           <button onClick={handleJoinGroup} disabled={code.length < 6} className="w-full rounded-xl bg-primary py-3.5 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-40">Entrar no Grupo</button>
           <button onClick={() => setStep("welcome")} className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors">← Voltar</button>
         </div>

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CreditCard, ChevronDown, ChevronUp, Receipt, Calendar, DollarSign, X, ArrowLeft } from "lucide-react";
+import { ChevronDown, Receipt, Calendar, DollarSign, ArrowLeft, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface CardTransaction {
@@ -24,21 +24,21 @@ interface CreditCardData {
   futureInvoices: { month: string; amount: number }[];
 }
 
-const BANK_DATA: Record<string, { color: string; abbr: string }> = {
-  "nubank": { color: "bg-purple-600", abbr: "NU" },
-  "inter": { color: "bg-orange-500", abbr: "IN" },
-  "itaú": { color: "bg-orange-600", abbr: "IT" },
-  "itau": { color: "bg-orange-600", abbr: "IT" },
-  "bradesco": { color: "bg-red-600", abbr: "BR" },
-  "santander": { color: "bg-red-700", abbr: "SA" },
-  "banco do brasil": { color: "bg-yellow-500", abbr: "BB" },
-  "caixa": { color: "bg-blue-600", abbr: "CX" },
-  "c6": { color: "bg-gray-900", abbr: "C6" },
-  "pan": { color: "bg-blue-500", abbr: "PN" },
-  "neon": { color: "bg-cyan-500", abbr: "NE" },
-  "next": { color: "bg-green-500", abbr: "NX" },
-  "picpay": { color: "bg-green-400", abbr: "PP" },
-  "mercado pago": { color: "bg-blue-400", abbr: "MP" },
+const BANK_DATA: Record<string, { color: string; gradient: string; abbr: string }> = {
+  "nubank": { color: "bg-purple-600", gradient: "from-purple-600/20 to-purple-900/10", abbr: "NU" },
+  "inter": { color: "bg-orange-500", gradient: "from-orange-500/20 to-orange-800/10", abbr: "IN" },
+  "itaú": { color: "bg-orange-600", gradient: "from-orange-600/20 to-orange-900/10", abbr: "IT" },
+  "itau": { color: "bg-orange-600", gradient: "from-orange-600/20 to-orange-900/10", abbr: "IT" },
+  "bradesco": { color: "bg-red-600", gradient: "from-red-600/20 to-red-900/10", abbr: "BR" },
+  "santander": { color: "bg-red-700", gradient: "from-red-700/20 to-red-900/10", abbr: "SA" },
+  "banco do brasil": { color: "bg-yellow-500", gradient: "from-yellow-500/20 to-yellow-800/10", abbr: "BB" },
+  "caixa": { color: "bg-blue-600", gradient: "from-blue-600/20 to-blue-900/10", abbr: "CX" },
+  "c6": { color: "bg-gray-700", gradient: "from-gray-600/20 to-gray-900/10", abbr: "C6" },
+  "pan": { color: "bg-blue-500", gradient: "from-blue-500/20 to-blue-800/10", abbr: "PN" },
+  "neon": { color: "bg-cyan-500", gradient: "from-cyan-500/20 to-cyan-800/10", abbr: "NE" },
+  "next": { color: "bg-green-500", gradient: "from-green-500/20 to-green-800/10", abbr: "NX" },
+  "picpay": { color: "bg-green-400", gradient: "from-green-400/20 to-green-700/10", abbr: "PP" },
+  "mercado pago": { color: "bg-blue-400", gradient: "from-blue-400/20 to-blue-700/10", abbr: "MP" },
 };
 
 const getBankInfo = (name: string) => {
@@ -46,10 +46,10 @@ const getBankInfo = (name: string) => {
   for (const [key, val] of Object.entries(BANK_DATA)) {
     if (lower.includes(key)) return val;
   }
-  return { color: "bg-muted-foreground", abbr: name.slice(0, 2).toUpperCase() };
+  return { color: "bg-primary", gradient: "from-primary/20 to-primary/5", abbr: name.slice(0, 2).toUpperCase() };
 };
 
-const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
 
 const STORAGE_KEY = "sparky-credit-cards";
 
@@ -66,7 +66,6 @@ const CreditCardCarousel = () => {
 
   const expandedCard = cards.find(c => c.id === expandedId);
 
-  // Expanded card detail overlay
   if (expandedCard) {
     const available = expandedCard.limit - expandedCard.usedAmount;
     const bankInfo = getBankInfo(expandedCard.bankName);
@@ -95,7 +94,6 @@ const CreditCardCarousel = () => {
             </div>
           </div>
 
-          {/* Summary */}
           <div className="grid grid-cols-2 gap-2 mb-4">
             <div className="card-zelo !py-3">
               <p className="text-[10px] text-muted-foreground">Limite</p>
@@ -107,7 +105,6 @@ const CreditCardCarousel = () => {
             </div>
           </div>
 
-          {/* Dates */}
           <div className="card-zelo mb-4 space-y-2">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
@@ -125,7 +122,6 @@ const CreditCardCarousel = () => {
             </div>
           </div>
 
-          {/* Current invoice */}
           <div className="card-zelo mb-4">
             <div className="flex justify-between items-center mb-3">
               <div>
@@ -140,7 +136,6 @@ const CreditCardCarousel = () => {
                 onClick={() => setShowPayment(true)}
                 className="w-full rounded-xl bg-success/15 py-2.5 text-xs font-semibold text-success active:scale-[0.98] transition-all flex items-center justify-center gap-2"
               >
-                {/* Credit card SVG icon */}
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
                   <line x1="1" y1="10" x2="23" y2="10"/>
@@ -175,7 +170,6 @@ const CreditCardCarousel = () => {
             )}
           </div>
 
-          {/* Gastos do mês */}
           <div className="card-zelo mb-4">
             <p className="text-xs font-semibold mb-2 flex items-center gap-1.5">
               <Receipt size={13} className="text-primary" /> Gastos do Mês
@@ -198,7 +192,6 @@ const CreditCardCarousel = () => {
             )}
           </div>
 
-          {/* Future invoices */}
           {expandedCard.futureInvoices.length > 0 && (
             <div className="card-zelo mb-4">
               <p className="text-xs font-semibold mb-2 flex items-center gap-1.5">
@@ -215,7 +208,6 @@ const CreditCardCarousel = () => {
             </div>
           )}
 
-          {/* Paid invoices */}
           {expandedCard.paidInvoices.length > 0 && (
             <div className="card-zelo">
               <p className="text-xs font-semibold mb-2 flex items-center gap-1.5">
@@ -242,7 +234,7 @@ const CreditCardCarousel = () => {
   return (
     <div className="space-y-2 fade-in-up stagger-2">
       <p className="text-[10px] text-muted-foreground font-semibold tracking-wider px-0.5">CARTÕES DE CRÉDITO</p>
-      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
+      <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
         {cards.map((card, idx) => {
           const bankInfo = getBankInfo(card.bankName);
           const available = card.limit - card.usedAmount;
@@ -254,10 +246,15 @@ const CreditCardCarousel = () => {
             <div
               key={card.id}
               onClick={() => setExpandedId(card.id)}
-              className={`card-zelo !p-3 min-w-[200px] flex-shrink-0 cursor-pointer hover:border-primary/30 transition-all active:scale-[0.98] fade-in-up stagger-${Math.min(idx + 1, 5)}`}
+              className={cn(
+                "min-w-[210px] flex-shrink-0 cursor-pointer rounded-2xl border border-border/50 p-3.5 relative overflow-hidden transition-all active:scale-[0.98] hover:border-primary/40",
+                `bg-gradient-to-br ${bankInfo.gradient}`,
+                `fade-in-up stagger-${Math.min(idx + 1, 5)}`
+              )}
             >
-              <div className="flex items-center gap-2 mb-2">
-                <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center text-white text-[10px] font-bold", bankInfo.color)}>
+              <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-white/5" />
+              <div className="flex items-center gap-2 mb-3">
+                <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center text-white text-[10px] font-bold shadow-sm", bankInfo.color)}>
                   {bankInfo.abbr}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -266,14 +263,14 @@ const CreditCardCarousel = () => {
                 </div>
                 <ChevronDown size={14} className="text-muted-foreground" />
               </div>
-              <div className="space-y-1">
-                <div className="flex justify-between">
+              <div className="space-y-1.5">
+                <div className="flex justify-between items-center">
                   <span className="text-[9px] text-muted-foreground">Disponível</span>
-                  <span className="text-[10px] font-bold text-success">{fmt(available)}</span>
+                  <span className="text-[11px] font-bold text-success tabular-nums">{fmt(available)}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span className="text-[9px] text-muted-foreground">Fatura (venc. {dueDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })})</span>
-                  <span className="text-[10px] font-bold text-warning">{fmt(card.invoiceAmount)}</span>
+                  <span className="text-[11px] font-bold text-warning tabular-nums">{fmt(card.invoiceAmount)}</span>
                 </div>
               </div>
             </div>

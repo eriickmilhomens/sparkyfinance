@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { TrendingUp, ShieldCheck, AlertTriangle, ArrowUpRight, Wallet, CreditCard, Calculator, Pencil, DollarSign, CalendarDays, CheckCircle2, X } from "lucide-react";
+import { TrendingUp, ShieldCheck, AlertTriangle, ArrowUpRight, Wallet, CreditCard, Pencil, DollarSign, CalendarDays, CheckCircle2, X } from "lucide-react";
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, CartesianGrid, BarChart, Bar, Tooltip } from "recharts";
 
 const balanceHistory = Array.from({ length: 19 }, (_, i) => ({
@@ -22,6 +22,20 @@ const DIAS_RESTANTES = 12;
 
 const fmt = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
+
+// Styled calculator SVG icon
+const CalculatorIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0">
+    <rect x="4" y="2" width="16" height="20" rx="2" stroke="hsl(var(--primary))" strokeWidth="2" />
+    <rect x="7" y="5" width="10" height="4" rx="1" fill="hsl(var(--primary))" opacity="0.3" />
+    <circle cx="8.5" cy="13" r="1" fill="hsl(var(--primary))" />
+    <circle cx="12" cy="13" r="1" fill="hsl(var(--primary))" />
+    <circle cx="15.5" cy="13" r="1" fill="hsl(var(--primary))" />
+    <circle cx="8.5" cy="17" r="1" fill="hsl(var(--primary))" />
+    <circle cx="12" cy="17" r="1" fill="hsl(var(--primary))" />
+    <rect x="14.5" y="16" width="2" height="2" rx="0.5" fill="hsl(var(--primary))" />
+  </svg>
+);
 
 const SpendingOverview = () => {
   const [simOpen, setSimOpen] = useState(false);
@@ -52,9 +66,9 @@ const SpendingOverview = () => {
         <div className="mt-2">
           <button
             onClick={() => setSimOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-full bg-background border border-border px-3 py-1 text-[11px] font-semibold text-primary cursor-pointer active:scale-95 transition-transform"
+            className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 border border-primary/30 px-3.5 py-1.5 text-[11px] font-semibold text-primary cursor-pointer active:scale-95 transition-all hover:bg-primary/20"
           >
-            <Calculator size={12} className="text-primary" />
+            <CalculatorIcon />
             Simular
           </button>
         </div>
@@ -75,7 +89,6 @@ const SpendingOverview = () => {
               </button>
             </div>
 
-            {/* Input - only typing, no spinners */}
             <label className="text-[11px] text-muted-foreground mb-1.5 block">Valor da Compra (R$)</label>
             <div className="flex items-center gap-2 mb-5">
               <div className="flex-1 relative">
@@ -94,7 +107,6 @@ const SpendingOverview = () => {
               </div>
             </div>
 
-            {/* Results */}
             <div className="space-y-3">
               <div className="flex items-center justify-between rounded-xl bg-muted/50 border border-border px-4 py-3">
                 <div>
@@ -234,9 +246,9 @@ const SpendingOverview = () => {
           </div>
           <div className="card-zelo fade-in-up stagger-3">
             <p className="text-label mb-1">PRÓXIMAS CONTAS</p>
-            <div className="flex items-center gap-1.5 justify-center py-1">
+            <div className="flex items-center gap-1.5 py-1">
               <CheckCircle2 size={14} className="text-success" />
-              <p className="text-[11px] text-success font-medium">Tudo pago por enquanto!</p>
+              <p className="text-[11px] text-success font-medium text-left">Tudo pago por enquanto!</p>
             </div>
           </div>
         </div>

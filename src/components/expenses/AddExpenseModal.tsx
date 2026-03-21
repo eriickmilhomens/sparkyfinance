@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { X, Zap, Droplets, Wifi, Flame, ShoppingCart, UtensilsCrossed, CreditCard } from "lucide-react";
+import { X, Zap, Droplets, Wifi, Flame, ShoppingCart, UtensilsCrossed, CreditCard, ChevronUp, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface AddExpenseModalProps {
   open: boolean;
@@ -25,25 +26,99 @@ const priorities = [
   { id: "P4", label: "Opcional", desc: "Compras não essenciais" },
 ];
 
-const STORAGE_KEY = "sparky-credit-cards";
+const CARDS_KEY = "sparky-credit-cards";
+const TRANSACTIONS_KEY = "sparky-transactions";
 
 const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalProps) => {
   const [selectedPriority, setSelectedPriority] = useState("P3");
   const [recurring, setRecurring] = useState(false);
   const [split, setSplit] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [installments, setInstallments] = useState("1");
+  const [installments, setInstallments] = useState(1);
   const [selectedCardId, setSelectedCardId] = useState<string>("");
+  const [name, setName] = useState("");
+  const [value, setValue] = useState("");
 
-  // Load credit cards for card category
   const cards = (() => {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; }
+    try { return JSON.parse(localStorage.getItem(CARDS_KEY) || "[]"); } catch { return []; }
   })();
 
   const isIncome = type === "income";
   const isCardCategory = selectedCategory === "Cartão";
   const title = isIncome ? "Adicionar Receita" : "Adicionar Despesa";
   const saveLabel = isIncome ? "Salvar Receita • +10 pts" : isCardCategory ? "Lançar na Fatura • +10 pts" : "Salvar Despesa • +10 pts";
+
+  const handleSave = () => {
+    if (!name.trim()) {
+      toast.error("Preencha o nome");
+      return;
+    }
+    const numValue = parseFloat(value.replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
+    if (numValue <= 0) {
+      toast.error("Informe um valor válido");
+      return;
+    }
+
+    const transaction = {
+      id: crypto.randomUUID(),
+      name: name.trim(),
+      value: numValue,
+      type: isIncome ? "income" : "expense",
+      category: selectedCategory || "Outros",
+      priority: isIncome ? null : selectedPriority,
+      recurring,
+      split,
+      installments: isCardCategory ? installments : 1,
+      cardId: isCardCategory ? selectedCardId : null,
+      date: new Date().toISOString(),
+    };
+
+    // Save transaction
+    try {
+      const existing = JSON.parse(localStorage.getItem(TRANSACTIONS_KEY) || "[]");
+      existing.unshift(transaction);
+      localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(existing));
+    } catch {}
+
+    // If card category, update card invoice
+    if (isCardCategory && selectedCardId) {
+      try {
+        const allCards = JSON.parse(localStorage.getItem(CARDS_KEY) || "[]");
+        const perInstallment = numValue / installments;
+        const updated = allCards.map((c: any) => {
+          if (c.id === selectedCardId) {
+            const newTx = { id: crypto.randomUUID(), desc: name.trim(), value: perInstallment, date: new Date().toLocaleDateString("pt-BR"), category: "Cartão" };
+            return {
+              ...c,
+              usedAmount: (c.usedAmount || 0) + perInstallment,
+              invoiceAmount: (c.invoiceAmount || 0) + perInstallment,
+              transactions: [newTx, ...(c.transactions || [])],
+              futureInvoices: installments > 1
+                ? Array.from({ length: installments - 1 }, (_, i) => {
+                    const d = new Date();
+                    d.setMonth(d.getMonth() + i + 1);
+                    return { month: d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" }), amount: perInstallment };
+                  })
+                : c.futureInvoices || [],
+            };
+          }
+          return c;
+        });
+        localStorage.setItem(CARDS_KEY, JSON.stringify(updated));
+      } catch {}
+    }
+
+    toast.success(isIncome ? "Receita salva com sucesso!" : isCardCategory ? "Lançado na fatura!" : "Despesa salva com sucesso!");
+    // Reset
+    setName("");
+    setValue("");
+    setSelectedCategory(null);
+    setInstallments(1);
+    setSelectedCardId("");
+    setRecurring(false);
+    setSplit(false);
+    onClose();
+  };
 
   if (!open) return null;
 
@@ -58,7 +133,6 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
           </button>
         </div>
 
-        {/* Quick shortcuts - only for expenses */}
         {!isIncome && (
           <div className="grid grid-cols-4 gap-2 mb-5">
             {shortcuts.map((s) => {
@@ -80,28 +154,33 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
           </div>
         )}
 
-        {/* Inputs */}
         <div className="space-y-3 mb-5">
           <input
             type="text"
             placeholder={isIncome ? "Fonte da receita" : "Nome da categoria"}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             className="w-full rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary transition-all"
           />
           <input
             type="text"
             inputMode="numeric"
             placeholder="Valor (R$)"
+            value={value}
+            onChange={(e) => {
+              const nums = e.target.value.replace(/\D/g, "");
+              const val = (parseInt(nums) || 0) / 100;
+              setValue(val > 0 ? val.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "");
+            }}
             className="w-full rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary transition-all tabular-nums"
           />
         </div>
 
-        {/* Card-specific options */}
         {isCardCategory && (
           <div className="space-y-3 mb-5 card-zelo !bg-purple-500/5 !border-purple-500/20">
             <p className="text-xs font-semibold flex items-center gap-1.5">
               <CreditCard size={14} className="text-purple-400" /> Opções do Cartão
             </p>
-            {/* Select card */}
             <div>
               <label className="text-[10px] text-muted-foreground font-medium mb-1 block">Cartão</label>
               <select
@@ -115,19 +194,27 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
                 ))}
               </select>
             </div>
-            {/* Installments */}
             <div>
               <label className="text-[10px] text-muted-foreground font-medium mb-1 block">Parcelas</label>
-              <input
-                type="text"
-                inputMode="numeric"
-                value={installments}
-                onChange={(e) => setInstallments(e.target.value.replace(/\D/g, "") || "1")}
-                placeholder="1"
-                className="w-full rounded-xl border border-border bg-muted/50 px-3 py-2.5 text-sm outline-none focus:border-primary"
-              />
-              {parseInt(installments) > 1 && (
-                <p className="text-[10px] text-muted-foreground mt-1">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setInstallments(Math.max(1, installments - 1))}
+                  className="h-9 w-9 rounded-xl border border-border bg-muted/50 flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary active:scale-95 transition-all"
+                >
+                  <ChevronDown size={16} />
+                </button>
+                <div className="flex-1 rounded-xl border-2 border-primary bg-muted/30 py-2 text-center text-sm font-bold tabular-nums">
+                  {installments}x
+                </div>
+                <button
+                  onClick={() => setInstallments(Math.min(48, installments + 1))}
+                  className="h-9 w-9 rounded-xl border border-border bg-muted/50 flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary active:scale-95 transition-all"
+                >
+                  <ChevronUp size={16} />
+                </button>
+              </div>
+              {installments > 1 && (
+                <p className="text-[10px] text-muted-foreground mt-1.5">
                   Compra será dividida em {installments}x nas próximas faturas
                 </p>
               )}
@@ -135,7 +222,6 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
           </div>
         )}
 
-        {/* Priority - only for expenses */}
         {!isIncome && (
           <>
             <p className="text-xs font-semibold text-muted-foreground mb-2">Prioridade</p>
@@ -159,21 +245,14 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
           </>
         )}
 
-        {/* Toggles */}
         <div className="space-y-3 mb-6">
           <label className="flex items-center justify-between">
             <span className="text-sm">{isIncome ? "Receita Recorrente" : "Despesa Recorrente"}</span>
             <button
               onClick={() => setRecurring(!recurring)}
-              className={cn(
-                "h-6 w-11 rounded-full transition-colors duration-200",
-                recurring ? "bg-primary" : "bg-muted"
-              )}
+              className={cn("h-6 w-11 rounded-full transition-colors duration-200", recurring ? "bg-primary" : "bg-muted")}
             >
-              <div className={cn(
-                "h-5 w-5 rounded-full bg-foreground transition-transform duration-200 ml-0.5",
-                recurring && "translate-x-5"
-              )} />
+              <div className={cn("h-5 w-5 rounded-full bg-foreground transition-transform duration-200 ml-0.5", recurring && "translate-x-5")} />
             </button>
           </label>
           {!isIncome && (
@@ -181,25 +260,21 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
               <span className="text-sm">Dividir despesa</span>
               <button
                 onClick={() => setSplit(!split)}
-                className={cn(
-                  "h-6 w-11 rounded-full transition-colors duration-200",
-                  split ? "bg-primary" : "bg-muted"
-                )}
+                className={cn("h-6 w-11 rounded-full transition-colors duration-200", split ? "bg-primary" : "bg-muted")}
               >
-                <div className={cn(
-                  "h-5 w-5 rounded-full bg-foreground transition-transform duration-200 ml-0.5",
-                  split && "translate-x-5"
-                )} />
+                <div className={cn("h-5 w-5 rounded-full bg-foreground transition-transform duration-200 ml-0.5", split && "translate-x-5")} />
               </button>
             </label>
           )}
         </div>
 
-        {/* Save */}
-        <button className={cn(
-          "w-full rounded-xl py-3.5 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] pulse-glow",
-          isIncome ? "bg-success" : isCardCategory ? "bg-purple-600" : "bg-primary"
-        )}>
+        <button
+          onClick={handleSave}
+          className={cn(
+            "w-full rounded-xl py-3.5 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] pulse-glow",
+            isIncome ? "bg-success" : isCardCategory ? "bg-purple-600" : "bg-primary"
+          )}
+        >
           {saveLabel}
         </button>
       </div>
