@@ -148,7 +148,9 @@ const CreditCardManager = ({ open, onClose }: Props) => {
     setShowPayment(false); setPayAmount("");
   };
 
-  const handleDeleteCard = (id: string) => { update(cards.filter(c => c.id !== id)); if (selectedCard === id) setSelectedCard(null); };
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  const handleDeleteCard = (id: string) => { update(cards.filter(c => c.id !== id)); if (selectedCard === id) setSelectedCard(null); setDeleteConfirmId(null); };
 
   if (!open) return null;
 

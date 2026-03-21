@@ -18,7 +18,6 @@ const TabBar = ({ activeTab, onTabChange }: TabBarProps) => {
   return (
     <nav
       className="shrink-0 z-50 border-t border-border bg-card/95 backdrop-blur-xl"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       <div className="mx-auto flex max-w-lg items-center justify-around px-2 py-2">
         {tabs.map((tab) => {
@@ -43,6 +42,7 @@ const TabBar = ({ activeTab, onTabChange }: TabBarProps) => {
           );
         })}
       </div>
+      <div style={{ height: 'env(safe-area-inset-bottom, 0px)' }} />
     </nav>
   );
 };
