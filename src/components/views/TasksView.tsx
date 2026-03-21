@@ -25,13 +25,28 @@ const TasksView = () => {
 
   useEffect(() => {
     const loadMembers = async () => {
+      const isDemo = localStorage.getItem("sparky-demo-mode") === "true";
+      if (isDemo) return;
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: profiles } = await supabase
+      // Get user's group_code first
+      const { data: myProfile } = await supabase
         .from("profiles")
-        .select("name, points, user_id")
-        .order("points", { ascending: false });
+        .select("group_code")
+        .eq("user_id", user.id)
+        .single();
+
+      let query = supabase.from("profiles").select("name, points, user_id, invite_code, group_code");
+      
+      if (myProfile?.group_code) {
+        query = query.eq("group_code", myProfile.group_code);
+      } else {
+        query = query.eq("user_id", user.id);
+      }
+
+      const { data: profiles } = await query.order("points", { ascending: false });
 
       if (profiles) {
         setMembers(profiles.map(p => ({
@@ -39,10 +54,13 @@ const TasksView = () => {
           points: p.points,
           avatar: p.name.charAt(0).toUpperCase(),
           isCurrentUser: p.user_id === user.id,
+          isLeader: p.invite_code === p.group_code,
         })));
       }
     };
     loadMembers();
+    const interval = setInterval(loadMembers, 15000);
+    return () => clearInterval(interval);
   }, []);
 
   // Dynamic achievements based on real data
