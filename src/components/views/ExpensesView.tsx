@@ -74,7 +74,8 @@ const ExpensesView = () => {
 
       <button
         onClick={() => setModalOpen(true)}
-        className="fixed bottom-20 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg shadow-primary/30 text-primary-foreground transition-all active:scale-90 pulse-glow"
+        className="fixed right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg shadow-primary/30 text-primary-foreground transition-all active:scale-90 pulse-glow"
+        style={{ bottom: 'calc(112px + env(safe-area-inset-bottom, 0px))' }}
       >
         <Plus size={24} strokeWidth={2.5} />
       </button>

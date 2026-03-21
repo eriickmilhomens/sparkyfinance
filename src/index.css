@@ -51,7 +51,7 @@
   }
 
   .dark {
-    --background: 0 0% 4.3%;
+    --background: 0 0% 8.6%;
     --foreground: 0 0% 95%;
 
     --card: 0 0% 8.6%;
@@ -119,6 +119,7 @@
     @apply bg-background;
     height: 100%;
     min-height: 100%;
+    overflow: hidden;
   }
 
   #root {
@@ -160,6 +161,17 @@
 
   .fade-in-up {
     animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .liquid-dock {
+    background: hsl(var(--card) / 0.72);
+    border: 1px solid hsl(var(--border) / 0.72);
+    box-shadow:
+      0 24px 48px -24px hsl(var(--foreground) / 0.6),
+      0 12px 24px -18px hsl(var(--foreground) / 0.4),
+      inset 0 1px 0 hsl(var(--foreground) / 0.08);
+    backdrop-filter: blur(18px) saturate(180%);
+    -webkit-backdrop-filter: blur(18px) saturate(180%);
   }
 
   .stagger-1 { animation-delay: 60ms; }

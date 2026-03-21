@@ -70,7 +70,7 @@ const Index = () => {
 
   return (
     <div
-      className="bg-background relative mx-auto max-w-lg lg:max-w-4xl xl:max-w-6xl flex flex-col"
+      className="bg-background relative mx-auto flex w-full max-w-lg flex-col lg:max-w-4xl xl:max-w-6xl"
       style={{
         height: '100dvh',
         minHeight: '100dvh',
@@ -80,7 +80,7 @@ const Index = () => {
         overscrollBehavior: 'none',
       }}
     >
-      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden" style={{ overscrollBehavior: 'none' }}>
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden" style={{ overscrollBehavior: 'none', paddingBottom: 'calc(116px + env(safe-area-inset-bottom, 0px))' }}>
         {renderView()}
       </div>
       <TabBar activeTab={activeTab} onTabChange={handleTabChange} />

@@ -3,6 +3,7 @@ import { Crown, TrendingUp, Star, Trophy, Flame, Target, ShieldCheck, Zap } from
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useFinancialData } from "@/hooks/useFinancialData";
+import { useProfile } from "@/hooks/useProfile";
 
 const CompletedBadge = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="shrink-0">
@@ -23,14 +24,33 @@ interface GroupMember {
 const TasksView = () => {
   const [members, setMembers] = useState<GroupMember[]>([]);
   const { data } = useFinancialData();
+  const { profile } = useProfile();
 
   useEffect(() => {
+    const buildCurrentUserCard = (): GroupMember[] => {
+      if (!profile) return [];
+
+      return [{
+        name: profile.name,
+        points: profile.points,
+        avatar: profile.name.charAt(0).toUpperCase(),
+        isCurrentUser: true,
+        isLeader: true,
+      }];
+    };
+
     const loadMembers = async () => {
       const isDemo = localStorage.getItem("sparky-demo-mode") === "true";
-      if (isDemo) return;
+      if (isDemo) {
+        setMembers(buildCurrentUserCard());
+        return;
+      }
 
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        setMembers(buildCurrentUserCard());
+        return;
+      }
 
       // Get user's group_code first
       const { data: myProfile } = await supabase
@@ -49,20 +69,25 @@ const TasksView = () => {
 
       const { data: profiles } = await query.order("points", { ascending: false });
 
-      if (profiles) {
+      if (profiles?.length) {
         setMembers(profiles.map(p => ({
           name: p.name,
           points: p.points,
           avatar: p.name.charAt(0).toUpperCase(),
           isCurrentUser: p.user_id === user.id,
-          isLeader: p.invite_code === p.group_code,
+          isLeader: profiles.length === 1 || p.invite_code === p.group_code,
         })));
+        return;
       }
+
+      setMembers(buildCurrentUserCard());
     };
+
     loadMembers();
     const interval = setInterval(loadMembers, 15000);
+
     return () => clearInterval(interval);
-  }, []);
+  }, [profile]);
 
   // Dynamic achievements based on real data
   const hasTransactions = data.transactions.length > 0;
@@ -132,7 +157,7 @@ const TasksView = () => {
           {members.length === 0 ? (
             <div className="card-zelo text-center py-6 fade-in-up">
               <Crown size={24} className="text-warning mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">Carregando ranking...</p>
+              <p className="text-sm text-muted-foreground">Nenhum participante disponível ainda</p>
             </div>
           ) : (
             members.map((member, i) => (
