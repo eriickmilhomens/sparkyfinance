@@ -111,7 +111,7 @@ const TasksView = () => {
         <p className="text-label mb-2 px-1">RANKING DO GRUPO</p>
         <div className="space-y-2">
           {members.length === 0 ? (
-            <div className="card-zelo text-center py-6 fade-in-up border-l-warning">
+            <div className="card-zelo text-center py-6 fade-in-up">
               <Crown size={24} className="text-warning mx-auto mb-2" />
               <p className="text-sm text-muted-foreground">Carregando ranking...</p>
             </div>
