@@ -188,6 +188,34 @@ const ChatView = () => {
     setShowMenu(false);
   };
 
+  // Auto-clear chat on app close (beforeunload) and 5min inactivity
+  useEffect(() => {
+    const clearChat = () => {
+      setMessages([]);
+      setActiveId(null);
+    };
+
+    // Clear on page unload / app close
+    const handleUnload = () => clearChat();
+    window.addEventListener("beforeunload", handleUnload);
+
+    // Clear on 5min inactivity
+    let idleTimer: ReturnType<typeof setTimeout>;
+    const resetIdle = () => {
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(clearChat, IDLE_TIMEOUT);
+    };
+    const events = ["pointerdown", "keydown", "scroll", "touchstart"];
+    events.forEach(e => window.addEventListener(e, resetIdle, { passive: true }));
+    resetIdle();
+
+    return () => {
+      window.removeEventListener("beforeunload", handleUnload);
+      events.forEach(e => window.removeEventListener(e, resetIdle));
+      clearTimeout(idleTimer);
+    };
+  }, []);
+
   useEffect(() => {
     if (!activeId) {
       const convs = loadConversations();
