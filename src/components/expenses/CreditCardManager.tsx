@@ -200,7 +200,7 @@ const CreditCardManager = ({ open, onClose }: Props) => {
                 <p className="text-[10px] text-muted-foreground">{activeCard.bankName} • {activeCard.cardType || "Crédito"}{activeCard.cardFlag ? ` • ${activeCard.cardFlag}` : ""}</p>
               </div>
             </div>
-            <button onClick={() => handleDeleteCard(activeCard.id)} className="p-2 rounded-lg text-destructive hover:bg-destructive/10"><X size={16} /></button>
+            <button onClick={() => setDeleteConfirmId(activeCard.id)} className="p-2 rounded-lg text-destructive hover:bg-destructive/10"><X size={16} /></button>
           </div>
 
           {/* Progress */}
