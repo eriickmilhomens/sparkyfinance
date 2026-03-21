@@ -5,6 +5,7 @@ import DonutChart from "@/components/expenses/DonutChart";
 import PaceBar from "@/components/expenses/PaceBar";
 import BudgetAlert from "@/components/expenses/BudgetAlert";
 import SyncBanner from "@/components/expenses/SyncBanner";
+import SyncStatusBanner from "@/components/expenses/SyncStatusBanner";
 
 const balanceHistory = [
   { name: "Jan", value: 3200.00 }, { name: "Fev", value: 2800.00 },
