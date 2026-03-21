@@ -257,7 +257,7 @@ const ProfileSwitcher = () => {
               const isCurrent = member.id === active;
               const diff = member.points - current.points;
               return (
-                <div key={member.id} className={cn("card-zelo flex items-center gap-3", isCurrent && "border-primary/30")}>
+                <div key={member.id} className={cn("card-zelo flex items-center gap-3", isCurrent ? "border-primary/30 border-l-primary" : i === 0 ? "border-l-warning" : "border-l-primary")}>
                   <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
                     {i + 1}º
                   </div>
