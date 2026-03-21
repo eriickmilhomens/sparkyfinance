@@ -103,7 +103,7 @@ const SubscriptionsCard = () => {
     toast.success(`${sub.name} marcada como paga! +3 pts`);
   };
 
-  const handleUnmarkPaid = (id: string) => {
+  const handleUnmarkPaid = async (id: string) => {
     const sub = subs.find(s => s.id === id);
     if (!sub || !sub.paid) return;
     update(subs.map(s => s.id === id ? { ...s, paid: false } : s));
@@ -114,7 +114,8 @@ const SubscriptionsCard = () => {
       balance: data.balance + sub.amount,
       transactions: updatedTx,
     });
-    toast.success(`${sub.name} desmarcada — estorno realizado`);
+    await removePoints("bill_paid");
+    toast.success(`${sub.name} desmarcada — estorno e pontos removidos`);
   };
 
   const handleDelete = (id: string) => {
