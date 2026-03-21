@@ -1,29 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Copy, Check, Crown, Star, Shield, Users, Trophy, Zap, Gift, ChevronDown, ChevronUp } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { usePoints, POINTS_RULES } from "@/hooks/usePoints";
+import { useGroupMembers } from "@/hooks/useGroupMembers";
 
 const MembersView = () => {
   const [copied, setCopied] = useState(false);
   const [showPointsGuide, setShowPointsGuide] = useState(false);
   const { profile } = useProfile();
   const { currentPoints, monthlyEarnings, recentActivity } = usePoints();
-  const [members, setMembers] = useState<any[]>([]);
+  const { members, isLeader } = useGroupMembers();
 
-  const groupCode = profile?.invite_code || "--------";
-
-  useEffect(() => {
-    const load = async () => {
-      if (!profile) return;
-      const { data } = await supabase
-        .from("profiles")
-        .select("*")
-        .order("points", { ascending: false });
-      if (data) setMembers(data);
-    };
-    load();
-  }, [profile]);
+  const groupCode = profile?.group_code || profile?.invite_code || "--------";
 
   const handleCopy = () => {
     navigator.clipboard.writeText(groupCode);
@@ -31,8 +19,9 @@ const MembersView = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const getRankBadge = (index: number) => {
-    if (index === 0) return { icon: Crown, color: "text-warning", bg: "bg-warning/15", label: "Líder" };
+  const getRankBadge = (index: number, member: any) => {
+    if (isLeader(member)) return { icon: Crown, color: "text-warning", bg: "bg-warning/15", label: "Líder" };
+    if (index === 0) return { icon: Crown, color: "text-warning", bg: "bg-warning/15", label: "1º lugar" };
     if (index === 1) return { icon: Star, color: "text-primary", bg: "bg-primary/15", label: "2º lugar" };
     if (index === 2) return { icon: Star, color: "text-success", bg: "bg-success/15", label: "3º lugar" };
     return { icon: Star, color: "text-muted-foreground", bg: "bg-muted", label: `${index + 1}º` };
@@ -57,6 +46,9 @@ const MembersView = () => {
   const progressToNext = nextLevel
     ? Math.min(100, ((currentPoints - level.min) / (nextLevel.min - level.min)) * 100)
     : 100;
+
+  const leaderCount = members.filter(m => isLeader(m)).length;
+  const memberCount = members.length - leaderCount;
 
   return (
     <div className="px-4 pb-24 space-y-4">
@@ -83,7 +75,6 @@ const MembersView = () => {
           </div>
         </div>
 
-        {/* Progress to next level */}
         {nextLevel && (
           <div>
             <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
@@ -124,7 +115,6 @@ const MembersView = () => {
 
         {showPointsGuide && (
           <div className="mt-4 space-y-4">
-            {/* Rules */}
             <div>
               <p className="text-[10px] font-semibold text-muted-foreground mb-2">COMO GANHAR</p>
               <div className="space-y-2">
@@ -143,7 +133,6 @@ const MembersView = () => {
               </div>
             </div>
 
-            {/* Levels */}
             <div>
               <p className="text-[10px] font-semibold text-muted-foreground mb-2">NÍVEIS</p>
               <div className="space-y-1.5">
@@ -162,7 +151,6 @@ const MembersView = () => {
               </div>
             </div>
 
-            {/* What points do */}
             <div className="rounded-xl bg-primary/10 border border-primary/20 p-3">
               <p className="text-xs font-bold text-primary mb-1">🎁 Para que servem os pontos?</p>
               <ul className="text-[11px] text-muted-foreground space-y-1">
@@ -199,24 +187,24 @@ const MembersView = () => {
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15">
               <Users size={14} className="text-primary" />
             </div>
-            <span className="text-[10px] text-muted-foreground font-medium">Participantes</span>
+            <span className="text-[10px] text-muted-foreground font-medium">Membros</span>
           </div>
-          <p className="text-2xl font-bold">{members.length || 1}</p>
+          <p className="text-2xl font-bold">{memberCount}</p>
         </div>
         <div className="card-zelo fade-in-up stagger-4">
           <div className="flex items-center gap-2 mb-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-warning/15">
-              <Shield size={14} className="text-warning" />
+              <Crown size={14} className="text-warning" />
             </div>
-            <span className="text-[10px] text-muted-foreground font-medium">Administradores</span>
+            <span className="text-[10px] text-muted-foreground font-medium">Líderes</span>
           </div>
-          <p className="text-2xl font-bold">{members.filter(m => m.role === "admin").length || 1}</p>
+          <p className="text-2xl font-bold">{leaderCount}</p>
         </div>
       </div>
 
       {/* Members Ranking */}
       <div className="fade-in-up stagger-4">
-        <p className="text-label mb-2 px-1">RANKING DO GRUPO</p>
+        <p className="text-label mb-2 px-1">CLASSIFICAÇÃO GERAL</p>
         <div className="card-zelo !p-0 divide-y divide-border">
           {members.length === 0 && profile && (
             <div className="flex items-center gap-3 px-4 py-3.5">
@@ -238,7 +226,8 @@ const MembersView = () => {
             </div>
           )}
           {members.map((member, index) => {
-            const badge = getRankBadge(index);
+            const memberIsLeader = isLeader(member);
+            const badge = getRankBadge(index, member);
             const BadgeIcon = badge.icon;
             const colors = [
               "from-warning/40 to-warning/10",
@@ -249,9 +238,13 @@ const MembersView = () => {
             return (
               <div key={member.id} className="flex items-center gap-3 px-4 py-3.5">
                 <div className="relative">
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br ${colors[index % colors.length]} text-sm font-bold`}>
-                    {member.name.charAt(0).toUpperCase()}
-                  </div>
+                  {member.avatar_url ? (
+                    <img src={member.avatar_url} alt={member.name} className="h-10 w-10 rounded-full object-cover" />
+                  ) : (
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br ${colors[index % colors.length]} text-sm font-bold`}>
+                      {member.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
                   <BadgeIcon size={12} className={`absolute -top-1 -right-1 ${badge.color}`} />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -263,10 +256,13 @@ const MembersView = () => {
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className={`inline-flex items-center gap-1 rounded-full ${badge.bg} px-2 py-0.5 text-[10px] font-semibold ${badge.color}`}>
-                      <BadgeIcon size={8} /> {badge.label}
+                      <BadgeIcon size={8} /> {memberIsLeader ? "Líder" : "Membro"}
                     </span>
                     <span className="text-[10px] text-muted-foreground tabular-nums">{member.points} pontos</span>
                   </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-bold text-muted-foreground">{index + 1}º</span>
                 </div>
               </div>
             );
