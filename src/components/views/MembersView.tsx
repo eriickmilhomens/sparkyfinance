@@ -203,7 +203,7 @@ const MembersView = () => {
           </div>
           <p className="text-2xl font-bold">{members.length || 1}</p>
         </div>
-        <div className="card-zelo fade-in-up stagger-4 border-l-warning">
+        <div className="card-zelo fade-in-up stagger-4">
           <div className="flex items-center gap-2 mb-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-warning/15">
               <Shield size={14} className="text-warning" />
