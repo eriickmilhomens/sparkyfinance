@@ -6,6 +6,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index.tsx";
 import Login from "./pages/Login.tsx";
 import Onboarding from "./pages/Onboarding.tsx";
+// Ensure OAuth callback handler runs on every page load
+import "@/integrations/lovable";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();

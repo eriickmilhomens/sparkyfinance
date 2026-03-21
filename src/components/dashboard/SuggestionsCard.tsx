@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
 import { Landmark, MessageCircle, ArrowLeft, Lightbulb, TrendingDown, PiggyBank, Target, Sparkles, Zap, BookOpen, Shield, Heart } from "lucide-react";
-import PluggyConnectModal from "@/components/expenses/PluggyConnectModal";
 import { useFinancialData, fmt } from "@/hooks/useFinancialData";
 
 const ALL_TIPS = [
@@ -17,7 +16,7 @@ const ALL_TIPS = [
 ];
 
 const SuggestionsCard = () => {
-  const [pluggyOpen, setPluggyOpen] = useState(false);
+  const [syncPopup, setSyncPopup] = useState(false);
   const [whatsappPopup, setWhatsappPopup] = useState(false);
   const [tipIndex, setTipIndex] = useState(() => Math.floor(Math.random() * ALL_TIPS.length));
   const { data, available, dailyBudget, daysLeft } = useFinancialData();
@@ -95,10 +94,10 @@ const SuggestionsCard = () => {
           <p className="text-[11px] text-muted-foreground">Importe transações bancárias automaticamente.</p>
         </div>
         <button
-          onClick={() => setPluggyOpen(true)}
-          className="shrink-0 rounded-lg bg-primary px-3 py-1.5 text-[10px] font-bold text-primary-foreground active:scale-95 transition-transform"
+          onClick={() => setSyncPopup(true)}
+          className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-[10px] font-medium text-muted-foreground active:scale-95 transition-transform"
         >
-          Conectar
+          Desativado
         </button>
       </div>
 
@@ -112,26 +111,26 @@ const SuggestionsCard = () => {
         </div>
         <button
           onClick={() => setWhatsappPopup(true)}
-          className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-[10px] font-medium text-muted-foreground active:scale-95 transition-transform"
+          className="shrink-0 rounded-lg bg-success px-3 py-1.5 text-[10px] font-bold text-success-foreground active:scale-95 transition-transform"
         >
-          Desativado
+          Ativar
         </button>
       </div>
 
-      {whatsappPopup && (
+      {syncPopup && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setWhatsappPopup(false)} />
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSyncPopup(false)} />
           <div className="relative w-[85%] max-w-sm rounded-2xl bg-card border border-border p-5 shadow-xl animate-scale-in">
             <div className="flex flex-col items-center text-center gap-3">
-              <div className="h-14 w-14 rounded-full bg-success/15 flex items-center justify-center">
-                <MessageCircle size={24} className="text-success" />
+              <div className="h-14 w-14 rounded-full bg-primary/15 flex items-center justify-center">
+                <Landmark size={24} className="text-primary" />
               </div>
-              <h3 className="text-base font-bold">Em breve!</h3>
+              <h3 className="text-base font-bold">Em desenvolvimento</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                O assistente via WhatsApp ainda está em implementação. Em breve você poderá lançar gastos e consultar seu saldo diretamente pelo WhatsApp!
+                A sincronização bancária ainda não está 100% implementada. Em breve teremos atualizações para conectar seus bancos automaticamente!
               </p>
               <button
-                onClick={() => setWhatsappPopup(false)}
+                onClick={() => setSyncPopup(false)}
                 className="w-full rounded-xl border border-border py-2.5 text-xs font-medium text-muted-foreground active:scale-[0.98] transition-all mt-1"
               >
                 <ArrowLeft size={12} className="inline mr-1" />
@@ -142,7 +141,37 @@ const SuggestionsCard = () => {
         </div>
       )}
 
-      <PluggyConnectModal open={pluggyOpen} onClose={() => setPluggyOpen(false)} />
+      {whatsappPopup && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setWhatsappPopup(false)} />
+          <div className="relative w-[85%] max-w-sm rounded-2xl bg-card border border-border p-5 shadow-xl animate-scale-in">
+            <div className="flex flex-col items-center text-center gap-3">
+              <div className="h-14 w-14 rounded-full bg-success/15 flex items-center justify-center">
+                <MessageCircle size={24} className="text-success" />
+              </div>
+              <h3 className="text-base font-bold">Ativar Assistente WhatsApp</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Envie uma mensagem para nosso número no WhatsApp e comece a lançar gastos e consultar seu saldo diretamente pelo app!
+              </p>
+              <a
+                href="https://wa.me/MESSAGE_NUMBER"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full rounded-xl bg-success py-2.5 text-xs font-bold text-success-foreground active:scale-[0.98] transition-all mt-1 text-center"
+              >
+                Abrir no WhatsApp
+              </a>
+              <button
+                onClick={() => setWhatsappPopup(false)}
+                className="w-full rounded-xl border border-border py-2.5 text-xs font-medium text-muted-foreground active:scale-[0.98] transition-all"
+              >
+                <ArrowLeft size={12} className="inline mr-1" />
+                Voltar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
