@@ -154,7 +154,7 @@ const SpendingOverview = ({ hideValues = false }: SpendingOverviewProps) => {
           <p className="text-lg font-bold tabular-nums">{hideValues ? masked : fmt(data.income)}</p>
           {hasData && !hideValues && (<span className="text-[10px] text-success font-medium flex items-center gap-0.5"><ArrowUpRight size={10} /> Receita registrada</span>)}
         </div>
-        <div className="card-zelo fade-in-up stagger-2">
+        <div className="card-zelo fade-in-up stagger-2 border-l-destructive">
           <div className="flex items-center gap-2 mb-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-destructive/15"><CreditCard size={14} className="text-destructive" /></div>
             <span className="text-[10px] text-muted-foreground font-medium">Gasto Mensal</span>
