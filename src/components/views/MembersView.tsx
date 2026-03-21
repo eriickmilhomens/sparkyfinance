@@ -217,7 +217,7 @@ const MembersView = () => {
       {/* Members Ranking */}
       <div className="fade-in-up stagger-4">
         <p className="text-label mb-2 px-1">RANKING DO GRUPO</p>
-        <div className="card-zelo !p-0 divide-y divide-border border-l-warning">
+        <div className="card-zelo !p-0 divide-y divide-border">
           {members.length === 0 && profile && (
             <div className="flex items-center gap-3 px-4 py-3.5">
               <div className="relative">
