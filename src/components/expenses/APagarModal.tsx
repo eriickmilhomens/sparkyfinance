@@ -2,6 +2,7 @@ import { useState } from "react";
 import { X, CheckCircle2, Clock, Trash2, CalendarDays, Tag, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFinancialData, fmt, Transaction } from "@/hooks/useFinancialData";
+import { usePoints } from "@/hooks/usePoints";
 import { toast } from "sonner";
 
 interface APagarModalProps {
