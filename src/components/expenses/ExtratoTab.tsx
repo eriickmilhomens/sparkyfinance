@@ -190,7 +190,7 @@ const ExtratoTab = () => {
       {Object.entries(grouped).map(([day, items]) => (
         <div key={day} className="fade-in-up">
           <p className="text-label px-1 mb-2">{day}</p>
-          <div className="card-zelo !p-0 divide-y divide-border">
+          <div className="card-zelo !p-0 divide-y divide-border border-l-primary">
             {items.map((t) => (
               <div key={t.id} className="relative">
                 {editingId === t.id ? (
