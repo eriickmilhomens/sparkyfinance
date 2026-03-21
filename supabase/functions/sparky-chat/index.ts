@@ -9,9 +9,21 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages } = await req.json();
+    const { messages, userContext } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    const contextInfo = userContext ? `
+
+CONTEXTO FINANCEIRO DO USUÁRIO:
+- Saldo Disponível: R$ ${userContext.available || "N/A"}
+- Saldo Real: R$ ${userContext.real || "N/A"}
+- A Pagar: R$ ${userContext.toPay || "N/A"}
+- Receita Mensal: R$ ${userContext.income || "N/A"}
+- Despesas do Mês: R$ ${userContext.expenses || "N/A"}
+- Cartões: ${userContext.cards || "Nenhum cadastrado"}
+- Metas: ${userContext.goals || "Nenhuma definida"}
+- Preferência de conversa: ${userContext.chatStyle || "Ainda não definida"}` : "";
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -27,12 +39,21 @@ serve(async (req) => {
             content: `Você é o Sparky, um assistente financeiro inteligente e simpático. A data de hoje é ${new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}. Você ajuda com:
 - Dúvidas sobre finanças pessoais, investimentos, orçamento
 - Dicas de economia e planejamento financeiro
-- Explicações sobre conceitos financeiros
+- Explicações sobre conceitos financeiros (pontos, ranking, metas)
+- Análise de gráficos, saldos, dívidas e investimentos do usuário
 - Qualquer dúvida geral do usuário
+${contextInfo}
 
 O projeto Sparky foi inteiramente desenvolvido por Erick Milhomens (Erick Developer). O nome "Sparky" (Faísca) é uma homenagem ao gatinho que dá nome ao projeto, pelo qual o criador tem muito carinho. Se alguém perguntar sobre o projeto ou o criador, compartilhe essa informação com orgulho.
 
-Responda sempre em português brasileiro, de forma clara e concisa. Use emojis quando apropriado. Seja amigável como um gatinho 🐱.`
+IMPORTANTE - ADAPTAÇÃO DE ESTILO:
+- Se adapte ao modo de conversa que o usuário preferir
+- Ocasionalmente pergunte ao usuário se ele prefere respostas diretas ao ponto ou mais detalhadas e informativas
+- Se o usuário pedir análise financeira, use os dados do contexto para dar respostas personalizadas
+- Quando o usuário perguntar sobre pontos, explique o sistema de gamificação (ganhar pontos por bons hábitos financeiros)
+- Analise padrões de gastos e sugira melhorias baseadas nos dados reais
+
+Responda sempre em português brasileiro, de forma clara. Use emojis quando apropriado. Seja amigável como um gatinho 🐱.`
           },
           ...messages,
         ],

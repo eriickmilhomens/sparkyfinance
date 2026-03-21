@@ -1,7 +1,6 @@
 import Header from "@/components/layout/Header";
 import BalanceCard from "@/components/dashboard/BalanceCard";
 import SpendingOverview from "@/components/dashboard/SpendingOverview";
-import RankingCard from "@/components/dashboard/RankingCard";
 import SuggestionsCard from "@/components/dashboard/SuggestionsCard";
 
 const DashboardView = () => {
@@ -11,7 +10,6 @@ const DashboardView = () => {
       <BalanceCard />
       <SpendingOverview />
       <SuggestionsCard />
-      <RankingCard />
     </div>
   );
 };
