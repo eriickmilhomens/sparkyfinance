@@ -179,6 +179,26 @@ const SpendingOverview = ({ hideValues = false }: SpendingOverviewProps) => {
     </div>
   );
 
+  const balanceHistory = buildBalanceHistory();
+  const entriesExitsData = Array.from({ length: 31 }, (_, i) => ({ day: i + 1, entradas: 0, saidas: 0 }));
+  if (hasData) {
+    const now = new Date();
+    data.transactions.forEach(t => {
+      const d = new Date(t.date);
+      if (d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
+        const day = d.getDate() - 1;
+        if (day >= 0 && day < 31) {
+          if (t.type === "income") entriesExitsData[day].entradas += t.amount;
+          else entriesExitsData[day].saidas += t.amount;
+        }
+      }
+    });
+  }
+
+  return (
+    <div className="space-y-3">
+      {renderPodeGastarCard()}
+
       {/* Simulator Modal */}
       {simOpen && (
         <div className="fixed inset-0 z-[60] flex items-end justify-center">
@@ -262,7 +282,7 @@ const SpendingOverview = ({ hideValues = false }: SpendingOverviewProps) => {
               ? "A Receita Mensal representa o total de entradas financeiras registradas no mês atual. Inclui salários, freelances, rendimentos e qualquer outra fonte de renda que você tenha adicionado. Esse valor é atualizado automaticamente a cada novo lançamento de receita."
               : infoPopup === "gasto"
               ? "O Gasto Mensal representa o total de despesas registradas no mês atual. Inclui contas fixas, compras, assinaturas e qualquer saída de dinheiro que você tenha lançado. Acompanhe esse valor para manter o controle do seu orçamento."
-              : "O 'Pode Gastar Hoje' calcula quanto você pode gastar de forma segura hoje. Ele pega 20% do seu saldo disponível (uma reserva de segurança) e divide pelos dias restantes do mês. Dessa forma, você evita gastar demais nos primeiros dias e garante que seu dinheiro dure até o fim do mês. Quanto mais verde, mais saudável está seu orçamento diário."
+              : `O 'Pode Gastar Hoje' calcula quanto você pode gastar de forma segura hoje. Ele pega ${spendPercent}% do seu saldo disponível (uma reserva de segurança) e divide pelos dias restantes do mês. Dessa forma, você evita gastar demais nos primeiros dias e garante que seu dinheiro dure até o fim do mês. Você pode ajustar o percentual tocando no ícone de lápis. Quanto mais verde, mais saudável está seu orçamento diário.`
           }
           onClose={() => setInfoPopup(null)}
         />
