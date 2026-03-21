@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { useFinancialData, fmt } from "@/hooks/useFinancialData";
 import { usePoints } from "@/hooks/usePoints";
 import { toast } from "sonner";
+import { useDockVisibility } from "@/hooks/useDockVisibility";
 
 interface Subscription {
   id: string;
