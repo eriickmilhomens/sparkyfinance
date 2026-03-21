@@ -4,6 +4,7 @@ import { BarChart, Bar, XAxis, ResponsiveContainer, RadialBarChart, RadialBar } 
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useFinancialData } from "@/hooks/useFinancialData";
+import { usePoints } from "@/hooks/usePoints";
 
 const BUDGET_KEY = "sparky-budgets";
 const GOALS_KEY = "sparky-investment-goals";
@@ -54,6 +55,7 @@ interface InvestmentGoal {
 
 const PlanejamentoTab = () => {
   const { data, updateData } = useFinancialData();
+  const { awardPoints } = usePoints();
   const [budgetCategories, setBudgetCategories] = useState(() => {
     try { return JSON.parse(localStorage.getItem(BUDGET_KEY) || "null") || defaultBudgets; } catch { return defaultBudgets; }
   });
@@ -144,7 +146,8 @@ const PlanejamentoTab = () => {
 
     setDepositGoalId(null);
     setDepositAmount("");
-    toast.success(`R$ ${fmtLocal(amount)} depositado na meta!`);
+    awardPoints("invest_deposit", `Depósito: ${investmentGoals.find(g => g.id === depositGoalId)?.name || "Meta"}`);
+    toast.success(`R$ ${fmtLocal(amount)} depositado na meta! +2 pts 📈`);
   };
 
   return (
