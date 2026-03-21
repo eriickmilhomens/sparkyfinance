@@ -24,7 +24,6 @@ const fmtNum = (v: number) => v.toLocaleString("pt-BR", { minimumFractionDigits:
 const DonutChart = () => {
   const { data: financialData } = useFinancialData();
 
-  // Build category totals from actual transactions only
   const categoryMap = new Map<string, number>();
   financialData.transactions
     .filter(t => t.type === "expense")
@@ -39,11 +38,27 @@ const DonutChart = () => {
 
   const total = categoryData.reduce((sum, d) => sum + d.value, 0);
 
+  // Empty state: show a full gray donut
   if (total === 0) {
+    const emptyData = [{ name: "Sem dados", value: 1, color: "hsl(0 0% 25%)" }];
     return (
       <div className="card-zelo fade-in-up">
         <p className="text-xs font-semibold text-muted-foreground mb-1">Distribuição de Gastos</p>
-        <p className="text-[11px] text-muted-foreground py-6 text-center">Nenhuma despesa registrada ainda.</p>
+        <p className="text-[10px] text-muted-foreground/70 mb-3">Nenhuma despesa registrada ainda.</p>
+        <div className="flex items-center justify-center">
+          <div className="h-32 w-32 relative opacity-40">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={emptyData} innerRadius={34} outerRadius={56} paddingAngle={0} dataKey="value" strokeWidth={0}>
+                  <Cell fill="hsl(0 0% 25%)" />
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-[10px] text-muted-foreground">R$ 0,00</span>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

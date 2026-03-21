@@ -1,22 +1,95 @@
-import { useState } from "react";
-import { Landmark, MessageCircle, X, ArrowLeft } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Landmark, MessageCircle, ArrowLeft, Lightbulb, TrendingDown, PiggyBank, Target, Sparkles } from "lucide-react";
 import PluggyConnectModal from "@/components/expenses/PluggyConnectModal";
+import { useFinancialData, fmt } from "@/hooks/useFinancialData";
 
 const SuggestionsCard = () => {
   const [pluggyOpen, setPluggyOpen] = useState(false);
   const [whatsappPopup, setWhatsappPopup] = useState(false);
+  const { data, available, dailyBudget, daysLeft } = useFinancialData();
+
+  const hasFinancialData = data.balance > 0 || data.income > 0 || data.expenses > 0;
+
+  // Dynamic tips based on user's real financial data
+  const dynamicTips = useMemo(() => {
+    const tips: { icon: any; bg: string; color: string; title: string; desc: string }[] = [];
+
+    if (!hasFinancialData) {
+      tips.push({
+        icon: Sparkles, bg: "bg-primary/15", color: "text-primary",
+        title: "Comece agora!",
+        desc: "Adicione sua primeira receita ou despesa para ativar seus insights financeiros.",
+      });
+      return tips;
+    }
+
+    const expenseRatio = data.income > 0 ? data.expenses / data.income : 0;
+
+    // High spending warning
+    if (expenseRatio > 0.8) {
+      tips.push({
+        icon: TrendingDown, bg: "bg-destructive/15", color: "text-destructive",
+        title: "Atenção aos gastos!",
+        desc: `Você já gastou ${(expenseRatio * 100).toFixed(0)}% da sua receita. Reduza despesas não essenciais.`,
+      });
+    }
+
+    // Savings encouragement
+    if (available > 0 && expenseRatio < 0.6) {
+      tips.push({
+        icon: PiggyBank, bg: "bg-success/15", color: "text-success",
+        title: "Ótimo ritmo de economia!",
+        desc: `Você ainda tem ${fmt(available)} disponível. Considere investir parte desse valor.`,
+      });
+    }
+
+    // Daily budget tip
+    if (dailyBudget > 0) {
+      tips.push({
+        icon: Target, bg: "bg-warning/15", color: "text-warning",
+        title: `${fmt(dailyBudget)}/dia`,
+        desc: `Seu limite diário para os próximos ${daysLeft} dias. Fique dentro para fechar o mês no verde!`,
+      });
+    }
+
+    // General motivation
+    if (tips.length === 0) {
+      tips.push({
+        icon: Lightbulb, bg: "bg-primary/15", color: "text-primary",
+        title: "Dica do Sparky",
+        desc: "Revise seus gastos semanalmente para identificar oportunidades de economia.",
+      });
+    }
+
+    return tips.slice(0, 2);
+  }, [hasFinancialData, data, available, dailyBudget, daysLeft]);
 
   return (
     <div className="space-y-2">
       <p className="text-label px-1">SUGESTÕES PARA VOCÊ</p>
-      
-      <div className="card-zelo fade-in-up stagger-1 flex items-center gap-3">
+
+      {dynamicTips.map((tip, i) => {
+        const Icon = tip.icon;
+        return (
+          <div key={i} className={`card-zelo fade-in-up stagger-${i + 1} flex items-center gap-3`}>
+            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${tip.bg}`}>
+              <Icon size={18} className={tip.color} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold">{tip.title}</p>
+              <p className="text-[11px] text-muted-foreground">{tip.desc}</p>
+            </div>
+          </div>
+        );
+      })}
+
+      <div className="card-zelo fade-in-up stagger-3 flex items-center gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15">
           <Landmark size={18} className="text-primary" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold">Sincronize suas finanças</p>
-          <p className="text-[11px] text-muted-foreground">Importe suas transações bancárias automaticamente.</p>
+          <p className="text-[11px] text-muted-foreground">Importe transações bancárias automaticamente.</p>
         </div>
         <button
           onClick={() => setPluggyOpen(true)}
@@ -26,7 +99,7 @@ const SuggestionsCard = () => {
         </button>
       </div>
 
-      <div className="card-zelo fade-in-up stagger-2 flex items-center gap-3">
+      <div className="card-zelo fade-in-up stagger-4 flex items-center gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-success/15">
           <MessageCircle size={18} className="text-success" />
         </div>
@@ -42,7 +115,6 @@ const SuggestionsCard = () => {
         </button>
       </div>
 
-      {/* WhatsApp popup */}
       {whatsappPopup && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setWhatsappPopup(false)} />
