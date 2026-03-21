@@ -72,10 +72,10 @@ const SyncBanner = ({ onNavigateToMetas, hideSyncBanner }: SyncBannerProps) => {
             <p className="text-[11px] text-muted-foreground">Conecte seus bancos para importar transações.</p>
           </div>
           <button
-            onClick={() => setPluggyOpen(true)}
-            className="shrink-0 rounded-full bg-primary px-3.5 py-1.5 text-[10px] font-bold text-primary-foreground active:scale-95 transition-transform whitespace-nowrap"
+            onClick={() => setSyncPopup(true)}
+            className="shrink-0 rounded-full border border-border px-3.5 py-1.5 text-[10px] font-medium text-muted-foreground active:scale-95 transition-transform whitespace-nowrap"
           >
-            Conectar Bancos
+            Desativado
           </button>
         </div>
       )}
