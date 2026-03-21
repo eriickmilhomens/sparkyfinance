@@ -25,6 +25,7 @@ const tabs = [
 
 const TabBar = ({ activeTab, onTabChange }: TabBarProps) => {
   const [adjusting, setAdjusting] = useState(false);
+  const [hidden, setHidden] = useState(false);
   const [offset, setOffset] = useState(getStoredOffset);
   const [tempOffset, setTempOffset] = useState(offset);
 
@@ -33,8 +34,16 @@ const TabBar = ({ activeTab, onTabChange }: TabBarProps) => {
       setTempOffset(offset);
       setAdjusting(true);
     };
+    const showHandler = () => setHidden(false);
+    const hideHandler = () => setHidden(true);
     window.addEventListener("sparky-dock-adjust", handler);
-    return () => window.removeEventListener("sparky-dock-adjust", handler);
+    window.addEventListener("sparky-dock-show", showHandler);
+    window.addEventListener("sparky-dock-hide", hideHandler);
+    return () => {
+      window.removeEventListener("sparky-dock-adjust", handler);
+      window.removeEventListener("sparky-dock-show", showHandler);
+      window.removeEventListener("sparky-dock-hide", hideHandler);
+    };
   }, [offset]);
 
   const handleSave = useCallback(() => {
