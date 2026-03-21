@@ -39,6 +39,7 @@ const COUNTRIES = [
 
 const Login = () => {
   const [loginMethod, setLoginMethod] = useState<"email" | "phone">("email");
+  // Note: Phone login is disabled at the backend level, only email works
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [countryCode, setCountryCode] = useState("+55");
