@@ -85,7 +85,16 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
       toast.error("Preencha o nome");
       return;
     }
-    const numValue = parseFloat(value.replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
+    // Parse Brazilian format: "2.600,50" → 2600.50, "2600" → 2600, "2600.50" → 2600.50
+    const cleanedValue = value.replace(/[^\d.,]/g, "");
+    let numValue: number;
+    if (cleanedValue.includes(",")) {
+      // Brazilian format: dots are thousands, comma is decimal
+      numValue = parseFloat(cleanedValue.replace(/\./g, "").replace(",", ".")) || 0;
+    } else {
+      // Plain number like "2600" or "2600.50"
+      numValue = parseFloat(cleanedValue) || 0;
+    }
     if (numValue <= 0) {
       toast.error("Informe um valor válido");
       return;
