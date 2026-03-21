@@ -113,7 +113,7 @@ const SpendingOverview = () => {
         </div>
         <p className="text-[11px] text-muted-foreground mt-2">
           {hasData
-            ? <>30% do saldo disponível (<span className="text-foreground font-medium">{fmt(spendablePool)}</span>) ÷ <span className="text-foreground font-medium">{daysLeft} dias</span> restantes</>
+            ? <>20% do saldo disponível (<span className="text-foreground font-medium">{fmt(spendablePool)}</span>) ÷ <span className="text-foreground font-medium">{daysLeft} dias</span> restantes</>
             : "Adicione sua renda e despesas para ver o orçamento diário"
           }
         </p>
