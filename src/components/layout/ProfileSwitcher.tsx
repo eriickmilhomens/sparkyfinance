@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
+import { useGroupMembers } from "@/hooks/useGroupMembers";
 
 interface Prize {
   name: string;
@@ -42,6 +43,7 @@ type SubView = null | "profile" | "prizes" | "members" | "ranking" | "admin";
 const ProfileSwitcher = () => {
   const navigate = useNavigate();
   const { profile: dbProfile, isDemo } = useProfile();
+  const { members: groupMembers, isLeader: isGroupLeader } = useGroupMembers();
   const [open, setOpen] = useState(false);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [active, setActive] = useState("");
@@ -202,8 +204,18 @@ const ProfileSwitcher = () => {
 
   // Sub-view: Ranking
   if (subView === "ranking") {
-    const sorted = [...profiles].sort((a, b) => b.points - a.points);
+    const sorted = [...groupMembers].sort((a, b) => b.points - a.points);
     const quote = inspirationalQuotes[Math.floor(Math.random() * inspirationalQuotes.length)];
+    const renderGroupAvatar = (member: any, size: string, textSize: string) => {
+      if (member.avatar_url) {
+        return <img src={member.avatar_url} alt={member.name} className={cn(size, "rounded-full object-cover")} />;
+      }
+      return (
+        <div className={cn(size, "rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center font-bold text-white", textSize)}>
+          {member.name?.charAt(0).toUpperCase() || "?"}
+        </div>
+      );
+    };
     return (
       <div className="fixed inset-0 z-[60] bg-background/95 backdrop-blur-sm overflow-y-auto">
         <div className="max-w-lg mx-auto px-4 py-4 space-y-4">
@@ -211,7 +223,7 @@ const ProfileSwitcher = () => {
             <button onClick={() => setSubView(null)} className="text-muted-foreground hover:text-foreground"><ChevronDown size={20} className="rotate-90" /></button>
             <div>
               <h1 className="text-lg font-bold">Ranking do Grupo</h1>
-              <p className="text-xs text-muted-foreground">Compare seu desempenho com os outros membros</p>
+              <p className="text-xs text-muted-foreground">{sorted.length} membro{sorted.length !== 1 ? "s" : ""} no grupo</p>
             </div>
           </div>
 
@@ -225,7 +237,7 @@ const ProfileSwitcher = () => {
           {sorted.length >= 3 && (
             <div className="flex items-end justify-center gap-3 py-4">
               <div className="flex flex-col items-center">
-                {renderAvatar(sorted[1], "h-12 w-12", "text-sm")}
+                {renderGroupAvatar(sorted[1], "h-12 w-12", "text-sm")}
                 <p className="text-xs font-semibold mt-1">{sorted[1].name}</p>
                 <div className="bg-muted rounded-lg px-3 py-1 mt-1">
                   <span className="text-xs font-bold text-warning">{sorted[1].points} pts</span>
@@ -234,7 +246,7 @@ const ProfileSwitcher = () => {
               </div>
               <div className="flex flex-col items-center">
                 <Crown size={16} className="text-warning mb-1" />
-                {renderAvatar(sorted[0], "h-14 w-14", "text-base")}
+                {renderGroupAvatar(sorted[0], "h-14 w-14", "text-base")}
                 <p className="text-xs font-bold mt-1">{sorted[0].name}</p>
                 <div className="bg-warning/15 rounded-lg px-3 py-1 mt-1">
                   <span className="text-xs font-bold text-warning">{sorted[0].points} pts</span>
@@ -242,7 +254,7 @@ const ProfileSwitcher = () => {
                 <div className="bg-warning/20 rounded-t-lg w-16 h-20 mt-2 flex items-center justify-center text-lg font-bold text-warning">1º</div>
               </div>
               <div className="flex flex-col items-center">
-                {renderAvatar(sorted[2], "h-11 w-11", "text-xs")}
+                {renderGroupAvatar(sorted[2], "h-11 w-11", "text-xs")}
                 <p className="text-xs font-semibold mt-1">{sorted[2].name}</p>
                 <div className="bg-muted rounded-lg px-3 py-1 mt-1">
                   <span className="text-xs font-bold text-warning">{sorted[2].points} pts</span>
@@ -255,18 +267,23 @@ const ProfileSwitcher = () => {
           <p className="text-label px-1">CLASSIFICAÇÃO GERAL</p>
           <div className="space-y-2">
             {sorted.map((member, i) => {
-              const isCurrent = member.id === active;
-              const diff = member.points - current.points;
+              const isCurrent = member.user_id === dbProfile?.user_id;
+              const memberIsLeader = isGroupLeader(member);
+              const myPoints = dbProfile?.points || 0;
+              const diff = member.points - myPoints;
               return (
                 <div key={member.id} className={cn("card-zelo flex items-center gap-3", isCurrent ? "border-primary/30" : "")}>
                   <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
                     {i + 1}º
                   </div>
-                  {renderAvatar(member, "h-10 w-10", "text-sm")}
+                  {renderGroupAvatar(member, "h-10 w-10", "text-sm")}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
                       <p className="text-sm font-semibold">{member.name}</p>
                       {isCurrent && <span className="text-[9px] rounded-full bg-primary/15 px-1.5 py-0.5 text-primary font-semibold">Você</span>}
+                      <span className={cn("text-[9px] rounded-full px-1.5 py-0.5 font-semibold", memberIsLeader ? "bg-warning/15 text-warning" : "bg-muted text-muted-foreground")}>
+                        {memberIsLeader ? "Líder" : "Membro"}
+                      </span>
                     </div>
                     {!isCurrent && (
                       <p className="text-[10px] text-muted-foreground mt-0.5">
@@ -616,8 +633,18 @@ const ProfileSwitcher = () => {
 
   // Sub-view: Gerenciar Membros
   if (subView === "members") {
-    const admins = profiles.filter(p => p.role === "admin");
-    const members = profiles.filter(p => p.role === "member");
+    const leaders = groupMembers.filter(m => isGroupLeader(m));
+    const regularMembers = groupMembers.filter(m => !isGroupLeader(m));
+    const renderMemberAvatar = (member: any, size: string, textSize: string) => {
+      if (member.avatar_url) {
+        return <img src={member.avatar_url} alt={member.name} className={cn(size, "rounded-full object-cover")} />;
+      }
+      return (
+        <div className={cn(size, "rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center font-bold text-white", textSize)}>
+          {member.name?.charAt(0).toUpperCase() || "?"}
+        </div>
+      );
+    };
     return (
       <div className="fixed inset-0 z-[60] bg-background/95 backdrop-blur-sm overflow-y-auto">
         <div className="max-w-lg mx-auto px-4 py-4 space-y-4">
@@ -625,7 +652,7 @@ const ProfileSwitcher = () => {
             <button onClick={() => setSubView(null)} className="text-muted-foreground hover:text-foreground"><ChevronDown size={20} className="rotate-90" /></button>
             <div>
               <h1 className="text-lg font-bold">Gerenciar Membros</h1>
-              <p className="text-xs text-muted-foreground">Gerencie os membros do grupo</p>
+              <p className="text-xs text-muted-foreground">Membros reais do grupo sincronizados</p>
             </div>
           </div>
 
@@ -637,8 +664,8 @@ const ProfileSwitcher = () => {
               </div>
             </div>
             <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/30 px-4 py-3">
-              <span className="flex-1 text-center text-lg font-mono font-bold tracking-[0.3em]">{dbProfile?.invite_code || "------"}</span>
-              <button onClick={() => navigator.clipboard.writeText(dbProfile?.invite_code || "")} className="text-primary active:scale-95">
+              <span className="flex-1 text-center text-lg font-mono font-bold tracking-[0.3em]">{dbProfile?.group_code || dbProfile?.invite_code || "------"}</span>
+              <button onClick={() => navigator.clipboard.writeText(dbProfile?.group_code || dbProfile?.invite_code || "")} className="text-primary active:scale-95">
                 <Check size={16} />
               </button>
             </div>
@@ -647,36 +674,36 @@ const ProfileSwitcher = () => {
           <div className="grid grid-cols-3 gap-2">
             <div className="card-zelo flex flex-col items-center py-3">
               <Users size={16} className="text-primary mb-1" />
-              <p className="text-lg font-bold">{profiles.length}</p>
+              <p className="text-lg font-bold">{groupMembers.length}</p>
               <p className="text-[9px] text-muted-foreground">Total</p>
             </div>
             <div className="card-zelo flex flex-col items-center py-3 border-l-warning">
               <Crown size={16} className="text-warning mb-1" />
-              <p className="text-lg font-bold">{admins.length}</p>
-              <p className="text-[9px] text-muted-foreground">Admins</p>
+              <p className="text-lg font-bold">{leaders.length}</p>
+              <p className="text-[9px] text-muted-foreground">Líderes</p>
             </div>
             <div className="card-zelo flex flex-col items-center py-3">
               <User size={16} className="text-muted-foreground mb-1" />
-              <p className="text-lg font-bold">{members.length}</p>
+              <p className="text-lg font-bold">{regularMembers.length}</p>
               <p className="text-[9px] text-muted-foreground">Membros</p>
             </div>
           </div>
 
           <div>
-            <p className="text-label mb-2 px-1 flex items-center gap-1.5"><Crown size={10} className="text-warning" /> ADMINISTRADORES</p>
+            <p className="text-label mb-2 px-1 flex items-center gap-1.5"><Crown size={10} className="text-warning" /> LÍDERES</p>
             <div className="space-y-2">
-              {admins.map(p => (
-                <div key={p.id} className="card-zelo flex items-center gap-3">
-                  {renderAvatar(p, "h-10 w-10", "text-sm")}
+              {leaders.map(m => (
+                <div key={m.id} className="card-zelo flex items-center gap-3">
+                  {renderMemberAvatar(m, "h-10 w-10", "text-sm")}
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-semibold">{p.name}</p>
-                      {p.id === active && <span className="text-[9px] rounded-full bg-muted px-1.5 py-0.5 text-muted-foreground">Você</span>}
-                      <span className="text-[9px] rounded-full bg-primary/15 px-1.5 py-0.5 text-primary font-semibold">Admin</span>
+                      <p className="text-sm font-semibold">{m.name}</p>
+                      {m.user_id === dbProfile?.user_id && <span className="text-[9px] rounded-full bg-muted px-1.5 py-0.5 text-muted-foreground">Você</span>}
+                      <span className="text-[9px] rounded-full bg-warning/15 px-1.5 py-0.5 text-warning font-semibold">Líder</span>
                     </div>
                     <div className="flex items-center gap-1 mt-0.5">
                       <Star size={8} className="text-warning" />
-                      <span className="text-[10px] text-muted-foreground">{p.points} pontos</span>
+                      <span className="text-[10px] text-muted-foreground">{m.points} pontos</span>
                     </div>
                   </div>
                 </div>
@@ -686,24 +713,25 @@ const ProfileSwitcher = () => {
 
           <div>
             <p className="text-label mb-2 px-1 flex items-center gap-1.5"><User size={10} className="text-muted-foreground" /> MEMBROS</p>
-            {members.length === 0 ? (
+            {regularMembers.length === 0 ? (
               <div className="card-zelo flex flex-col items-center py-6">
                 <Users size={24} className="text-muted-foreground" />
+                <p className="text-[10px] text-muted-foreground mt-2">Nenhum membro ainda</p>
               </div>
             ) : (
               <div className="space-y-2">
-                {members.map(p => (
-                  <div key={p.id} className="card-zelo flex items-center gap-3">
-                    {renderAvatar(p, "h-10 w-10", "text-sm")}
+                {regularMembers.map(m => (
+                  <div key={m.id} className="card-zelo flex items-center gap-3">
+                    {renderMemberAvatar(m, "h-10 w-10", "text-sm")}
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-semibold">{p.name}</p>
-                        {p.id === active && <span className="text-[9px] rounded-full bg-muted px-1.5 py-0.5 text-muted-foreground">Você</span>}
+                        <p className="text-sm font-semibold">{m.name}</p>
+                        {m.user_id === dbProfile?.user_id && <span className="text-[9px] rounded-full bg-muted px-1.5 py-0.5 text-muted-foreground">Você</span>}
                         <span className="text-[9px] rounded-full bg-muted/50 px-1.5 py-0.5 text-muted-foreground">Membro</span>
                       </div>
                       <div className="flex items-center gap-1 mt-0.5">
                         <Star size={8} className="text-warning" />
-                        <span className="text-[10px] text-muted-foreground">{p.points} pontos</span>
+                        <span className="text-[10px] text-muted-foreground">{m.points} pontos</span>
                       </div>
                     </div>
                   </div>
