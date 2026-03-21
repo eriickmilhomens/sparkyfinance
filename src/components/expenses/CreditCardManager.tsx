@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { X, ArrowLeft, Plus, CreditCard, ChevronRight, Receipt, Calendar, DollarSign, Wallet, Building2 } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const BANK_DATA: Record<string, { color: string; abbr: string }> = {
