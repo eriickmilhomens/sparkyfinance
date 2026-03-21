@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Zap, Droplets, Wifi, Flame, ShoppingCart, UtensilsCrossed, CreditCard, ChevronUp, ChevronDown } from "lucide-react";
+import { X, Receipt, Wifi, ShoppingCart, UtensilsCrossed, CreditCard, ChevronUp, ChevronDown, ArrowLeftRight, Sparkles, Heart, MoreHorizontal, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useFinancialData } from "@/hooks/useFinancialData";
@@ -11,13 +11,14 @@ interface AddExpenseModalProps {
 }
 
 const shortcuts = [
-  { label: "Luz", icon: Zap, color: "bg-warning/20 text-warning" },
-  { label: "Água", icon: Droplets, color: "bg-primary/20 text-primary" },
+  { label: "Contas", icon: Receipt, color: "bg-warning/20 text-warning" },
   { label: "Internet", icon: Wifi, color: "bg-info/20 text-info" },
-  { label: "Gás", icon: Flame, color: "bg-orange-500/20 text-orange-400" },
   { label: "Mercado", icon: ShoppingCart, color: "bg-success/20 text-success" },
   { label: "Delivery", icon: UtensilsCrossed, color: "bg-destructive/20 text-destructive" },
   { label: "Cartão", icon: CreditCard, color: "bg-purple-500/20 text-purple-400" },
+  { label: "Transferência", icon: ArrowLeftRight, color: "bg-primary/20 text-primary" },
+  { label: "Cuidados Pessoais", icon: Heart, color: "bg-pink-500/20 text-pink-400" },
+  { label: "Outros", icon: MoreHorizontal, color: "bg-accent/30 text-accent-foreground" },
 ];
 
 const priorities = [
@@ -56,16 +57,23 @@ const getBankAbbr = (name: string) => {
   return name.slice(0, 2).toUpperCase();
 };
 
+const MONTHS = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+
 const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalProps) => {
+  const now = new Date();
   const [selectedPriority, setSelectedPriority] = useState("P3");
   const [recurring, setRecurring] = useState(false);
   const [split, setSplit] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [customCategory, setCustomCategory] = useState("");
   const [installments, setInstallments] = useState(1);
   const [selectedCardId, setSelectedCardId] = useState<string>("");
   const [showCardPicker, setShowCardPicker] = useState(false);
   const [name, setName] = useState("");
   const [value, setValue] = useState("");
+  const [expDay, setExpDay] = useState(String(now.getDate()));
+  const [expMonth, setExpMonth] = useState(String(now.getMonth()));
+  const [expYear, setExpYear] = useState(String(now.getFullYear()));
 
   const { data, updateData } = useFinancialData();
 
@@ -77,22 +85,22 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
 
   const isIncome = type === "income";
   const isCardCategory = selectedCategory === "Cartão";
+  const isOthers = selectedCategory === "Outros";
   const title = isIncome ? "Adicionar Receita" : "Adicionar Despesa";
   const saveLabel = isIncome ? "Salvar Receita • +10 pts" : isCardCategory ? "Lançar na Fatura • +10 pts" : "Salvar Despesa • +10 pts";
+
+  const finalCategory = isOthers && customCategory.trim() ? customCategory.trim() : selectedCategory || "Outros";
 
   const handleSave = () => {
     if (!name.trim()) {
       toast.error("Preencha o nome");
       return;
     }
-    // Parse Brazilian format: "2.600,50" → 2600.50, "2600" → 2600, "2600.50" → 2600.50
     const cleanedValue = value.replace(/[^\d.,]/g, "");
     let numValue: number;
     if (cleanedValue.includes(",")) {
-      // Brazilian format: dots are thousands, comma is decimal
       numValue = parseFloat(cleanedValue.replace(/\./g, "").replace(",", ".")) || 0;
     } else {
-      // Plain number like "2600" or "2600.50"
       numValue = parseFloat(cleanedValue) || 0;
     }
     if (numValue <= 0) {
@@ -100,18 +108,18 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
       return;
     }
 
-    // Create transaction for the central store
+    const expDate = new Date(parseInt(expYear), parseInt(expMonth), parseInt(expDay) || 1);
+
     const newTransaction = {
       id: crypto.randomUUID(),
-      date: new Date().toISOString(),
+      date: expDate.toISOString(),
       description: name.trim(),
       amount: numValue,
       type: (isIncome ? "income" : "expense") as "income" | "expense",
-      category: selectedCategory || "Outros",
+      category: finalCategory,
       cardId: isCardCategory ? selectedCardId : undefined,
     };
 
-    // Update central financial data
     const newTransactions = [newTransaction, ...data.transactions];
     if (isIncome) {
       updateData({
@@ -127,14 +135,13 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
       });
     }
 
-    // Update credit card if applicable
     if (isCardCategory && selectedCardId) {
       try {
         const allCards = JSON.parse(localStorage.getItem(CARDS_KEY) || "[]");
         const perInstallment = numValue / installments;
         const updated = allCards.map((c: any) => {
           if (c.id === selectedCardId) {
-            const newTx = { id: crypto.randomUUID(), desc: name.trim(), value: perInstallment, date: new Date().toLocaleDateString("pt-BR"), category: "Cartão" };
+            const newTx = { id: crypto.randomUUID(), desc: name.trim(), value: perInstallment, date: expDate.toLocaleDateString("pt-BR"), category: "Cartão" };
             return {
               ...c,
               usedAmount: (c.usedAmount || 0) + perInstallment,
@@ -156,7 +163,8 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
     }
 
     toast.success(isIncome ? "Receita salva com sucesso!" : isCardCategory ? "Lançado na fatura!" : "Despesa salva com sucesso!");
-    setName(""); setValue(""); setSelectedCategory(null); setInstallments(1); setSelectedCardId(""); setRecurring(false); setSplit(false);
+    setName(""); setValue(""); setSelectedCategory(null); setCustomCategory(""); setInstallments(1); setSelectedCardId(""); setRecurring(false); setSplit(false);
+    setExpDay(String(now.getDate())); setExpMonth(String(now.getMonth())); setExpYear(String(now.getFullYear()));
     onClose();
   };
 
@@ -187,17 +195,30 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
                   )}
                 >
                   <Icon size={20} />
-                  <span className="text-[11px] font-medium">{s.label}</span>
+                  <span className="text-[10px] font-medium leading-tight text-center">{s.label}</span>
                 </button>
               );
             })}
           </div>
         )}
 
+        {isOthers && (
+          <div className="mb-4">
+            <label className="text-[10px] text-muted-foreground font-medium mb-1 block">Nome da categoria personalizada</label>
+            <input
+              type="text"
+              placeholder="Ex: Academia, Pet, Educação..."
+              value={customCategory}
+              onChange={(e) => setCustomCategory(e.target.value)}
+              className="w-full rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+            />
+          </div>
+        )}
+
         <div className="space-y-3 mb-5">
           <input
             type="text"
-            placeholder={isIncome ? "Fonte da receita" : "Nome da categoria"}
+            placeholder={isIncome ? "Fonte da receita" : "Descrição da despesa"}
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="w-full rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary transition-all"
@@ -205,18 +226,53 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
           <input
             type="text"
             inputMode="decimal"
-            placeholder="Valor (R$) ex: 2600 ou 2.600,50"
+            placeholder="Digite o valor (R$)"
             value={value}
             onChange={(e) => {
-              // Allow user to type naturally: 2600, 2.600, 2600.50, 2.600,50
-              const raw = e.target.value;
-              // Only allow digits, dots, commas
-              const cleaned = raw.replace(/[^\d.,]/g, "");
+              const cleaned = e.target.value.replace(/[^\d.,]/g, "");
               setValue(cleaned);
             }}
             className="w-full rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary transition-all tabular-nums"
           />
         </div>
+
+        {/* Date picker */}
+        {!isIncome && (
+          <div className="mb-5">
+            <label className="text-[10px] text-muted-foreground font-medium mb-2 flex items-center gap-1.5">
+              <CalendarDays size={12} /> Data do lançamento
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <label className="text-[9px] text-muted-foreground mb-0.5 block">Dia</label>
+                <select value={expDay} onChange={(e) => setExpDay(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-muted/50 px-2 py-2 text-xs outline-none focus:border-primary transition-all appearance-none">
+                  {Array.from({ length: 31 }, (_, i) => (
+                    <option key={i + 1} value={i + 1}>{String(i + 1).padStart(2, "0")}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-[9px] text-muted-foreground mb-0.5 block">Mês</label>
+                <select value={expMonth} onChange={(e) => setExpMonth(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-muted/50 px-2 py-2 text-xs outline-none focus:border-primary transition-all appearance-none">
+                  {MONTHS.map((m, i) => (
+                    <option key={i} value={i}>{m}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-[9px] text-muted-foreground mb-0.5 block">Ano</label>
+                <select value={expYear} onChange={(e) => setExpYear(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-muted/50 px-2 py-2 text-xs outline-none focus:border-primary transition-all appearance-none">
+                  {[now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1].map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
 
         {isCardCategory && (
           <div className="space-y-3 mb-5 card-zelo !bg-purple-500/5 !border-purple-500/20">

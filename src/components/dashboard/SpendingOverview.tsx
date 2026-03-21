@@ -19,11 +19,15 @@ const CalculatorIcon = () => (
 const SpendingOverview = () => {
   const [simOpen, setSimOpen] = useState(false);
   const [simValue, setSimValue] = useState(0);
-  const { data, available, daysLeft, dailyBudget } = useFinancialData();
+  const { data, available, daysLeft } = useFinancialData();
 
   const hasData = data.balance > 0 || data.income > 0 || data.expenses > 0;
 
-  const orcamentoDiarioNovo = Math.max(0, (available - simValue) / daysLeft);
+  // 30% rule: only allow spending 30% of available balance divided by remaining days
+  const spendablePool = Math.max(0, available * 0.3);
+  const dailyBudget = daysLeft > 0 ? spendablePool / daysLeft : 0;
+
+  const orcamentoDiarioNovo = Math.max(0, (spendablePool - simValue) / daysLeft);
   const reducao = dailyBudget - orcamentoDiarioNovo;
 
   const isHealthy = dailyBudget >= 50 || !hasData;
@@ -31,11 +35,44 @@ const SpendingOverview = () => {
     ? Math.floor(available / (data.expenses / new Date().getDate()))
     : 0;
 
-  const balanceHistory = Array.from({ length: 19 }, (_, i) => ({
-    d: i + 1,
-    v: hasData ? Math.floor(Math.random() * (data.balance * 0.1) + data.balance * 0.02) : 0,
-  }));
-  if (hasData && balanceHistory.length > 0) balanceHistory[balanceHistory.length - 1].v = available;
+  // Dynamic balance history based on actual transactions
+  const buildBalanceHistory = () => {
+    if (!hasData) return [];
+    const now = new Date();
+    const month = now.getMonth();
+    const year = now.getFullYear();
+    const today = now.getDate();
+    const dailyMap: Record<number, number> = {};
+
+    // Group transactions by day in current month
+    let runningBalance = data.balance;
+    const txThisMonth = data.transactions
+      .filter(t => {
+        const d = new Date(t.date);
+        return d.getMonth() === month && d.getFullYear() === year;
+      })
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    // Calculate starting balance (balance minus all this month's net)
+    let netThisMonth = 0;
+    txThisMonth.forEach(t => {
+      netThisMonth += t.type === "income" ? t.amount : -t.amount;
+    });
+    let startBalance = data.balance - netThisMonth;
+
+    const points: { d: number; v: number }[] = [];
+    let cumBalance = startBalance;
+    for (let day = 1; day <= today; day++) {
+      const dayTxs = txThisMonth.filter(t => new Date(t.date).getDate() === day);
+      dayTxs.forEach(t => {
+        cumBalance += t.type === "income" ? t.amount : -t.amount;
+      });
+      points.push({ d: day, v: Math.round(cumBalance) });
+    }
+    return points.length > 0 ? points : [{ d: today, v: data.balance }];
+  };
+
+  const balanceHistory = buildBalanceHistory();
 
   const entriesExitsData = Array.from({ length: 31 }, (_, i) => ({
     day: i + 1,
@@ -43,8 +80,17 @@ const SpendingOverview = () => {
     saidas: 0,
   }));
   if (hasData) {
-    entriesExitsData[18] = { day: 19, entradas: data.income * 0.6, saidas: data.expenses * 0.5 };
-    entriesExitsData[19] = { day: 20, entradas: data.income * 0.4, saidas: data.expenses * 0.5 };
+    const now = new Date();
+    data.transactions.forEach(t => {
+      const d = new Date(t.date);
+      if (d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
+        const day = d.getDate() - 1;
+        if (day >= 0 && day < 31) {
+          if (t.type === "income") entriesExitsData[day].entradas += t.amount;
+          else entriesExitsData[day].saidas += t.amount;
+        }
+      }
+    });
   }
 
   return (
@@ -67,7 +113,7 @@ const SpendingOverview = () => {
         </div>
         <p className="text-[11px] text-muted-foreground mt-2">
           {hasData
-            ? <>Baseado no seu saldo de <span className="text-foreground font-medium">{fmt(available)}</span> e <span className="text-foreground font-medium">{daysLeft} dias</span> restantes</>
+            ? <>30% do saldo disponível (<span className="text-foreground font-medium">{fmt(spendablePool)}</span>) ÷ <span className="text-foreground font-medium">{daysLeft} dias</span> restantes</>
             : "Adicione sua renda e despesas para ver o orçamento diário"
           }
         </p>
@@ -90,7 +136,7 @@ const SpendingOverview = () => {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-lg font-bold">Simulador de Impacto</h2>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Veja como uma compra afeta seu orçamento diário até o fim do mês</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Veja como uma compra afeta seu orçamento diário (base: 30% do saldo)</p>
               </div>
               <button onClick={() => setSimOpen(false)} className="rounded-full p-1.5 text-muted-foreground hover:text-foreground active:scale-95 transition-all">
                 <X size={20} />
@@ -177,7 +223,7 @@ const SpendingOverview = () => {
       </div>
 
       {/* Balance History */}
-      {hasData && (
+      {hasData && balanceHistory.length > 1 && (
         <div className="card-zelo fade-in-up stagger-3">
           <p className="text-label mb-0.5">HISTÓRICO DE SALDO</p>
           <p className="text-[11px] text-muted-foreground mb-3">Evolução realizada até hoje</p>
