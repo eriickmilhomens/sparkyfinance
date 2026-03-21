@@ -79,14 +79,8 @@ const ChatView = () => {
   }, [messages, activeId]);
 
   const startNewChat = useCallback(() => {
+    // Don't create a new empty conversation entry yet - wait until user sends first message
     const id = crypto.randomUUID();
-    const now = new Date().toISOString();
-    const conv: Conversation = { id, title: "Nova conversa", summary: "", messages: [], createdAt: now, lastActiveAt: now };
-    setConversations(prev => {
-      const updated = [conv, ...prev];
-      saveConversations(updated);
-      return updated;
-    });
     setActiveId(id);
     setMessages([]);
     setShowHistory(false);
