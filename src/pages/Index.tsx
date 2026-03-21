@@ -80,7 +80,7 @@ const Index = () => {
         overscrollBehavior: 'none',
       }}
     >
-      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden" style={{ overscrollBehavior: 'none', paddingBottom: 'calc(116px + env(safe-area-inset-bottom, 0px))' }}>
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden" style={{ overscrollBehavior: 'none', paddingBottom: 'calc(100px + env(safe-area-inset-bottom, 0px))' }}>
         {renderView()}
       </div>
       <TabBar activeTab={activeTab} onTabChange={handleTabChange} />

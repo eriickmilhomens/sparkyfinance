@@ -44,12 +44,12 @@ const APagarModal = ({ open, onClose }: APagarModalProps) => {
     if (newPaid.has(id)) {
       // Unmark as paid — restore balance and remove points
       newPaid.delete(id);
-      await removePoints("bill_paid");
+      await removePoints("bill_paid", `Pagou: ${bill.description}`);
       toast.info("Conta desmarcada e pontos removidos");
     } else {
       // Mark as paid — award points
       newPaid.add(id);
-      awardPoints("bill_paid", `Pagou: ${bill.description}`);
+      await awardPoints("bill_paid", `Pagou: ${bill.description}`);
       toast.success("Conta marcada como paga! +3 pts 💳");
     }
     setPaidIds(newPaid);

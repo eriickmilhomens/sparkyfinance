@@ -18,7 +18,7 @@ const TabBar = ({ activeTab, onTabChange }: TabBarProps) => {
   return (
     <nav
       className="pointer-events-none fixed inset-x-0 z-[60] flex justify-center px-3"
-      style={{ bottom: 'calc(20px + env(safe-area-inset-bottom, 0px))' }}
+      style={{ bottom: 'calc(12px + env(safe-area-inset-bottom, 0px))' }}
     >
       <div className="liquid-dock pointer-events-auto mx-auto flex w-full max-w-lg items-center justify-around rounded-full px-2 py-2">
         {tabs.map((tab) => {
