@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
+import { toast } from "sonner";
 
 const CatLogo = () => (
   <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -18,11 +21,44 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate("/");
+    if (!email || !password) {
+      toast.error("Preencha todos os campos");
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        toast.error(error.message === "Invalid login credentials" ? "E-mail ou senha incorretos" : error.message);
+      } else {
+        navigate("/");
+      }
+    } catch {
+      toast.error("Erro ao fazer login");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    try {
+      const { error } = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (error) {
+        toast.error("Erro ao conectar com Google");
+      }
+    } catch {
+      toast.error("Erro ao conectar com Google");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -49,8 +85,15 @@ const Login = () => {
             {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
         </div>
-        <button type="submit" className="w-full rounded-xl bg-primary py-3.5 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98]">Entrar</button>
-        <button type="button" className="w-full rounded-xl border border-border py-3.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+        <button type="submit" disabled={loading} className="w-full rounded-xl bg-primary py-3.5 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50">
+          {loading ? "Entrando..." : "Entrar"}
+        </button>
+        <button
+          type="button"
+          onClick={handleGoogleLogin}
+          disabled={loading}
+          className="w-full rounded-xl border border-border py-3.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50"
+        >
           <svg width="16" height="16" viewBox="0 0 24 24" className="shrink-0">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
             <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
