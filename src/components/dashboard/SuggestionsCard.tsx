@@ -94,10 +94,10 @@ const SuggestionsCard = () => {
           <p className="text-[11px] text-muted-foreground">Importe transações bancárias automaticamente.</p>
         </div>
         <button
-          onClick={() => setPluggyOpen(true)}
-          className="shrink-0 rounded-lg bg-primary px-3 py-1.5 text-[10px] font-bold text-primary-foreground active:scale-95 transition-transform"
+          onClick={() => setSyncPopup(true)}
+          className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-[10px] font-medium text-muted-foreground active:scale-95 transition-transform"
         >
-          Conectar
+          Desativado
         </button>
       </div>
 
@@ -111,9 +111,9 @@ const SuggestionsCard = () => {
         </div>
         <button
           onClick={() => setWhatsappPopup(true)}
-          className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-[10px] font-medium text-muted-foreground active:scale-95 transition-transform"
+          className="shrink-0 rounded-lg bg-success px-3 py-1.5 text-[10px] font-bold text-success-foreground active:scale-95 transition-transform"
         >
-          Desativado
+          Ativar
         </button>
       </div>
 
