@@ -1,13 +1,22 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Send, Bot, User, Loader2, Plus, Trash2, ChevronLeft, MoreVertical } from "lucide-react";
+import { Send, Bot, User, Loader2, Plus, Trash2, ChevronLeft, MoreVertical, Paperclip, Image, FileText, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type Msg = { role: "user" | "assistant"; content: string };
+type Attachment = {
+  type: "image" | "document";
+  name: string;
+  data: string; // base64 data URI for images
+  extractedText?: string; // for documents
+  preview?: string; // thumbnail/icon
+};
+
+type Msg = { role: "user" | "assistant"; content: string; attachments?: Attachment[] };
 type Conversation = { id: string; title: string; summary: string; messages: Msg[]; createdAt: string; lastActiveAt: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sparky-chat`;
 const STORAGE_KEY = "sparky-chat-history";
 const TWELVE_HOURS = 12 * 60 * 60 * 1000;
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 const loadConversations = (): Conversation[] => {
   try {
@@ -26,9 +35,12 @@ const generateTitle = (msgs: Msg[]): string => {
   const firstUser = msgs.find(m => m.role === "user");
   if (!firstUser) return "Nova conversa";
   const text = firstUser.content.trim();
-  // Capitalize first letter, end with period
   let sentence = text.split(/[!?\n]/)[0].trim();
   if (sentence.length > 45) sentence = sentence.slice(0, 42) + "...";
+  if (!sentence) {
+    if (firstUser.attachments?.length) return "Arquivo enviado.";
+    return "Nova conversa";
+  }
   sentence = sentence.charAt(0).toUpperCase() + sentence.slice(1);
   if (!sentence.endsWith(".") && !sentence.endsWith("...")) sentence += ".";
   return sentence;
@@ -36,21 +48,39 @@ const generateTitle = (msgs: Msg[]): string => {
 
 const generateSummary = (msgs: Msg[]): string => {
   if (msgs.length === 0) return "";
-  const topics: string[] = [];
   const userMsgs = msgs.filter(m => m.role === "user");
   if (userMsgs.length === 0) return "";
-
-  // Get first and last user message for context
-  const first = userMsgs[0].content.trim().slice(0, 60);
+  const first = userMsgs[0].content.trim().slice(0, 60) || "Arquivo enviado";
   let summary = first.charAt(0).toUpperCase() + first.slice(1);
-  if (userMsgs.length > 1) {
-    const count = userMsgs.length;
-    summary += ` (+${count - 1} mensagens)`;
-  }
+  if (userMsgs.length > 1) summary += ` (+${userMsgs.length - 1} mensagens)`;
   if (!summary.endsWith(".")) summary += ".";
   if (summary.length > 80) summary = summary.slice(0, 77) + "...";
   return summary;
 };
+
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
+
+const readTextFile = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsText(file);
+  });
+};
+
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+const DOC_TYPES = ["application/pdf", "text/plain", "text/csv", "text/xml", "application/xml",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/json"];
 
 const ChatView = () => {
   const [conversations, setConversations] = useState<Conversation[]>(loadConversations);
@@ -61,7 +91,11 @@ const ChatView = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showNewChatConfirm, setShowNewChatConfirm] = useState(false);
+  const [pendingAttachments, setPendingAttachments] = useState<Attachment[]>([]);
+  const [showAttachMenu, setShowAttachMenu] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -77,7 +111,6 @@ const ChatView = () => {
           c.id === activeId ? { ...c, messages, title: generateTitle(messages), summary: generateSummary(messages), lastActiveAt: new Date().toISOString() } : c
         );
       } else {
-        // Create conversation entry only when there are messages
         const now = new Date().toISOString();
         const conv: Conversation = { id: activeId, title: generateTitle(messages), summary: generateSummary(messages), messages, createdAt: now, lastActiveAt: now };
         updated = [conv, ...prev];
@@ -88,10 +121,10 @@ const ChatView = () => {
   }, [messages, activeId]);
 
   const startNewChat = useCallback(() => {
-    // Don't create a new empty conversation entry yet - wait until user sends first message
     const id = crypto.randomUUID();
     setActiveId(id);
     setMessages([]);
+    setPendingAttachments([]);
     setShowHistory(false);
     setShowNewChatConfirm(false);
   }, []);
@@ -137,8 +170,7 @@ const ChatView = () => {
       if (convs.length > 0) {
         const latest = convs[0];
         const lastActive = new Date(latest.lastActiveAt || latest.createdAt).getTime();
-        const now = Date.now();
-        if (now - lastActive < TWELVE_HOURS && latest.messages.length > 0) {
+        if (Date.now() - lastActive < TWELVE_HOURS && latest.messages.length > 0) {
           setActiveId(latest.id);
           setMessages(latest.messages);
           return;
@@ -147,6 +179,40 @@ const ChatView = () => {
       startNewChat();
     }
   }, []);
+
+  const handleFileSelect = async (files: FileList | null, type: "image" | "document") => {
+    if (!files) return;
+    setShowAttachMenu(false);
+    for (const file of Array.from(files)) {
+      if (file.size > MAX_FILE_SIZE) {
+        alert(`Arquivo "${file.name}" excede 10MB.`);
+        continue;
+      }
+      try {
+        if (type === "image" && IMAGE_TYPES.includes(file.type)) {
+          const data = await fileToBase64(file);
+          setPendingAttachments(prev => [...prev, { type: "image", name: file.name, data }]);
+        } else {
+          // For text-based files, read content
+          let extractedText = "";
+          if (file.type.startsWith("text/") || file.type === "application/json" || file.type === "application/xml") {
+            extractedText = await readTextFile(file);
+            if (extractedText.length > 15000) extractedText = extractedText.slice(0, 15000) + "\n...[truncado]";
+          } else {
+            extractedText = `Arquivo binário: ${file.name} (${(file.size / 1024).toFixed(1)} KB). Tipo: ${file.type || "desconhecido"}. Para PDFs e documentos complexos, o conteúdo visual pode ser analisado se enviado como imagem/screenshot.`;
+          }
+          const data = await fileToBase64(file);
+          setPendingAttachments(prev => [...prev, { type: "document", name: file.name, data, extractedText }]);
+        }
+      } catch {
+        alert(`Erro ao processar "${file.name}".`);
+      }
+    }
+  };
+
+  const removeAttachment = (index: number) => {
+    setPendingAttachments(prev => prev.filter((_, i) => i !== index));
+  };
 
   const getUserContext = () => {
     try {
@@ -169,21 +235,43 @@ const ChatView = () => {
 
   const send = async () => {
     const text = input.trim();
-    if (!text || isLoading) return;
+    if ((!text && pendingAttachments.length === 0) || isLoading) return;
     setInput("");
-    const userMsg: Msg = { role: "user", content: text };
+    const userMsg: Msg = {
+      role: "user",
+      content: text || (pendingAttachments.length > 0 ? `[${pendingAttachments.map(a => a.name).join(", ")}]` : ""),
+      attachments: pendingAttachments.length > 0 ? [...pendingAttachments] : undefined,
+    };
+    setPendingAttachments([]);
     setMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
 
     let assistantSoFar = "";
     try {
+      // Prepare messages for API - include attachment data
+      const apiMessages = [...messages, userMsg].map(msg => {
+        if (msg.attachments && msg.attachments.length > 0) {
+          return {
+            role: msg.role,
+            content: msg.content,
+            attachments: msg.attachments.map(a => ({
+              type: a.type,
+              name: a.name,
+              data: a.data,
+              extractedText: a.extractedText,
+            })),
+          };
+        }
+        return { role: msg.role, content: msg.content };
+      });
+
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ messages: [...messages, userMsg], userContext: getUserContext() }),
+        body: JSON.stringify({ messages: apiMessages, userContext: getUserContext() }),
       });
 
       if (!resp.ok || !resp.body) throw new Error("Erro na resposta");
@@ -233,7 +321,6 @@ const ChatView = () => {
     }
   };
 
-  // Confirmation popup for new chat
   const NewChatConfirmPopup = () => (
     <div className="fixed inset-0 z-[70] flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowNewChatConfirm(false)} />
@@ -257,7 +344,6 @@ const ChatView = () => {
     </div>
   );
 
-  // History sidebar view
   if (showHistory) {
     return (
       <div className="flex flex-col h-[calc(100vh-5rem)]">
@@ -300,9 +386,7 @@ const ChatView = () => {
               >
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium truncate">{conv.title}</p>
-                  {conv.summary && (
-                    <p className="text-[10px] text-muted-foreground truncate mt-0.5">{conv.summary}</p>
-                  )}
+                  {conv.summary && <p className="text-[10px] text-muted-foreground truncate mt-0.5">{conv.summary}</p>}
                   <p className="text-[10px] text-muted-foreground mt-0.5">
                     {new Date(conv.createdAt).toLocaleDateString("pt-BR")} • {conv.messages.length} msgs
                   </p>
@@ -362,8 +446,8 @@ const ChatView = () => {
               <Bot size={28} className="text-primary" />
             </div>
             <p className="text-sm font-semibold mb-1">Olá! Sou o Sparky 🐱</p>
-            <p className="text-xs text-muted-foreground max-w-[240px]">
-              Pergunte sobre finanças, investimentos, orçamento ou qualquer dúvida que tiver!
+            <p className="text-xs text-muted-foreground max-w-[260px]">
+              Pergunte sobre finanças, envie imagens de extratos ou documentos para análise!
             </p>
           </div>
         )}
@@ -375,12 +459,29 @@ const ChatView = () => {
               </div>
             )}
             <div className={cn(
-              "max-w-[80%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap",
+              "max-w-[80%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed",
               msg.role === "user"
                 ? "bg-primary text-primary-foreground rounded-br-md"
                 : "bg-card border border-border rounded-bl-md"
             )}>
-              {msg.content}
+              {/* Show attachment previews */}
+              {msg.attachments && msg.attachments.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {msg.attachments.map((att, j) => (
+                    <div key={j} className="rounded-lg overflow-hidden">
+                      {att.type === "image" ? (
+                        <img src={att.data} alt={att.name} className="max-h-32 max-w-[200px] rounded-lg object-cover" />
+                      ) : (
+                        <div className="flex items-center gap-1.5 rounded-lg bg-black/20 px-2.5 py-1.5">
+                          <FileText size={12} />
+                          <span className="text-[10px] font-medium truncate max-w-[120px]">{att.name}</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              <span className="whitespace-pre-wrap">{msg.content}</span>
             </div>
             {msg.role === "user" && (
               <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center shrink-0 mt-1">
@@ -402,9 +503,67 @@ const ChatView = () => {
         <div ref={bottomRef} />
       </div>
 
+      {/* Pending attachments preview */}
+      {pendingAttachments.length > 0 && (
+        <div className="px-4 py-2 border-t border-border flex gap-2 overflow-x-auto">
+          {pendingAttachments.map((att, i) => (
+            <div key={i} className="relative shrink-0 group">
+              {att.type === "image" ? (
+                <img src={att.data} alt={att.name} className="h-14 w-14 rounded-lg object-cover border border-border" />
+              ) : (
+                <div className="h-14 w-14 rounded-lg bg-muted border border-border flex flex-col items-center justify-center gap-0.5">
+                  <FileText size={16} className="text-muted-foreground" />
+                  <span className="text-[7px] text-muted-foreground truncate w-12 text-center">{att.name.split('.').pop()?.toUpperCase()}</span>
+                </div>
+              )}
+              <button
+                onClick={() => removeAttachment(i)}
+                className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <X size={10} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Input */}
       <div className="px-4 pb-3 pt-2 border-t border-border">
         <div className="flex items-center gap-2 rounded-2xl border border-border bg-card px-3 py-2">
+          {/* Attach button */}
+          <div className="relative">
+            <button
+              onClick={() => setShowAttachMenu(!showAttachMenu)}
+              className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted active:scale-95 transition-all"
+            >
+              <Paperclip size={16} />
+            </button>
+            {showAttachMenu && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setShowAttachMenu(false)} />
+                <div className="absolute bottom-10 left-0 bg-card border border-border rounded-xl shadow-lg z-20 py-1.5 min-w-[160px]">
+                  <button
+                    onClick={() => { imageInputRef.current?.click(); }}
+                    className="w-full px-4 py-2.5 text-xs flex items-center gap-2.5 hover:bg-muted transition-colors"
+                  >
+                    <Image size={14} className="text-primary" />
+                    Enviar imagem
+                  </button>
+                  <button
+                    onClick={() => { fileInputRef.current?.click(); }}
+                    className="w-full px-4 py-2.5 text-xs flex items-center gap-2.5 hover:bg-muted transition-colors"
+                  >
+                    <FileText size={14} className="text-success" />
+                    Enviar documento
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+
+          <input type="file" ref={imageInputRef} accept="image/*" multiple className="hidden" onChange={e => handleFileSelect(e.target.files, "image")} />
+          <input type="file" ref={fileInputRef} accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.xml,.json" multiple className="hidden" onChange={e => handleFileSelect(e.target.files, "document")} />
+
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -414,10 +573,10 @@ const ChatView = () => {
           />
           <button
             onClick={send}
-            disabled={isLoading || !input.trim()}
+            disabled={isLoading || (!input.trim() && pendingAttachments.length === 0)}
             className={cn(
               "h-8 w-8 rounded-full flex items-center justify-center transition-all active:scale-95",
-              input.trim() ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+              (input.trim() || pendingAttachments.length > 0) ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
             )}
           >
             <Send size={14} />

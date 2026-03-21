@@ -25,6 +25,32 @@ CONTEXTO FINANCEIRO DO USUÁRIO:
 - Metas: ${userContext.goals || "Nenhuma definida"}
 - Preferência de conversa: ${userContext.chatStyle || "Ainda não definida"}` : "";
 
+    // Transform messages: if any message has images/files, format for multimodal
+    const formattedMessages = messages.map((msg: any) => {
+      if (msg.role === "user" && msg.attachments && msg.attachments.length > 0) {
+        const content: any[] = [];
+        if (msg.content) {
+          content.push({ type: "text", text: msg.content });
+        }
+        for (const att of msg.attachments) {
+          if (att.type === "image") {
+            content.push({
+              type: "image_url",
+              image_url: { url: att.data },
+            });
+          } else if (att.type === "document") {
+            // For documents, send extracted text
+            content.push({
+              type: "text",
+              text: `[Documento anexado: ${att.name}]\n\n${att.extractedText || "Conteúdo não disponível para leitura."}`,
+            });
+          }
+        }
+        return { role: msg.role, content };
+      }
+      return { role: msg.role, content: msg.content };
+    });
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -32,7 +58,7 @@ CONTEXTO FINANCEIRO DO USUÁRIO:
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
+        model: "google/gemini-2.5-flash",
         messages: [
           {
             role: "system",
@@ -41,6 +67,8 @@ CONTEXTO FINANCEIRO DO USUÁRIO:
 - Dicas de economia e planejamento financeiro
 - Explicações sobre conceitos financeiros (pontos, ranking, metas)
 - Análise de gráficos, saldos, dívidas e investimentos do usuário
+- Análise de imagens enviadas (extratos, notas fiscais, comprovantes, gráficos)
+- Leitura de documentos (PDF, planilhas, textos) enviados pelo usuário
 - Qualquer dúvida geral do usuário
 ${contextInfo}
 
@@ -52,10 +80,12 @@ IMPORTANTE - ADAPTAÇÃO DE ESTILO:
 - Se o usuário pedir análise financeira, use os dados do contexto para dar respostas personalizadas
 - Quando o usuário perguntar sobre pontos, explique o sistema de gamificação (ganhar pontos por bons hábitos financeiros)
 - Analise padrões de gastos e sugira melhorias baseadas nos dados reais
+- Quando receber imagens, analise-as detalhadamente (extratos, notas, comprovantes, gráficos)
+- Quando receber documentos, leia e interprete o conteúdo para ajudar o usuário
 
 Responda sempre em português brasileiro, de forma clara. Use emojis quando apropriado. Seja amigável como um gatinho 🐱.`
           },
-          ...messages,
+          ...formattedMessages,
         ],
         stream: true,
       }),
