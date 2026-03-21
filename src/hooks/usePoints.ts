@@ -79,6 +79,29 @@ export const usePoints = () => {
     return rule.points;
   }, [currentPoints, profile, isDemo, updateProfile, log]);
 
+  const removePoints = useCallback(async (ruleId: string) => {
+    const rule = POINTS_RULES.find(r => r.id === ruleId);
+    if (!rule) return 0;
+
+    // Find and remove the most recent log entry for this rule
+    const logCopy = [...getLog()];
+    let idx = -1;
+    for (let i = logCopy.length - 1; i >= 0; i--) {
+      if (logCopy[i].ruleId === ruleId) { idx = i; break; }
+    }
+    if (idx === -1) return 0;
+
+    logCopy.splice(idx, 1);
+    saveLog(logCopy);
+
+    const newTotal = Math.max(0, currentPoints - rule.points);
+    if (!isDemo && profile) {
+      await updateProfile({ points: newTotal });
+    }
+
+    return rule.points;
+  }, [currentPoints, profile, isDemo, updateProfile]);
+
   // Calculate monthly earnings
   const monthKey = new Date().toISOString().slice(0, 7);
   const monthlyEarnings = log
@@ -93,6 +116,7 @@ export const usePoints = () => {
     monthlyEarnings,
     recentActivity,
     awardPoints,
+    removePoints,
     rules: POINTS_RULES,
     log,
   };

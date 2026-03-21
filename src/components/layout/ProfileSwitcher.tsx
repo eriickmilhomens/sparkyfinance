@@ -157,12 +157,14 @@ const ProfileSwitcher = () => {
   };
 
   const openSubView = (view: SubView) => {
-    setSubView(view);
-    setOpen(false);
     if (view === "profile") {
       setEditName(current.name);
       setEditEmail(current.email);
     }
+    // Set subView FIRST, then close dropdown
+    // Using setTimeout to avoid race condition with closeAll backdrop
+    setOpen(false);
+    setTimeout(() => setSubView(view), 50);
   };
 
   const closeAll = () => {
