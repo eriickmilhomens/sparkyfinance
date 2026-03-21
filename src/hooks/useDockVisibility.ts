@@ -8,5 +8,11 @@ export const useDockVisibility = (isOpen: boolean) => {
     } else {
       window.dispatchEvent(new Event("sparky-dock-show"));
     }
+    return () => {
+      // Always restore dock when component unmounts or isOpen changes
+      if (isOpen) {
+        window.dispatchEvent(new Event("sparky-dock-show"));
+      }
+    };
   }, [isOpen]);
 };
