@@ -51,7 +51,27 @@ const Onboarding = () => {
   const [code, setCode] = useState("");
   const [codeError, setCodeError] = useState("");
   const [joiningGroup, setJoiningGroup] = useState(false);
+  const [tapCount, setTapCount] = useState(0);
+  const [tapTimer, setTapTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
   const navigate = useNavigate();
+
+  const handleLogoTap = useCallback(() => {
+    const newCount = tapCount + 1;
+    if (tapTimer) clearTimeout(tapTimer);
+
+    if (newCount >= 7) {
+      localStorage.setItem("sparky-demo-mode", "true");
+      seedDemoData();
+      toast.success("🎮 Modo Demo ativado!");
+      setTapCount(0);
+      navigate("/");
+      return;
+    }
+
+    setTapCount(newCount);
+    const timer = setTimeout(() => setTapCount(0), 2000);
+    setTapTimer(timer);
+  }, [tapCount, tapTimer, navigate]);
 
   // Redirect if already authenticated (e.g. after Google OAuth redirect)
   useEffect(() => {
