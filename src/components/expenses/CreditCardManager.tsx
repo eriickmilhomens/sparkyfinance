@@ -108,11 +108,24 @@ const CreditCardManager = ({ open, onClose }: Props) => {
   const update = (updated: CreditCardData[]) => { setCards(updated); saveCards(updated); };
 
   const handleAddCard = () => {
-    const bankName = showCustomBank ? customBankName.trim() : newBank.trim();
-    if (!bankName || !newName.trim()) return;
+    const rawBankName = showCustomBank ? customBankName.trim() : newBank.trim();
+    if (!rawBankName || !newName.trim()) {
+      toast.error(!rawBankName ? "Selecione ou digite o banco" : "Preencha o nome do cartão");
+      return;
+    }
+    const bankName = capitalize(rawBankName);
     const limit = parseFloat(newLimit.replace(/\D/g, "")) / 100 || 0;
+
+    // For custom banks not in BANK_DATA, assign a random color
+    const isKnown = Object.keys(BANK_DATA).some(k => bankName.toLowerCase().includes(k));
+    if (!isKnown) {
+      const color = getRandomColor();
+      const abbr = bankName.slice(0, 2).toUpperCase();
+      BANK_DATA[bankName.toLowerCase()] = { color, abbr };
+    }
+
     const card: CreditCardData = {
-      id: crypto.randomUUID(), bankName, cardName: newName,
+      id: crypto.randomUUID(), bankName, cardName: capitalize(newName.trim()),
       cardType: newType, cardFlag: newFlag,
       limit, usedAmount: 0, invoiceAmount: 0,
       dueDay: parseInt(newDueDay) || 10, closeDay: parseInt(newCloseDay) || 3,
@@ -122,6 +135,7 @@ const CreditCardManager = ({ open, onClose }: Props) => {
     update([...cards, card]);
     setNewBank(""); setCustomBankName(""); setShowCustomBank(false); setNewName(""); setNewLimit(""); setNewDueDay("10"); setNewCloseDay("3"); setNewType("Crédito"); setNewFlag("");
     setShowAdd(false);
+    toast.success("Cartão salvo com sucesso!");
   };
 
   const handlePayInvoice = (cardId: string) => {
