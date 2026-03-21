@@ -158,6 +158,7 @@ const ProfileSwitcher = () => {
 
   const openSubView = (view: SubView) => {
     setSubView(view);
+    setOpen(false);
     if (view === "profile") {
       setEditName(current.name);
       setEditEmail(current.email);
