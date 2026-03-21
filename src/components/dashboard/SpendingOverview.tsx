@@ -23,8 +23,8 @@ const SpendingOverview = () => {
 
   const hasData = data.balance > 0 || data.income > 0 || data.expenses > 0;
 
-  // 30% rule: only allow spending 30% of available balance divided by remaining days
-  const spendablePool = Math.max(0, available * 0.3);
+  // 20% rule: only allow spending 20% of available balance divided by remaining days
+  const spendablePool = Math.max(0, available * 0.2);
   const dailyBudget = daysLeft > 0 ? spendablePool / daysLeft : 0;
 
   const orcamentoDiarioNovo = Math.max(0, (spendablePool - simValue) / daysLeft);
