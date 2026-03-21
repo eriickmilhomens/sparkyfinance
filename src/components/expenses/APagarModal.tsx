@@ -36,20 +36,21 @@ const APagarModal = ({ open, onClose }: APagarModalProps) => {
   const paidTotal = bills.filter(b => paidIds.has(b.id)).reduce((s, t) => s + t.amount, 0);
   const pendingTotal = totalBills - paidTotal;
 
-  const togglePaid = (id: string) => {
+  const togglePaid = async (id: string) => {
     const bill = bills.find(b => b.id === id);
     if (!bill) return;
 
     const newPaid = new Set(paidIds);
     if (newPaid.has(id)) {
-      // Unmark as paid — restore balance
+      // Unmark as paid — restore balance and remove points
       newPaid.delete(id);
-      toast.info("Conta desmarcada como paga");
+      await removePoints("bill_paid");
+      toast.info("Conta desmarcada e pontos removidos");
     } else {
       // Mark as paid — award points
       newPaid.add(id);
       awardPoints("bill_paid", `Pagou: ${bill.description}`);
-      toast.success("Conta marcada como paga! +2 pts 💳");
+      toast.success("Conta marcada como paga! +3 pts 💳");
     }
     setPaidIds(newPaid);
     localStorage.setItem("sparky-paid-bills", JSON.stringify([...newPaid]));
