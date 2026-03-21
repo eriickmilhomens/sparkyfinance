@@ -3,6 +3,7 @@ import { X, Receipt, Wifi, ShoppingCart, UtensilsCrossed, CreditCard, ChevronUp,
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useFinancialData } from "@/hooks/useFinancialData";
+import { useDockVisibility } from "@/hooks/useDockVisibility";
 
 interface AddExpenseModalProps {
   open: boolean;
