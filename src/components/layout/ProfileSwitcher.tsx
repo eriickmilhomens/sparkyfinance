@@ -184,7 +184,7 @@ const ProfileSwitcher = () => {
   if (showLogoutConfirm) {
     return (
       <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-        <div className="w-full max-w-sm card-zelo space-y-4 text-center border-l-destructive">
+        <div className="w-full max-w-sm card-zelo space-y-4 text-center">
           <div className="flex h-14 w-14 mx-auto items-center justify-center rounded-full bg-destructive/15">
             <LogOut size={24} className="text-destructive" />
           </div>
