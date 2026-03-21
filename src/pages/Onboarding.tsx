@@ -195,8 +195,10 @@ const Onboarding = () => {
     setWelcomePopup(true);
   };
 
+  let content: React.ReactNode;
+
   if (step === "join") {
-    return (
+    content = (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
         <div className="flex flex-col items-center gap-3 mb-10 fade-in-up">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
@@ -226,10 +228,8 @@ const Onboarding = () => {
         </div>
       </div>
     );
-  }
-
-  if (step === "welcome") {
-    return (
+  } else if (step === "welcome") {
+    content = (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
         <div className="flex flex-col items-center gap-3 mb-10 fade-in-up">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
