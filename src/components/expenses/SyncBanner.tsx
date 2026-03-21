@@ -6,9 +6,10 @@ import ImportModal from "./ImportModal";
 
 interface SyncBannerProps {
   onNavigateToMetas?: () => void;
+  hideSyncBanner?: boolean;
 }
 
-const SyncBanner = ({ onNavigateToMetas }: SyncBannerProps) => {
+const SyncBanner = ({ onNavigateToMetas, hideSyncBanner }: SyncBannerProps) => {
   const [expenseModalOpen, setExpenseModalOpen] = useState(false);
   const [expenseModalType, setExpenseModalType] = useState<"expense" | "income">("expense");
   const [pluggyOpen, setPluggyOpen] = useState(false);
@@ -28,16 +29,11 @@ const SyncBanner = ({ onNavigateToMetas }: SyncBannerProps) => {
   const handleScan = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-      // For now, just stop the stream and show a placeholder
       stream.getTracks().forEach(t => t.stop());
       alert("Funcionalidade de escaneamento de NFC-e será implementada com OCR/IA.");
     } catch {
       alert("Não foi possível acessar a câmera. Verifique as permissões.");
     }
-  };
-
-  const handleImport = () => {
-    fileInputRef.current?.click();
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -47,7 +43,6 @@ const SyncBanner = ({ onNavigateToMetas }: SyncBannerProps) => {
     }
     e.target.value = "";
   };
-
 
   const quickActions = [
     { label: "Despesa", icon: TrendingDown, bg: "bg-destructive/15", color: "text-destructive", onClick: handleDespesa },
@@ -59,7 +54,6 @@ const SyncBanner = ({ onNavigateToMetas }: SyncBannerProps) => {
 
   return (
     <div className="space-y-4">
-      {/* Hidden file input for import */}
       <input
         ref={fileInputRef}
         type="file"
@@ -68,22 +62,24 @@ const SyncBanner = ({ onNavigateToMetas }: SyncBannerProps) => {
         onChange={handleFileChange}
       />
 
-      {/* Sync Banner */}
-      <div className="card-zelo fade-in-up flex items-center gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-primary/30 bg-primary/10">
-          <Wallet size={18} className="text-primary" />
+      {/* Sync Banner — hidden when prop is true */}
+      {!hideSyncBanner && (
+        <div className="card-zelo fade-in-up flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-primary/30 bg-primary/10">
+            <Wallet size={18} className="text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold">Sincronize suas finanças</p>
+            <p className="text-[11px] text-muted-foreground">Conecte seus bancos para importar transações.</p>
+          </div>
+          <button
+            onClick={() => setPluggyOpen(true)}
+            className="shrink-0 rounded-full bg-primary px-3.5 py-1.5 text-[10px] font-bold text-primary-foreground active:scale-95 transition-transform whitespace-nowrap"
+          >
+            Conectar Bancos
+          </button>
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold">Sincronize suas finanças</p>
-          <p className="text-[11px] text-muted-foreground">Conecte seus bancos para importar transações.</p>
-        </div>
-        <button
-          onClick={() => setPluggyOpen(true)}
-          className="shrink-0 rounded-full bg-primary px-3.5 py-1.5 text-[10px] font-bold text-primary-foreground active:scale-95 transition-transform whitespace-nowrap"
-        >
-          Conectar Bancos
-        </button>
-      </div>
+      )}
 
       {/* Quick Actions */}
       <div className="flex items-center justify-around fade-in-up stagger-1">
