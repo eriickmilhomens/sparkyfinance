@@ -177,7 +177,7 @@ const MembersView = () => {
       </div>
 
       {/* Group Code */}
-      <div className="card-zelo fade-in-up stagger-2">
+      <div className="card-zelo fade-in-up stagger-2 border-l-primary">
         <p className="text-label mb-2">CÓDIGO DE CONVITE DO GRUPO</p>
         <div className="flex items-center gap-3">
           <span className="flex-1 rounded-xl bg-muted/50 border border-border px-4 py-3 text-lg font-mono font-bold tracking-[0.3em] text-center">
