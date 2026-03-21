@@ -158,7 +158,7 @@ const TasksView = () => {
             const pctDone = a.total <= 1 ? (a.progress >= a.total ? 100 : 0) : Math.round((a.progress / a.total) * 100);
             const isDone = pctDone >= 100;
             return (
-              <div key={a.label} className={cn("card-zelo fade-in-up", `stagger-${i + 1}`, a.color === "text-success" ? "border-l-success" : a.color === "text-warning" ? "border-l-warning" : a.color === "text-orange-400" ? "border-l-warning" : "border-l-primary")}>
+              <div key={a.label} className={cn("card-zelo fade-in-up", `stagger-${i + 1}`)}>
                 <div className="flex items-center gap-3">
                   <div className={cn("flex h-10 w-10 items-center justify-center rounded-xl", a.bg)}>
                     <Icon size={18} className={a.color} />

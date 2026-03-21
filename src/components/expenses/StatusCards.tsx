@@ -65,7 +65,7 @@ const StatusCards = () => {
           }
 
           return (
-            <div key={s.label} className={`card-zelo fade-in-up stagger-${i + 1} !py-3 !px-2.5 ${s.iconColor === "text-warning" ? "border-l-warning" : s.iconColor === "text-success" ? "border-l-success" : "border-l-primary"}`}>
+            <div key={s.label} className={`card-zelo fade-in-up stagger-${i + 1} !py-3 !px-2.5`}>
               {content}
             </div>
           );

@@ -342,7 +342,7 @@ const PlanejamentoTab = () => {
 
       {/* Planned vs Real */}
       {totalBudget > 0 && (
-        <div className="card-zelo fade-in-up stagger-4 border-l-warning">
+        <div className="card-zelo fade-in-up stagger-4">
           <div className="flex items-center gap-2 mb-3">
             <Calendar size={14} className="text-warning" />
             <p className="text-xs font-semibold">Planejado vs Real</p>
