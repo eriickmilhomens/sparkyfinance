@@ -13,7 +13,7 @@ const PaceBar = () => {
   const progress = hasData && (displayCashDays + daysLeft) > 0
     ? Math.min(100, (displayCashDays / (displayCashDays + daysLeft)) * 100)
     : 0;
-  const accelerated = hasData && cashDays < daysLeft;
+  const accelerated = hasData && cashDays > 0 && cashDays < daysLeft;
 
   // Descriptive label instead of raw number
   const getLabel = () => {

@@ -115,16 +115,14 @@
     scroll-behavior: smooth;
   }
 
-  html, html * {
-    transition-property: color, background-color, border-color, box-shadow;
-    transition-duration: 0.3s;
-    transition-timing-function: ease;
-  }
-
-  /* Exclude elements that need their own transitions */
-  html .no-theme-transition,
-  html .no-theme-transition * {
-    transition: none !important;
+  html.theme-transitioning,
+  html.theme-transitioning * {
+    transition: color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                fill 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                stroke 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
   }
 }
 

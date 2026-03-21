@@ -18,7 +18,12 @@ export const useTheme = () => {
     localStorage.setItem("sparky-theme", theme);
   }, [theme]);
 
-  const toggleTheme = () => setTheme(t => t === "dark" ? "light" : "dark");
+  const toggleTheme = () => {
+    const root = document.documentElement;
+    root.classList.add("theme-transitioning");
+    setTheme(t => t === "dark" ? "light" : "dark");
+    setTimeout(() => root.classList.remove("theme-transitioning"), 600);
+  };
 
   return { theme, toggleTheme };
 };
