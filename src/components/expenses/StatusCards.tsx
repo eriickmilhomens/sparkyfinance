@@ -1,12 +1,15 @@
 import { PiggyBank, CalendarClock, Banknote } from "lucide-react";
-
-const statuses = [
-  { label: "Saldo Real", value: "R$ 4.832,00", color: "text-foreground", sub: "em conta agora", icon: PiggyBank, iconColor: "text-primary" },
-  { label: "A Pagar", value: "R$ 1.584,50", color: "text-warning", sub: "total agendado", icon: CalendarClock, iconColor: "text-warning" },
-  { label: "Saldo Disponível", value: "R$ 3.247,50", color: "text-success", sub: "livre após todas as contas agendadas", icon: Banknote, iconColor: "text-success" },
-];
+import { useFinancialData, fmt } from "@/hooks/useFinancialData";
 
 const StatusCards = () => {
+  const { data, available } = useFinancialData();
+
+  const statuses = [
+    { label: "Saldo Real", value: fmt(data.balance), color: "text-foreground", sub: "em conta agora", icon: PiggyBank, iconColor: "text-primary" },
+    { label: "A Pagar", value: fmt(data.scheduled), color: "text-warning", sub: "total agendado", icon: CalendarClock, iconColor: "text-warning" },
+    { label: "Saldo Disponível", value: fmt(available), color: "text-success", sub: "livre após todas as contas agendadas", icon: Banknote, iconColor: "text-success" },
+  ];
+
   return (
     <div className="grid grid-cols-3 gap-2">
       {statuses.map((s, i) => {
