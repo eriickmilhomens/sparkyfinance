@@ -106,10 +106,11 @@
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    overflow-x: hidden;
+    overflow: hidden;
     touch-action: manipulation;
     -webkit-text-size-adjust: 100%;
-    min-height: 100dvh;
+    height: 100dvh;
+    overscroll-behavior: none;
   }
 
   html {
