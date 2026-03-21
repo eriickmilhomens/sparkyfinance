@@ -23,8 +23,8 @@ const SpendingOverview = () => {
 
   const hasData = data.balance > 0 || data.income > 0 || data.expenses > 0;
 
-  // 30% rule: only allow spending 30% of available balance divided by remaining days
-  const spendablePool = Math.max(0, available * 0.3);
+  // 20% rule: only allow spending 20% of available balance divided by remaining days
+  const spendablePool = Math.max(0, available * 0.2);
   const dailyBudget = daysLeft > 0 ? spendablePool / daysLeft : 0;
 
   const orcamentoDiarioNovo = Math.max(0, (spendablePool - simValue) / daysLeft);
@@ -113,7 +113,7 @@ const SpendingOverview = () => {
         </div>
         <p className="text-[11px] text-muted-foreground mt-2">
           {hasData
-            ? <>30% do saldo disponível (<span className="text-foreground font-medium">{fmt(spendablePool)}</span>) ÷ <span className="text-foreground font-medium">{daysLeft} dias</span> restantes</>
+            ? <>20% do saldo disponível (<span className="text-foreground font-medium">{fmt(spendablePool)}</span>) ÷ <span className="text-foreground font-medium">{daysLeft} dias</span> restantes</>
             : "Adicione sua renda e despesas para ver o orçamento diário"
           }
         </p>
@@ -136,7 +136,7 @@ const SpendingOverview = () => {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-lg font-bold">Simulador de Impacto</h2>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Veja como uma compra afeta seu orçamento diário (base: 30% do saldo)</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Veja como uma compra afeta seu orçamento diário (base: 20% do saldo)</p>
               </div>
               <button onClick={() => setSimOpen(false)} className="rounded-full p-1.5 text-muted-foreground hover:text-foreground active:scale-95 transition-all">
                 <X size={20} />

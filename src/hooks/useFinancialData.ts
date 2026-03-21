@@ -64,7 +64,17 @@ export const useFinancialData = () => {
   const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
   const today = new Date().getDate();
   const daysLeft = Math.max(1, daysInMonth - today);
-  const dailyBudget = daysLeft > 0 ? Math.max(0, available) / daysLeft : 0;
+
+  // Hidden savings: deduct unspent days from pool (user doesn't see this)
+  const BUDGET_PERCENT = 0.20;
+  const spendablePool = Math.max(0, available * BUDGET_PERCENT);
+  // Calculate how much was actually spent today-ish to simulate daily savings
+  const pastDays = Math.max(1, today);
+  const idealDailySpend = (available * BUDGET_PERCENT) / daysInMonth;
+  const actualDailySpend = data.expenses > 0 ? data.expenses / pastDays : 0;
+  const savedSoFar = Math.max(0, (idealDailySpend - actualDailySpend) * pastDays);
+  const adjustedPool = Math.max(0, spendablePool - savedSoFar);
+  const dailyBudget = daysLeft > 0 ? adjustedPool / daysLeft : 0;
 
   const updateData = useCallback((partial: Partial<FinancialData>) => {
     setData(prev => ({ ...prev, ...partial }));

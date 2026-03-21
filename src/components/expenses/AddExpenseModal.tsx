@@ -244,31 +244,40 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
             </label>
             <div className="grid grid-cols-3 gap-2">
               <div>
-                <label className="text-[9px] text-muted-foreground mb-0.5 block">Dia</label>
-                <select value={expDay} onChange={(e) => setExpDay(e.target.value)}
-                  className="w-full rounded-lg border border-border bg-muted/50 px-2 py-2 text-xs outline-none focus:border-primary transition-all appearance-none">
-                  {Array.from({ length: 31 }, (_, i) => (
-                    <option key={i + 1} value={i + 1}>{String(i + 1).padStart(2, "0")}</option>
-                  ))}
-                </select>
+                <label className="text-[9px] text-muted-foreground font-medium mb-1 block">Dia</label>
+                <div className="relative">
+                  <select value={expDay} onChange={(e) => setExpDay(e.target.value)}
+                    className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-xs font-medium text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all appearance-none cursor-pointer">
+                    {Array.from({ length: 31 }, (_, i) => (
+                      <option key={i + 1} value={i + 1}>{String(i + 1).padStart(2, "0")}</option>
+                    ))}
+                  </select>
+                  <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                </div>
               </div>
               <div>
-                <label className="text-[9px] text-muted-foreground mb-0.5 block">Mês</label>
-                <select value={expMonth} onChange={(e) => setExpMonth(e.target.value)}
-                  className="w-full rounded-lg border border-border bg-muted/50 px-2 py-2 text-xs outline-none focus:border-primary transition-all appearance-none">
-                  {MONTHS.map((m, i) => (
-                    <option key={i} value={i}>{m}</option>
-                  ))}
-                </select>
+                <label className="text-[9px] text-muted-foreground font-medium mb-1 block">Mês</label>
+                <div className="relative">
+                  <select value={expMonth} onChange={(e) => setExpMonth(e.target.value)}
+                    className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-xs font-medium text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all appearance-none cursor-pointer">
+                    {MONTHS.map((m, i) => (
+                      <option key={i} value={i}>{m}</option>
+                    ))}
+                  </select>
+                  <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                </div>
               </div>
               <div>
-                <label className="text-[9px] text-muted-foreground mb-0.5 block">Ano</label>
-                <select value={expYear} onChange={(e) => setExpYear(e.target.value)}
-                  className="w-full rounded-lg border border-border bg-muted/50 px-2 py-2 text-xs outline-none focus:border-primary transition-all appearance-none">
-                  {[now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1].map(y => (
-                    <option key={y} value={y}>{y}</option>
-                  ))}
-                </select>
+                <label className="text-[9px] text-muted-foreground font-medium mb-1 block">Ano</label>
+                <div className="relative">
+                  <select value={expYear} onChange={(e) => setExpYear(e.target.value)}
+                    className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-xs font-medium text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all appearance-none cursor-pointer">
+                    {[now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1].map(y => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                  <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                </div>
               </div>
             </div>
           </div>

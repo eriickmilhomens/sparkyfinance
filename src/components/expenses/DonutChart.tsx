@@ -1,30 +1,41 @@
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { useFinancialData, fmt as fmtCurrency } from "@/hooks/useFinancialData";
 
-const defaultCategories = [
-  { name: "Moradia", color: "hsl(217 91% 60%)" },
-  { name: "Alimentação", color: "hsl(142 71% 45%)" },
-  { name: "Transporte", color: "hsl(38 92% 50%)" },
-  { name: "Lazer", color: "hsl(0 84% 60%)" },
-  { name: "Outros", color: "hsl(239 84% 67%)" },
-];
+const CATEGORY_COLORS: Record<string, string> = {
+  "Moradia": "hsl(217 91% 60%)",
+  "Alimentação": "hsl(142 71% 45%)",
+  "Transporte": "hsl(38 92% 50%)",
+  "Lazer": "hsl(0 84% 60%)",
+  "Contas": "hsl(45 93% 47%)",
+  "Internet": "hsl(199 89% 48%)",
+  "Mercado": "hsl(142 71% 45%)",
+  "Delivery": "hsl(0 72% 51%)",
+  "Cartão": "hsl(271 76% 53%)",
+  "Transferência": "hsl(217 91% 60%)",
+  "Cuidados Pessoais": "hsl(330 81% 60%)",
+  "Investimento": "hsl(262 83% 58%)",
+  "Outros": "hsl(239 84% 67%)",
+};
+
+const getColor = (name: string) => CATEGORY_COLORS[name] || `hsl(${Math.abs(name.split("").reduce((a, c) => a + c.charCodeAt(0), 0)) % 360} 70% 55%)`;
 
 const fmtNum = (v: number) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
 
 const DonutChart = () => {
   const { data: financialData } = useFinancialData();
-  const totalExpenses = financialData.expenses;
 
-  // Distribute expenses across categories proportionally (placeholder logic)
-  const categoryData = totalExpenses > 0
-    ? [
-        { name: "Moradia", value: Math.round(totalExpenses * 0.35), color: "hsl(217 91% 60%)" },
-        { name: "Alimentação", value: Math.round(totalExpenses * 0.25), color: "hsl(142 71% 45%)" },
-        { name: "Transporte", value: Math.round(totalExpenses * 0.18), color: "hsl(38 92% 50%)" },
-        { name: "Lazer", value: Math.round(totalExpenses * 0.12), color: "hsl(0 84% 60%)" },
-        { name: "Outros", value: Math.round(totalExpenses * 0.10), color: "hsl(239 84% 67%)" },
-      ]
-    : defaultCategories.map(c => ({ ...c, value: 0 }));
+  // Build category totals from actual transactions only
+  const categoryMap = new Map<string, number>();
+  financialData.transactions
+    .filter(t => t.type === "expense")
+    .forEach(t => {
+      const cat = t.category || "Outros";
+      categoryMap.set(cat, (categoryMap.get(cat) || 0) + t.amount);
+    });
+
+  const categoryData = Array.from(categoryMap.entries())
+    .map(([name, value]) => ({ name, value, color: getColor(name) }))
+    .sort((a, b) => b.value - a.value);
 
   const total = categoryData.reduce((sum, d) => sum + d.value, 0);
 
@@ -68,7 +79,7 @@ const DonutChart = () => {
               <div className="text-right">
                 <span className="text-xs font-semibold tabular-nums">R$ {fmtNum(entry.value)}</span>
                 <span className="text-[9px] text-muted-foreground ml-1">
-                  {total > 0 ? ((entry.value / total) * 100).toFixed(1) : 0}%
+                  {((entry.value / total) * 100).toFixed(1)}%
                 </span>
               </div>
             </div>
