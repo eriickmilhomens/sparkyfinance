@@ -23,6 +23,7 @@ interface ImportModalProps {
 
 const ImportModal = ({ open, onClose }: ImportModalProps) => {
   const [step, setStep] = useState<"input" | "review">("input");
+  useDockVisibility(open);
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);

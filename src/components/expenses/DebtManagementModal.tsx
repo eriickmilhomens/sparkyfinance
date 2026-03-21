@@ -7,6 +7,7 @@ interface DebtManagementModalProps {
 }
 
 const DebtManagementModal = ({ open, onClose }: DebtManagementModalProps) => {
+  useDockVisibility(open);
   if (!open) return null;
 
   return (

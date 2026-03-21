@@ -41,6 +41,7 @@ const loadSettings = (): FinSettings => {
 
 const FinancialSettingsModal = ({ open, onClose }: FinancialSettingsModalProps) => {
   const [settings, setSettings] = useState<FinSettings>(loadSettings);
+  useDockVisibility(open);
   const [confirmClear, setConfirmClear] = useState(false);
   const [showConnectionPopup, setShowConnectionPopup] = useState(false);
   const [showReserveInfo, setShowReserveInfo] = useState(false);

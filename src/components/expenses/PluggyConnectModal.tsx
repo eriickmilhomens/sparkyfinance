@@ -21,6 +21,7 @@ const PluggyConnectModal = ({ open, onClose }: PluggyConnectModalProps) => {
   } = usePluggy();
 
   const [widgetOpen, setWidgetOpen] = useState(false);
+  useDockVisibility(open);
   const [connectToken, setConnectToken] = useState<string | null>(null);
 
   useEffect(() => {
