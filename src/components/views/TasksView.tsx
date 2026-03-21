@@ -17,6 +17,7 @@ interface GroupMember {
   points: number;
   avatar: string;
   isCurrentUser: boolean;
+  isLeader: boolean;
 }
 
 const TasksView = () => {
@@ -25,13 +26,28 @@ const TasksView = () => {
 
   useEffect(() => {
     const loadMembers = async () => {
+      const isDemo = localStorage.getItem("sparky-demo-mode") === "true";
+      if (isDemo) return;
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: profiles } = await supabase
+      // Get user's group_code first
+      const { data: myProfile } = await supabase
         .from("profiles")
-        .select("name, points, user_id")
-        .order("points", { ascending: false });
+        .select("group_code")
+        .eq("user_id", user.id)
+        .single();
+
+      let query = supabase.from("profiles").select("name, points, user_id, invite_code, group_code");
+      
+      if (myProfile?.group_code) {
+        query = query.eq("group_code", myProfile.group_code);
+      } else {
+        query = query.eq("user_id", user.id);
+      }
+
+      const { data: profiles } = await query.order("points", { ascending: false });
 
       if (profiles) {
         setMembers(profiles.map(p => ({
@@ -39,10 +55,13 @@ const TasksView = () => {
           points: p.points,
           avatar: p.name.charAt(0).toUpperCase(),
           isCurrentUser: p.user_id === user.id,
+          isLeader: p.invite_code === p.group_code,
         })));
       }
     };
     loadMembers();
+    const interval = setInterval(loadMembers, 15000);
+    return () => clearInterval(interval);
   }, []);
 
   // Dynamic achievements based on real data
@@ -135,7 +154,7 @@ const TasksView = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold">{member.name}</p>
-                  <p className="text-[10px] text-muted-foreground">{member.isCurrentUser ? "Você" : "Membro"}</p>
+                  <p className="text-[10px] text-muted-foreground">{member.isLeader ? "Líder" : member.isCurrentUser ? "Você" : "Membro"}</p>
                 </div>
                 <div className="flex items-center gap-1.5 rounded-full bg-warning/15 px-2.5 py-1">
                   {i === 0 ? <Trophy size={12} className="text-warning" /> : <Star size={12} className="text-warning" />}

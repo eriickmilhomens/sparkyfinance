@@ -97,7 +97,15 @@ const SpendingOverview = ({ hideValues = false }: SpendingOverviewProps) => {
       <div className="card-zelo fade-in-up relative overflow-hidden">
         <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-success/5" />
         <div className="absolute -right-2 -top-2 h-12 w-12 rounded-full bg-success/8" />
-        <p className="text-label mb-1">Pode Gastar Hoje</p>
+        <div className="flex items-center justify-between mb-1">
+          <p className="text-label">Pode Gastar Hoje</p>
+          <button
+            onClick={() => setInfoPopup("podeGastar")}
+            className="p-0.5 rounded text-muted-foreground/50 hover:text-muted-foreground active:scale-90 transition-all"
+          >
+            <Info size={11} />
+          </button>
+        </div>
         <div className="flex items-end gap-3">
           <p className="text-4xl font-extrabold tracking-tight tabular-nums text-success">
             {hideValues ? masked : fmt(dailyBudget).replace("R$\u00a0", "R$ ")}
@@ -197,11 +205,17 @@ const SpendingOverview = ({ hideValues = false }: SpendingOverviewProps) => {
 
       {infoPopup && (
         <InfoPopup
-          title={infoPopup === "receita" ? "Receita Mensal" : "Gasto Mensal"}
+          title={
+            infoPopup === "receita" ? "Receita Mensal" 
+            : infoPopup === "gasto" ? "Gasto Mensal"
+            : "Pode Gastar Hoje"
+          }
           message={
             infoPopup === "receita"
               ? "A Receita Mensal representa o total de entradas financeiras registradas no mês atual. Inclui salários, freelances, rendimentos e qualquer outra fonte de renda que você tenha adicionado. Esse valor é atualizado automaticamente a cada novo lançamento de receita."
-              : "O Gasto Mensal representa o total de despesas registradas no mês atual. Inclui contas fixas, compras, assinaturas e qualquer saída de dinheiro que você tenha lançado. Acompanhe esse valor para manter o controle do seu orçamento."
+              : infoPopup === "gasto"
+              ? "O Gasto Mensal representa o total de despesas registradas no mês atual. Inclui contas fixas, compras, assinaturas e qualquer saída de dinheiro que você tenha lançado. Acompanhe esse valor para manter o controle do seu orçamento."
+              : "O 'Pode Gastar Hoje' calcula quanto você pode gastar de forma segura hoje. Ele pega 20% do seu saldo disponível (uma reserva de segurança) e divide pelos dias restantes do mês. Dessa forma, você evita gastar demais nos primeiros dias e garante que seu dinheiro dure até o fim do mês. Quanto mais verde, mais saudável está seu orçamento diário."
           }
           onClose={() => setInfoPopup(null)}
         />
