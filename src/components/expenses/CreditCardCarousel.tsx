@@ -201,7 +201,7 @@ const CreditCardCarousel = () => {
             </div>
           </div>
 
-          <div className="card-zelo mb-4 border-l-warning">
+          <div className="card-zelo mb-4">
             <div className="flex justify-between items-center mb-3">
               <div>
                 <p className="text-xs font-semibold">Fatura Atual</p>
