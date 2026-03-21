@@ -2,6 +2,7 @@ import { useState } from "react";
 import { X, ArrowLeft, Plus, CreditCard, ChevronRight, Receipt, Calendar, DollarSign, Wallet, Building2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useDockVisibility } from "@/hooks/useDockVisibility";
 
 const BANK_DATA: Record<string, { color: string; abbr: string }> = {
   "nubank": { color: "bg-purple-600", abbr: "NU" },
