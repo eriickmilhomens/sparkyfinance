@@ -343,6 +343,7 @@ const Onboarding = () => {
           onClick={async () => {
             const { error } = await lovable.auth.signInWithOAuth("google", {
               redirect_uri: window.location.origin,
+              extraParams: { prompt: "consent" },
             });
             if (error) toast.error("Erro ao entrar com Google");
           }}
