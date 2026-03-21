@@ -165,7 +165,7 @@ const ExtratoTab = () => {
 
       {/* Summary */}
       <div className="grid grid-cols-2 gap-2">
-        <div className="card-zelo fade-in-up stagger-1">
+        <div className="card-zelo fade-in-up stagger-1 border-l-success">
           <div className="flex items-center gap-2 mb-1">
             <ArrowUpRight size={14} className="text-success" />
             <span className="text-[10px] text-muted-foreground font-medium">Entradas</span>
