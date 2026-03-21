@@ -44,7 +44,7 @@ const Header = () => {
   };
 
   return (
-    <header className="flex items-center justify-between px-4 py-3">
+    <header className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-background/95 backdrop-blur-md">
       <div className="flex items-center gap-2">
         <button
           onClick={handleCatClick}

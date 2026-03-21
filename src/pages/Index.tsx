@@ -16,7 +16,6 @@ const Index = () => {
   const [, setTick] = useState(0);
   const navigate = useNavigate();
 
-  // Subtle auto-refresh every 30s to keep data fresh
   useEffect(() => {
     const interval = setInterval(() => setTick(t => t + 1), 30000);
     return () => clearInterval(interval);
@@ -50,6 +49,11 @@ const Index = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    window.scrollTo(0, 0);
+  };
+
   if (!ready) return null;
 
   const renderView = () => {
@@ -65,11 +69,19 @@ const Index = () => {
   };
 
   return (
-    <div className="bg-background relative mx-auto max-w-lg lg:max-w-4xl xl:max-w-6xl transition-all" style={{ minHeight: '100dvh', paddingTop: 'env(safe-area-inset-top, 20px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-      <div className="pb-20">
+    <div
+      className="bg-background relative mx-auto max-w-lg lg:max-w-4xl xl:max-w-6xl flex flex-col overflow-hidden"
+      style={{
+        height: '100dvh',
+        paddingTop: 'env(safe-area-inset-top, 20px)',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        overscrollBehavior: 'none',
+      }}
+    >
+      <div className="flex-1 overflow-y-auto overflow-x-hidden" style={{ overscrollBehavior: 'none' }}>
         {renderView()}
       </div>
-      <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
+      <TabBar activeTab={activeTab} onTabChange={handleTabChange} />
     </div>
   );
 };
