@@ -172,7 +172,7 @@ const ExtratoTab = () => {
           </div>
           <p className="text-base font-bold tabular-nums text-success">{fmt(totalIn)}</p>
         </div>
-        <div className="card-zelo fade-in-up stagger-2 border-l-destructive">
+        <div className="card-zelo fade-in-up stagger-2 border-l-4 border-l-destructive">
           <div className="flex items-center gap-2 mb-1">
             <ArrowDownLeft size={14} className="text-destructive" />
             <span className="text-[10px] text-muted-foreground font-medium">Saídas</span>
