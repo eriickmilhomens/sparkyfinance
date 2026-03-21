@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,7 +22,31 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [tapCount, setTapCount] = useState(0);
+  const [tapTimer, setTapTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
   const navigate = useNavigate();
+
+  const handleLogoTap = useCallback(() => {
+    const newCount = tapCount + 1;
+    if (tapTimer) clearTimeout(tapTimer);
+
+    if (newCount >= 7) {
+      // Demo mode
+      localStorage.setItem("sparky-demo-mode", "true");
+      localStorage.setItem("sparky-profiles", JSON.stringify([
+        { id: "demo", name: "Usuário Demo", email: "demo@sparky.app", avatar: "", isOriginal: true }
+      ]));
+      localStorage.setItem("sparky-active-profile", "demo");
+      toast.success("🎮 Modo Demo ativado!");
+      setTapCount(0);
+      navigate("/");
+      return;
+    }
+
+    setTapCount(newCount);
+    const timer = setTimeout(() => setTapCount(0), 2000);
+    setTapTimer(timer);
+  }, [tapCount, tapTimer, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,8 +58,15 @@ const Login = () => {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
-        toast.error(error.message === "Invalid login credentials" ? "E-mail ou senha incorretos" : error.message);
+        if (error.message === "Invalid login credentials") {
+          toast.error("E-mail ou senha incorretos");
+        } else if (error.message.includes("Email not confirmed")) {
+          toast.error("Confirme seu e-mail antes de fazer login");
+        } else {
+          toast.error(error.message);
+        }
       } else {
+        localStorage.removeItem("sparky-demo-mode");
         navigate("/");
       }
     } catch {
@@ -53,6 +84,8 @@ const Login = () => {
       });
       if (error) {
         toast.error("Erro ao conectar com Google");
+      } else {
+        localStorage.removeItem("sparky-demo-mode");
       }
     } catch {
       toast.error("Erro ao conectar com Google");
@@ -64,11 +97,18 @@ const Login = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
       <div className="flex flex-col items-center gap-3 mb-10 fade-in-up">
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
+        <button
+          type="button"
+          onClick={handleLogoTap}
+          className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 active:scale-95 transition-transform select-none"
+        >
           <CatLogo />
-        </div>
+        </button>
         <span className="text-2xl font-extrabold tracking-tight">SPARKY</span>
         <p className="text-sm text-muted-foreground">Seu controle financeiro inteligente</p>
+        {tapCount >= 3 && tapCount < 7 && (
+          <p className="text-[10px] text-muted-foreground/50 animate-pulse">{7 - tapCount} toques para modo demo</p>
+        )}
       </div>
 
       <form onSubmit={handleLogin} className="w-full max-w-sm space-y-4 fade-in-up stagger-1">

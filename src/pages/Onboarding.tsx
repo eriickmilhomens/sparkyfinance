@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { Users, LogIn, Copy, Check } from "lucide-react";
+import { Users, LogIn, Mail, Lock, Eye, EyeOff, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
 import { toast } from "sonner";
 
 const CatLogo = () => (
@@ -18,21 +20,70 @@ const CatLogo = () => (
 const VALID_CODES = ["RFL45QUH", "SPARKY01", "DEMO2026"];
 
 const Onboarding = () => {
-  const [step, setStep] = useState<"welcome" | "join">("welcome");
+  const [step, setStep] = useState<"register" | "welcome" | "join">("register");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [code, setCode] = useState("");
   const [codeError, setCodeError] = useState("");
   const navigate = useNavigate();
 
-  const handleCreateGroup = () => {
-    // Check if user is logged in
-    const profiles = (() => {
-      try { return JSON.parse(localStorage.getItem("sparky-profiles") || "[]"); } catch { return []; }
-    })();
-    if (profiles.length === 0) {
-      toast.error("Crie uma conta antes de criar um grupo");
-      navigate("/login");
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || !email || !password) {
+      toast.error("Preencha todos os campos");
       return;
     }
+    if (password.length < 6) {
+      toast.error("A senha deve ter pelo menos 6 caracteres");
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { full_name: name.trim() },
+          emailRedirectTo: window.location.origin,
+        },
+      });
+      if (error) {
+        if (error.message.includes("already registered")) {
+          toast.error("Este e-mail já está cadastrado. Faça login.");
+        } else {
+          toast.error(error.message);
+        }
+      } else {
+        toast.success("Conta criada! Verifique seu e-mail para confirmar.");
+        setStep("welcome");
+      }
+    } catch {
+      toast.error("Erro ao criar conta");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleRegister = async () => {
+    setLoading(true);
+    try {
+      const { error } = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (error) {
+        toast.error("Erro ao conectar com Google");
+      }
+    } catch {
+      toast.error("Erro ao conectar com Google");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateGroup = () => {
     navigate("/");
   };
 
@@ -82,34 +133,92 @@ const Onboarding = () => {
     );
   }
 
+  if (step === "welcome") {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
+        <div className="flex flex-col items-center gap-3 mb-10 fade-in-up">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
+            <CatLogo />
+          </div>
+          <h1 className="text-xl font-bold text-balance text-center">Seja bem-vindo ao seu novo controle financeiro</h1>
+          <p className="text-sm text-muted-foreground text-center">Escolha como deseja começar</p>
+        </div>
+
+        <div className="w-full max-w-sm space-y-3 fade-in-up stagger-1">
+          <button onClick={handleCreateGroup} className="w-full card-zelo flex items-center gap-4 active:scale-[0.98] transition-all hover:border-primary/50">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/15"><Users size={22} className="text-primary" /></div>
+            <div className="text-left">
+              <p className="text-sm font-semibold">Criar Novo Grupo</p>
+              <p className="text-[11px] text-muted-foreground">Inicie um espaço de planejamento do zero</p>
+            </div>
+          </button>
+          <button onClick={() => setStep("join")} className="w-full card-zelo flex items-center gap-4 active:scale-[0.98] transition-all hover:border-primary/50">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-success/15"><LogIn size={22} className="text-success" /></div>
+            <div className="text-left">
+              <p className="text-sm font-semibold">Entrar em um Grupo</p>
+              <p className="text-[11px] text-muted-foreground">Use o código de convite para sincronizar</p>
+            </div>
+          </button>
+        </div>
+
+        <p className="mt-8 text-xs text-muted-foreground fade-in-up stagger-2">
+          Já tem conta?{" "}
+          <button onClick={() => navigate("/login")} className="text-primary font-medium">Fazer login</button>
+        </p>
+      </div>
+    );
+  }
+
+  // Registration form
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
       <div className="flex flex-col items-center gap-3 mb-10 fade-in-up">
         <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
           <CatLogo />
         </div>
-        <h1 className="text-xl font-bold text-balance text-center">Seja bem-vindo ao seu novo controle financeiro</h1>
-        <p className="text-sm text-muted-foreground text-center">Escolha como deseja começar</p>
+        <span className="text-2xl font-extrabold tracking-tight">SPARKY</span>
+        <p className="text-sm text-muted-foreground">Crie sua conta para começar</p>
       </div>
 
-      <div className="w-full max-w-sm space-y-3 fade-in-up stagger-1">
-        <button onClick={handleCreateGroup} className="w-full card-zelo flex items-center gap-4 active:scale-[0.98] transition-all hover:border-primary/50">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/15"><Users size={22} className="text-primary" /></div>
-          <div className="text-left">
-            <p className="text-sm font-semibold">Criar Novo Grupo</p>
-            <p className="text-[11px] text-muted-foreground">Inicie um espaço de planejamento do zero</p>
-          </div>
+      <form onSubmit={handleRegister} className="w-full max-w-sm space-y-4 fade-in-up stagger-1">
+        <div className="relative">
+          <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input type="text" placeholder="Nome completo" value={name} onChange={(e) => setName(e.target.value)}
+            className="w-full rounded-xl border border-border bg-muted/50 pl-10 pr-4 py-3.5 text-sm outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary transition-all" />
+        </div>
+        <div className="relative">
+          <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input type="email" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)}
+            className="w-full rounded-xl border border-border bg-muted/50 pl-10 pr-4 py-3.5 text-sm outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary transition-all" />
+        </div>
+        <div className="relative">
+          <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input type={showPw ? "text" : "password"} placeholder="Senha (mín. 6 caracteres)" value={password} onChange={(e) => setPassword(e.target.value)}
+            className="w-full rounded-xl border border-border bg-muted/50 pl-10 pr-11 py-3.5 text-sm outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary transition-all" />
+          <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground active:scale-95">
+            {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
+        </div>
+        <button type="submit" disabled={loading} className="w-full rounded-xl bg-primary py-3.5 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50">
+          {loading ? "Criando conta..." : "Criar Conta"}
         </button>
-        <button onClick={() => setStep("join")} className="w-full card-zelo flex items-center gap-4 active:scale-[0.98] transition-all hover:border-primary/50">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-success/15"><LogIn size={22} className="text-success" /></div>
-          <div className="text-left">
-            <p className="text-sm font-semibold">Entrar em um Grupo</p>
-            <p className="text-[11px] text-muted-foreground">Use o código de convite para sincronizar</p>
-          </div>
+        <button
+          type="button"
+          onClick={handleGoogleRegister}
+          disabled={loading}
+          className="w-full rounded-xl border border-border py-3.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" className="shrink-0">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          Registrar com Google
         </button>
-      </div>
+      </form>
 
-      <p className="mt-8 text-xs text-muted-foreground fade-in-up stagger-2">
+      <p className="mt-6 text-xs text-muted-foreground fade-in-up stagger-2">
         Já tem conta?{" "}
         <button onClick={() => navigate("/login")} className="text-primary font-medium">Fazer login</button>
       </p>
