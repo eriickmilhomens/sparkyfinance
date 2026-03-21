@@ -176,6 +176,9 @@ export function seedDemoData() {
   localStorage.setItem("sparky-budgets", JSON.stringify(generateBudgets(expenses)));
   localStorage.setItem("sparky-investment-goals", JSON.stringify(generateGoals()));
 
+  // Clear demo AI chats on each new demo session
+  localStorage.removeItem("sparky-chat-history");
+
   // Dispatch event so hooks pick up the changes
   window.dispatchEvent(new Event("sparky-data-cleared"));
 }

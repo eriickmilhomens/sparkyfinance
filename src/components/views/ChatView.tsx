@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Send, Bot, User, Loader2, Plus, Trash2, ChevronLeft, MoreVertical, Paperclip, Image, FileText, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 type Attachment = {
   type: "image" | "document";
@@ -14,13 +15,21 @@ type Msg = { role: "user" | "assistant"; content: string; attachments?: Attachme
 type Conversation = { id: string; title: string; summary: string; messages: Msg[]; createdAt: string; lastActiveAt: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sparky-chat`;
-const STORAGE_KEY = "sparky-chat-history";
+const BASE_STORAGE_KEY = "sparky-chat-history";
 const TWELVE_HOURS = 12 * 60 * 60 * 1000;
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
+const getStorageKey = (): string => {
+  const isDemo = localStorage.getItem("sparky-demo-mode") === "true";
+  if (isDemo) return `${BASE_STORAGE_KEY}-demo`;
+  // User-specific key will be set once we have the user id
+  const userId = localStorage.getItem("sparky-current-user-id");
+  return userId ? `${BASE_STORAGE_KEY}-${userId}` : BASE_STORAGE_KEY;
+};
+
 const loadConversations = (): Conversation[] => {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]").map((c: any) => ({
+    return JSON.parse(localStorage.getItem(getStorageKey()) || "[]").map((c: any) => ({
       ...c,
       summary: c.summary || "",
     }));
@@ -28,7 +37,7 @@ const loadConversations = (): Conversation[] => {
 };
 
 const saveConversations = (convs: Conversation[]) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(convs));
+  localStorage.setItem(getStorageKey(), JSON.stringify(convs));
 };
 
 const generateTitle = (msgs: Msg[]): string => {
@@ -96,6 +105,19 @@ const ChatView = () => {
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+
+  // Set current user ID for scoped chat storage
+  useEffect(() => {
+    const isDemo = localStorage.getItem("sparky-demo-mode") === "true";
+    if (isDemo) return;
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user?.id) {
+        localStorage.setItem("sparky-current-user-id", session.user.id);
+        // Reload conversations for this user
+        setConversations(loadConversations());
+      }
+    });
+  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });

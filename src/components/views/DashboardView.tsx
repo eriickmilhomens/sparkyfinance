@@ -3,6 +3,7 @@ import Header from "@/components/layout/Header";
 import BalanceCard from "@/components/dashboard/BalanceCard";
 import SpendingOverview from "@/components/dashboard/SpendingOverview";
 import SuggestionsCard from "@/components/dashboard/SuggestionsCard";
+import BiggestExpenseCard from "@/components/dashboard/BiggestExpenseCard";
 
 const DashboardView = () => {
   const [hideValues, setHideValues] = useState(false);
@@ -24,6 +25,7 @@ const DashboardView = () => {
       </div>
       <BalanceCard onVisibilityChange={handleVisibilityChange} />
       <SpendingOverview hideValues={hideValues} />
+      <BiggestExpenseCard hideValues={hideValues} />
       <SuggestionsCard />
     </div>
   );
