@@ -85,7 +85,10 @@ export const usePoints = () => {
 
     // Find and remove the most recent log entry for this rule
     const logCopy = [...getLog()];
-    const idx = logCopy.findLastIndex(e => e.ruleId === ruleId);
+    let idx = -1;
+    for (let i = logCopy.length - 1; i >= 0; i--) {
+      if (logCopy[i].ruleId === ruleId) { idx = i; break; }
+    }
     if (idx === -1) return 0;
 
     logCopy.splice(idx, 1);
