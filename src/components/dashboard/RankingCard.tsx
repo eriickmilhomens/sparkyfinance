@@ -1,12 +1,17 @@
-import { Crown, TrendingUp } from "lucide-react";
+import { Crown, TrendingUp, Users } from "lucide-react";
 import { usePoints } from "@/hooks/usePoints";
 import { useProfile } from "@/hooks/useProfile";
+import { useGroupMembers } from "@/hooks/useGroupMembers";
 
 const RankingCard = () => {
   const { currentPoints, monthlyEarnings } = usePoints();
   const { profile } = useProfile();
+  const { members, currentUserRank, isLeader } = useGroupMembers();
 
   if (!profile) return null;
+
+  const isUserLeader = members.length > 0 && members.find(m => m.user_id === profile.user_id && isLeader(m));
+  const roleLabel = isUserLeader ? "Líder" : currentUserRank > 0 ? `${currentUserRank}º lugar` : "Membro";
 
   return (
     <div className="card-zelo fade-in-up stagger-2">
@@ -17,7 +22,7 @@ const RankingCard = () => {
           </div>
           <div>
             <p className="text-sm font-semibold">Ranking</p>
-            <p className="text-xs text-muted-foreground">{profile.name} • Líder</p>
+            <p className="text-xs text-muted-foreground">{profile.name} • {roleLabel}</p>
           </div>
         </div>
         <div className="flex items-center gap-1.5 rounded-full bg-warning/15 px-2.5 py-1">
@@ -25,9 +30,16 @@ const RankingCard = () => {
           <span className="text-xs font-bold text-warning tabular-nums">{currentPoints} pts</span>
         </div>
       </div>
-      {monthlyEarnings > 0 && (
-        <p className="text-[10px] text-success font-medium mt-2">+{monthlyEarnings} pontos este mês</p>
-      )}
+      <div className="flex items-center justify-between mt-2">
+        {monthlyEarnings > 0 && (
+          <p className="text-[10px] text-success font-medium">+{monthlyEarnings} pontos este mês</p>
+        )}
+        {members.length > 1 && (
+          <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+            <Users size={10} /> {members.length} membros
+          </p>
+        )}
+      </div>
     </div>
   );
 };
