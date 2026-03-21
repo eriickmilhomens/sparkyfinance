@@ -712,6 +712,11 @@ const ProfileSwitcher = () => {
     );
   }
 
+  // Sub-view: Admin Panel
+  if (subView === "admin") {
+    return <AdminPanel onClose={() => setSubView(null)} />;
+  }
+
   return (
     <div className="relative">
       <button onClick={() => setOpen(!open)} className="flex items-center gap-1.5 active:scale-95 transition-transform">
