@@ -166,7 +166,7 @@ const SpendingOverview = ({ hideValues = false }: SpendingOverviewProps) => {
 
       {/* Balance History */}
       {hasData && balanceHistory.length > 1 && (
-        <div className="card-zelo fade-in-up stagger-3 border-l-primary">
+        <div className="card-zelo fade-in-up stagger-3">
           <p className="text-label mb-0.5">HISTÓRICO DE SALDO</p>
           <p className="text-[11px] text-muted-foreground mb-3">Evolução realizada até hoje</p>
           <div className="h-44">
