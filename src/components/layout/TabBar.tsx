@@ -100,7 +100,10 @@ const TabBar = ({ activeTab, onTabChange }: TabBarProps) => {
 
       {/* Dock */}
       <nav
-        className="pointer-events-none fixed inset-x-0 z-[60] flex justify-center px-3 transition-all duration-300"
+        className={cn(
+          "pointer-events-none fixed inset-x-0 z-[60] flex justify-center px-3 transition-all duration-300",
+          hidden && !adjusting && "translate-y-[200%] opacity-0"
+        )}
         style={{ bottom: `calc(${currentBottom}px + env(safe-area-inset-bottom, 0px))` }}
       >
         <div className="liquid-dock pointer-events-auto mx-auto flex w-full max-w-lg items-center justify-around rounded-full px-2 py-2">
