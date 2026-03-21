@@ -445,7 +445,7 @@ const ChatView = () => {
             <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
               <Bot size={28} className="text-primary" />
             </div>
-            <p className="text-sm font-semibold mb-1">Olá! Sou o Sparky 🐱</p>
+            <p className="text-sm font-semibold mb-1">Olá! Sou o Sparky 🐈‍⬛</p>
             <p className="text-xs text-muted-foreground max-w-[260px]">
               Pergunte sobre finanças, envie imagens de extratos ou documentos para análise!
             </p>

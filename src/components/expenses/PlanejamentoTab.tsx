@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Target, PiggyBank, TrendingUp, Calendar, Lightbulb, Plus, X, Wallet, Shield, Sparkles, DollarSign } from "lucide-react";
 import { BarChart, Bar, XAxis, ResponsiveContainer, RadialBarChart, RadialBar } from "recharts";
 import { cn } from "@/lib/utils";
@@ -36,6 +36,11 @@ const tips = [
   { title: "Reduza delivery", desc: "Cozinhar mais vezes por semana pode economizar bastante no final do mês.", icon: "🍳" },
   { title: "Revise assinaturas", desc: "Cancele serviços que não usa para economizar mensalmente.", icon: "📺" },
   { title: "Energia em horário reduzido", desc: "Use eletrodomésticos após 22h para reduzir a conta de luz em até 15%.", icon: "⚡" },
+  { title: "Compras no atacado", desc: "Itens de uso frequente saem mais baratos em atacarejos.", icon: "🛒" },
+  { title: "Metas semanais", desc: "Dividir o orçamento em semanas facilita o controle dos gastos.", icon: "📅" },
+  { title: "Cashback e cupons", desc: "Use apps de cashback e cupons para economizar nas compras do dia a dia.", icon: "💰" },
+  { title: "Transporte alternativo", desc: "Considere caronas, bicicleta ou transporte público para economizar.", icon: "🚲" },
+  { title: "Lista de compras", desc: "Ir ao mercado com lista reduz compras por impulso em até 40%.", icon: "📝" },
 ];
 
 const goalTypes = [
@@ -65,6 +70,14 @@ const PlanejamentoTab = () => {
   const totalBudget = budgetCategories.reduce((s: number, c: any) => s + c.budget, 0);
   const totalSpent = budgetCategories.reduce((s: number, c: any) => s + c.spent, 0);
   const [activeTip, setActiveTip] = useState(0);
+
+  // Auto-rotate tips every 8 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveTip(prev => (prev + 1) % tips.length);
+    }, 8000);
+    return () => clearInterval(interval);
+  }, []);
   const [goalModalOpen, setGoalModalOpen] = useState(false);
   const [editBudgetOpen, setEditBudgetOpen] = useState(false);
   const [newGoalOpen, setNewGoalOpen] = useState(false);

@@ -114,6 +114,18 @@
   html {
     scroll-behavior: smooth;
   }
+
+  html, html * {
+    transition-property: color, background-color, border-color, box-shadow;
+    transition-duration: 0.3s;
+    transition-timing-function: ease;
+  }
+
+  /* Exclude elements that need their own transitions */
+  html .no-theme-transition,
+  html .no-theme-transition * {
+    transition: none !important;
+  }
 }
 
 @layer utilities {
