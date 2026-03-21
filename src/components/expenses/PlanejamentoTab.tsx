@@ -55,6 +55,7 @@ interface InvestmentGoal {
 
 const PlanejamentoTab = () => {
   const { data, updateData } = useFinancialData();
+  const { awardPoints } = usePoints();
   const [budgetCategories, setBudgetCategories] = useState(() => {
     try { return JSON.parse(localStorage.getItem(BUDGET_KEY) || "null") || defaultBudgets; } catch { return defaultBudgets; }
   });
