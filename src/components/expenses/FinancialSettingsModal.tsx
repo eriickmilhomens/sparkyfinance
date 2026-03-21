@@ -3,6 +3,7 @@ import { X, Link2, Trash2, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import PluggyConnectModal from "./PluggyConnectModal";
 import { toast } from "sonner";
+import { useFinancialData } from "@/hooks/useFinancialData";
 
 interface FinancialSettingsModalProps {
   open: boolean;
