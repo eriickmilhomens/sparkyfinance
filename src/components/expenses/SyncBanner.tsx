@@ -99,8 +99,30 @@ const SyncBanner = ({ onNavigateToMetas, hideSyncBanner }: SyncBannerProps) => {
         })}
       </div>
 
+      {syncPopup && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSyncPopup(false)} />
+          <div className="relative w-[85%] max-w-sm rounded-2xl bg-card border border-border p-5 shadow-xl animate-scale-in">
+            <div className="flex flex-col items-center text-center gap-3">
+              <div className="h-14 w-14 rounded-full bg-primary/15 flex items-center justify-center">
+                <Wallet size={24} className="text-primary" />
+              </div>
+              <h3 className="text-base font-bold">Em desenvolvimento</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                A sincronização bancária ainda não está 100% implementada. Em breve teremos atualizações para conectar seus bancos automaticamente!
+              </p>
+              <button
+                onClick={() => setSyncPopup(false)}
+                className="w-full rounded-xl border border-border py-2.5 text-xs font-medium text-muted-foreground active:scale-[0.98] transition-all mt-1"
+              >
+                Voltar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <AddExpenseModal open={expenseModalOpen} onClose={() => setExpenseModalOpen(false)} type={expenseModalType} />
-      <PluggyConnectModal open={pluggyOpen} onClose={() => setPluggyOpen(false)} />
       <ImportModal open={importOpen} onClose={() => setImportOpen(false)} />
     </div>
   );
