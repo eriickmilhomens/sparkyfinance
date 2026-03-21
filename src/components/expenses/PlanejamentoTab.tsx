@@ -166,7 +166,7 @@ const PlanejamentoTab = () => {
   return (
     <div className="space-y-3">
       {/* Savings goal radial */}
-      <div className="card-zelo fade-in-up">
+      <div className="card-zelo fade-in-up border-l-success">
         <div className="flex items-center gap-2 mb-1">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-success/15">
             <PiggyBank size={14} className="text-success" />
