@@ -174,7 +174,7 @@ const CreditCardCarousel = () => {
           </div>
 
           <div className="grid grid-cols-2 gap-2 mb-4">
-            <div className="card-zelo !py-3">
+            <div className="card-zelo !py-3 border-l-primary">
               <p className="text-[10px] text-muted-foreground">Limite</p>
               <p className="text-sm font-bold">{fmt(expandedCard.limit)}</p>
             </div>
