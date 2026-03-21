@@ -89,15 +89,7 @@ const ProfileSwitcher = () => {
   }, [dbProfile]);
 
   const current = profiles.find((p) => p.id === active) || profiles[0];
-  if (!current) {
-    // Show placeholder avatar while profile loads
-    return (
-      <div className="flex items-center gap-1.5">
-        <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
-        <ChevronDown size={14} className="text-muted-foreground" />
-      </div>
-    );
-  }
+  const isLoading = !current;
   const prizes = allPrizes[active] || [];
 
   const setPrizes = (newPrizes: Prize[]) => {
@@ -722,11 +714,15 @@ const ProfileSwitcher = () => {
   return (
     <div className="relative">
       <button onClick={() => setOpen(!open)} className="flex items-center gap-1.5 active:scale-95 transition-transform">
-        {renderAvatar(current, "h-8 w-8", "text-xs")}
+        {isLoading ? (
+          <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
+        ) : (
+          renderAvatar(current!, "h-8 w-8", "text-xs")
+        )}
         <ChevronDown size={14} className={cn("text-muted-foreground transition-transform", open && "rotate-180")} />
       </button>
 
-      {open && (
+      {open && !isLoading && (
         <>
           <div className="fixed inset-0 z-40" onClick={closeAll} />
           <div className="absolute right-0 top-11 z-50 w-72 rounded-2xl border border-border bg-card p-3 shadow-xl shadow-black/30 fade-in-up">
