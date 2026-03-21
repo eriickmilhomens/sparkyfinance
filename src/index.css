@@ -128,9 +128,7 @@
     overflow: hidden;
   }
 
-  html {
-    scroll-behavior: smooth;
-  }
+  /* html scroll-behavior already set above */
 
   html.theme-transitioning,
   html.theme-transitioning * {
