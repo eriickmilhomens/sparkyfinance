@@ -305,42 +305,49 @@ const ProfileSwitcher = () => {
                     <span className="text-sm">💳</span>
                     <span className="text-[11px]">Pagar contas em dia</span>
                   </div>
-                  <span className="text-[10px] font-bold text-warning">+2 pts</span>
+                  <span className="text-[10px] font-bold text-warning">+3 pts</span>
                 </div>
                 <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
                   <div className="flex items-center gap-2">
                     <span className="text-sm">🐷</span>
                     <span className="text-[11px]">Economizar 10% da renda</span>
                   </div>
-                  <span className="text-[10px] font-bold text-warning">+3 pts</span>
+                  <span className="text-[10px] font-bold text-warning">+5 pts</span>
                 </div>
                 <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
                   <div className="flex items-center gap-2">
                     <span className="text-sm">🏆</span>
                     <span className="text-[11px]">Economizar 20% da renda</span>
                   </div>
-                  <span className="text-[10px] font-bold text-warning">+5 pts</span>
+                  <span className="text-[10px] font-bold text-warning">+8 pts</span>
                 </div>
                 <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
                   <div className="flex items-center gap-2">
                     <span className="text-sm">📈</span>
                     <span className="text-[11px]">Depositar em meta de investimento</span>
                   </div>
-                  <span className="text-[10px] font-bold text-warning">+2 pts</span>
+                  <span className="text-[10px] font-bold text-warning">+4 pts</span>
                 </div>
                 <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
                   <div className="flex items-center gap-2">
                     <span className="text-sm">✅</span>
                     <span className="text-[11px]">Fechar mês no verde</span>
                   </div>
-                  <span className="text-[10px] font-bold text-warning">+5 pts</span>
+                  <span className="text-[10px] font-bold text-warning">+10 pts</span>
+                </div>
+                <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">🔥</span>
+                    <span className="text-[11px]">7 dias registrando gastos</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-warning">+3 pts</span>
                 </div>
                 <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
                   <div className="flex items-center gap-2">
                     <span className="text-sm">🧘</span>
                     <span className="text-[11px]">Mês sem compra impulsiva</span>
                   </div>
-                  <span className="text-[10px] font-bold text-warning">+3 pts</span>
+                  <span className="text-[10px] font-bold text-warning">+7 pts</span>
                 </div>
               </div>
             </div>
