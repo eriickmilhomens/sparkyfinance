@@ -18,18 +18,12 @@ const FinancialSettingsModal = ({ open, onClose }: FinancialSettingsModalProps) 
   const [alertsEnabled, setAlertsEnabled] = useState(true);
   const [pluggyOpen, setPluggyOpen] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
+  const { clearAll } = useFinancialData();
 
   if (!open) return null;
 
   const handleClearAllData = () => {
-    const keysToRemove = [
-      "sparky-balance", "sparky-transactions", "sparky-cards",
-      "sparky-credit-cards", "sparky-budget", "sparky-goals",
-      "sparky-chat-history", "sparky-investments", "sparky-planning",
-      "sparky-income", "sparky-expenses", "sparky-sync-data",
-      "sparky-open-finance-cache"
-    ];
-    keysToRemove.forEach((key) => localStorage.removeItem(key));
+    clearAll();
     setConfirmClear(false);
     toast.success("Todos os dados foram apagados com sucesso. Sua conta está zerada.");
     onClose();
