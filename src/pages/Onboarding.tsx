@@ -6,6 +6,7 @@ import { lovable } from "@/integrations/lovable";
 import { seedDemoData } from "@/utils/demoSeed";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { syncLocalDataOwner } from "@/lib/userLocalData";
 
 const CatLogo = () => (
   <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
