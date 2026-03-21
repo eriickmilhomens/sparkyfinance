@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import {
   ChevronDown, Check, UserPlus, User, Trophy, Crown, Star,
   Settings, Users, LogOut, Gift, Camera, Mail, Calendar, X,
@@ -161,10 +162,8 @@ const ProfileSwitcher = () => {
       setEditName(current.name);
       setEditEmail(current.email);
     }
-    // Set subView FIRST, then close dropdown
-    // Using setTimeout to avoid race condition with closeAll backdrop
+    setSubView(view);
     setOpen(false);
-    setTimeout(() => setSubView(view), 50);
   };
 
   const closeAll = () => {
@@ -173,6 +172,11 @@ const ProfileSwitcher = () => {
     setAddingProfile(false);
     setShowNewPrize(false);
     setShowLogoutConfirm(false);
+  };
+
+  const renderLayer = (content: ReactNode) => {
+    if (typeof document === "undefined") return null;
+    return createPortal(content, document.body);
   };
 
   const renderAvatar = (profile: Profile, size: string, textSize: string) => {
@@ -188,7 +192,7 @@ const ProfileSwitcher = () => {
 
   // Logout confirmation modal
   if (showLogoutConfirm) {
-    return (
+    return renderLayer(
       <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
         <div className="w-full max-w-sm card-zelo space-y-4 text-center">
           <div className="flex h-14 w-14 mx-auto items-center justify-center rounded-full bg-destructive/15">
@@ -201,7 +205,7 @@ const ProfileSwitcher = () => {
             <button onClick={handleLogout} className="flex-1 rounded-xl bg-destructive py-3 text-sm font-semibold text-destructive-foreground active:scale-[0.98]">Sair</button>
           </div>
         </div>
-      </div>
+      </div>,
     );
   }
 
