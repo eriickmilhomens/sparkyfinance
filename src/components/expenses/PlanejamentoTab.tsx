@@ -306,7 +306,7 @@ const PlanejamentoTab = () => {
       </div>
 
       {/* Budget by category */}
-      <div className="card-zelo fade-in-up stagger-3">
+      <div className="card-zelo fade-in-up stagger-3 border-l-primary">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Target size={14} className="text-primary" />
