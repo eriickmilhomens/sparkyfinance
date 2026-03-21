@@ -19,7 +19,6 @@ const BASE_STORAGE_KEY = "sparky-chat-history";
 const TWELVE_HOURS = 12 * 60 * 60 * 1000;
 const IDLE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 const getStorageKey = (): string => {
   const isDemo = localStorage.getItem("sparky-demo-mode") === "true";
