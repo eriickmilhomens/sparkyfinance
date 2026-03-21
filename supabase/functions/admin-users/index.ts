@@ -52,7 +52,7 @@ serve(async (req) => {
     const url = new URL(req.url);
     const action = url.searchParams.get("action") || "list";
 
-    if (req.method === "GET" || action === "list") {
+    if (req.method === "GET") {
       // List all users
       const { data: authUsers } = await supabaseAdmin.auth.admin.listUsers();
       const { data: profiles } = await supabaseAdmin.from("profiles").select("*");
