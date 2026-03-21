@@ -148,7 +148,15 @@ const Onboarding = () => {
     }
   };
 
-  const handleCreateGroup = () => {
+  const handleCreateGroup = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data } = await supabase.from("profiles").select("invite_code").eq("user_id", user.id).single();
+      if (data?.invite_code) {
+        setGroupPopup({ show: true, inviteCode: data.invite_code });
+        return;
+      }
+    }
     navigate("/");
   };
 
