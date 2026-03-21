@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useRef } from "react";
 import { Sun, Moon } from "lucide-react";
 import ProfileSwitcher from "@/components/layout/ProfileSwitcher";
 import { useTheme } from "@/hooks/useTheme";
@@ -28,18 +28,31 @@ const EASTER_EGG_MESSAGES = [
 const Header = () => {
   const { theme, toggleTheme } = useTheme();
   const { profile } = useProfile();
-  const clickCount = useRef(0);
-  const clickTimer = useRef<NodeJS.Timeout | null>(null);
+  const catClickCount = useRef(0);
+  const catClickTimer = useRef<NodeJS.Timeout | null>(null);
+  const nameClickCount = useRef(0);
+  const nameClickTimer = useRef<NodeJS.Timeout | null>(null);
 
   const handleCatClick = () => {
-    clickCount.current += 1;
-    if (clickTimer.current) clearTimeout(clickTimer.current);
-    clickTimer.current = setTimeout(() => { clickCount.current = 0; }, 2000);
+    catClickCount.current += 1;
+    if (catClickTimer.current) clearTimeout(catClickTimer.current);
+    catClickTimer.current = setTimeout(() => { catClickCount.current = 0; }, 2000);
 
-    if (clickCount.current >= 7) {
-      clickCount.current = 0;
+    if (catClickCount.current >= 7) {
+      catClickCount.current = 0;
       const msg = EASTER_EGG_MESSAGES[Math.floor(Math.random() * EASTER_EGG_MESSAGES.length)];
       toast(msg, { duration: 4000 });
+    }
+  };
+
+  const handleNameClick = () => {
+    nameClickCount.current += 1;
+    if (nameClickTimer.current) clearTimeout(nameClickTimer.current);
+    nameClickTimer.current = setTimeout(() => { nameClickCount.current = 0; }, 1500);
+
+    if (nameClickCount.current >= 3) {
+      nameClickCount.current = 0;
+      window.dispatchEvent(new Event("sparky-dock-adjust"));
     }
   };
 
@@ -52,7 +65,12 @@ const Header = () => {
         >
           <CatIcon />
         </button>
-        <span className="text-lg font-bold tracking-tight">SPARKY</span>
+        <span
+          onClick={handleNameClick}
+          className="text-lg font-bold tracking-tight select-none cursor-default active:scale-95 transition-transform"
+        >
+          SPARKY
+        </span>
       </div>
       <div className="flex items-center gap-3">
         <button
