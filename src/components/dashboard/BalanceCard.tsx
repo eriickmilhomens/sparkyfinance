@@ -1,15 +1,23 @@
 import { Eye, EyeOff, Pencil, Plus, Minus } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useFinancialData, fmt } from "@/hooks/useFinancialData";
 import { toast } from "sonner";
 
-const BalanceCard = () => {
+interface BalanceCardProps {
+  onVisibilityChange?: (visible: boolean) => void;
+}
+
+const BalanceCard = ({ onVisibilityChange }: BalanceCardProps) => {
   const [visible, setVisible] = useState(true);
   const [editing, setEditing] = useState(false);
   const [adjustType, setAdjustType] = useState<"add" | "sub">("add");
   const [adjustValue, setAdjustValue] = useState("");
   const [adjustDesc, setAdjustDesc] = useState("");
   const { available, data, updateData } = useFinancialData();
+
+  useEffect(() => {
+    onVisibilityChange?.(visible);
+  }, [visible, onVisibilityChange]);
 
   const handleAdjust = () => {
     const raw = adjustValue.replace(/\./g, "").replace(",", ".");
@@ -65,9 +73,9 @@ const BalanceCard = () => {
       </p>
       <div className="mt-2 space-y-1">
         <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-          <span>Receitas: <span className="text-success font-medium">{fmt(data.income)}</span></span>
+          <span>Receitas: <span className="text-success font-medium">{visible ? fmt(data.income) : "••••••"}</span></span>
           <span className="text-border">•</span>
-          <span>Despesas: <span className="text-destructive font-medium">{fmt(data.expenses)}</span></span>
+          <span>Despesas: <span className="text-destructive font-medium">{visible ? fmt(data.expenses) : "••••••"}</span></span>
         </div>
         <p className="text-[10px] text-muted-foreground">
           Livre após contas agendadas
@@ -93,7 +101,7 @@ const BalanceCard = () => {
           <input
             type="text"
             inputMode="decimal"
-            placeholder="Digite o valor (ex: 500,00)"
+            placeholder="Digite o valor"
             value={adjustValue}
             onChange={(e) => setAdjustValue(e.target.value)}
             className="w-full rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus:border-primary"

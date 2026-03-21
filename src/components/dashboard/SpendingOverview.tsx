@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { TrendingUp, TrendingDown, ShieldCheck, AlertTriangle, ArrowUpRight, Wallet, CreditCard, Pencil, DollarSign, CalendarDays, CheckCircle2, X, Minus } from "lucide-react";
+import { TrendingUp, TrendingDown, ArrowUpRight, Wallet, CreditCard, X } from "lucide-react";
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, CartesianGrid, BarChart, Bar, Tooltip } from "recharts";
 import { useFinancialData, fmt } from "@/hooks/useFinancialData";
+import PaceBar from "@/components/expenses/PaceBar";
 
 const CalculatorIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0">
@@ -16,69 +17,45 @@ const CalculatorIcon = () => (
   </svg>
 );
 
-const SpendingOverview = () => {
+interface SpendingOverviewProps {
+  hideValues?: boolean;
+}
+
+const SpendingOverview = ({ hideValues = false }: SpendingOverviewProps) => {
   const [simOpen, setSimOpen] = useState(false);
   const [simValue, setSimValue] = useState(0);
   const { data, available, daysLeft } = useFinancialData();
 
   const hasData = data.balance > 0 || data.income > 0 || data.expenses > 0;
-
-  // 20% rule: only allow spending 20% of available balance divided by remaining days
   const spendablePool = Math.max(0, available * 0.2);
   const dailyBudget = daysLeft > 0 ? spendablePool / daysLeft : 0;
-
   const orcamentoDiarioNovo = Math.max(0, (spendablePool - simValue) / daysLeft);
   const reducao = dailyBudget - orcamentoDiarioNovo;
-
   const isHealthy = dailyBudget >= 50 || !hasData;
-  const cashDays = dailyBudget > 0 && data.expenses > 0
-    ? Math.floor(available / (data.expenses / new Date().getDate()))
-    : 0;
 
-  // Dynamic balance history based on actual transactions
   const buildBalanceHistory = () => {
     if (!hasData) return [];
     const now = new Date();
     const month = now.getMonth();
     const year = now.getFullYear();
     const today = now.getDate();
-    const dailyMap: Record<number, number> = {};
-
-    // Group transactions by day in current month
-    let runningBalance = data.balance;
     const txThisMonth = data.transactions
-      .filter(t => {
-        const d = new Date(t.date);
-        return d.getMonth() === month && d.getFullYear() === year;
-      })
+      .filter(t => { const d = new Date(t.date); return d.getMonth() === month && d.getFullYear() === year; })
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-    // Calculate starting balance (balance minus all this month's net)
     let netThisMonth = 0;
-    txThisMonth.forEach(t => {
-      netThisMonth += t.type === "income" ? t.amount : -t.amount;
-    });
-    let startBalance = data.balance - netThisMonth;
-
+    txThisMonth.forEach(t => { netThisMonth += t.type === "income" ? t.amount : -t.amount; });
+    let cumBalance = data.balance - netThisMonth;
     const points: { d: number; v: number }[] = [];
-    let cumBalance = startBalance;
     for (let day = 1; day <= today; day++) {
       const dayTxs = txThisMonth.filter(t => new Date(t.date).getDate() === day);
-      dayTxs.forEach(t => {
-        cumBalance += t.type === "income" ? t.amount : -t.amount;
-      });
+      dayTxs.forEach(t => { cumBalance += t.type === "income" ? t.amount : -t.amount; });
       points.push({ d: day, v: Math.round(cumBalance) });
     }
     return points.length > 0 ? points : [{ d: today, v: data.balance }];
   };
 
   const balanceHistory = buildBalanceHistory();
-
-  const entriesExitsData = Array.from({ length: 31 }, (_, i) => ({
-    day: i + 1,
-    entradas: 0,
-    saidas: 0,
-  }));
+  const entriesExitsData = Array.from({ length: 31 }, (_, i) => ({ day: i + 1, entradas: 0, saidas: 0 }));
   if (hasData) {
     const now = new Date();
     data.transactions.forEach(t => {
@@ -93,6 +70,8 @@ const SpendingOverview = () => {
     });
   }
 
+  const masked = "••••••";
+
   return (
     <div className="space-y-3">
       {/* Pode gastar hoje */}
@@ -102,9 +81,9 @@ const SpendingOverview = () => {
         <p className="text-label mb-1">Pode Gastar Hoje</p>
         <div className="flex items-end gap-3">
           <p className="text-4xl font-extrabold tracking-tight tabular-nums text-success">
-            {fmt(dailyBudget).replace("R$\u00a0", "R$ ")}
+            {hideValues ? masked : fmt(dailyBudget).replace("R$\u00a0", "R$ ")}
           </p>
-          {hasData && (
+          {hasData && !hideValues && (
             <span className={`mb-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${isHealthy ? "bg-success/15 text-success" : "bg-warning/15 text-warning"}`}>
               {isHealthy ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
               {isHealthy ? "Saudável" : "Atenção"}
@@ -112,20 +91,18 @@ const SpendingOverview = () => {
           )}
         </div>
         <p className="text-[11px] text-muted-foreground mt-2">
-          {hasData
+          {hasData && !hideValues
             ? <>20% do saldo disponível (<span className="text-foreground font-medium">{fmt(spendablePool)}</span>) ÷ <span className="text-foreground font-medium">{daysLeft} dias</span> restantes</>
-            : "Adicione sua renda e despesas para ver o orçamento diário"
+            : hideValues ? "Valores ocultos" : "Adicione sua renda e despesas para ver o orçamento diário"
           }
         </p>
-        <div className="mt-2">
-          <button
-            onClick={() => setSimOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 border border-primary/30 px-3.5 py-1.5 text-[11px] font-semibold text-primary cursor-pointer active:scale-95 transition-all hover:bg-primary/20"
-          >
-            <CalculatorIcon />
-            Simular
-          </button>
-        </div>
+        {!hideValues && (
+          <div className="mt-2">
+            <button onClick={() => setSimOpen(true)} className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 border border-primary/30 px-3.5 py-1.5 text-[11px] font-semibold text-primary cursor-pointer active:scale-95 transition-all hover:bg-primary/20">
+              <CalculatorIcon /> Simular
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Simulator Modal */}
@@ -138,50 +115,27 @@ const SpendingOverview = () => {
                 <h2 className="text-lg font-bold">Simulador de Impacto</h2>
                 <p className="text-[11px] text-muted-foreground mt-0.5">Veja como uma compra afeta seu orçamento diário (base: 20% do saldo)</p>
               </div>
-              <button onClick={() => setSimOpen(false)} className="rounded-full p-1.5 text-muted-foreground hover:text-foreground active:scale-95 transition-all">
-                <X size={20} />
-              </button>
+              <button onClick={() => setSimOpen(false)} className="rounded-full p-1.5 text-muted-foreground hover:text-foreground active:scale-95 transition-all"><X size={20} /></button>
             </div>
-
             <label className="text-[11px] text-muted-foreground mb-1.5 block">Valor da Compra (R$)</label>
             <div className="flex items-center gap-2 mb-5">
               <div className="flex-1 relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">R$</span>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={simValue || ""}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/[^\d.,]/g, "").replace(",", ".");
-                    setSimValue(Math.max(0, Number(val) || 0));
-                  }}
-                  placeholder="0,00"
-                  className="w-full rounded-xl border-2 border-primary bg-muted/50 pl-10 pr-4 py-3 text-sm font-medium outline-none tabular-nums placeholder:text-muted-foreground transition-all"
-                />
+                <input type="text" inputMode="numeric" value={simValue || ""} onChange={(e) => { const val = e.target.value.replace(/[^\d.,]/g, "").replace(",", "."); setSimValue(Math.max(0, Number(val) || 0)); }} placeholder="0,00" className="w-full rounded-xl border-2 border-primary bg-muted/50 pl-10 pr-4 py-3 text-sm font-medium outline-none tabular-nums placeholder:text-muted-foreground transition-all" />
               </div>
             </div>
-
             <div className="space-y-3">
               <div className="flex items-center justify-between rounded-xl bg-muted/50 border border-border px-4 py-3">
-                <div>
-                  <p className="text-[10px] text-muted-foreground">Orçamento diário atual</p>
-                  <p className="text-sm font-bold tabular-nums text-success">{fmt(dailyBudget)}</p>
-                </div>
+                <div><p className="text-[10px] text-muted-foreground">Orçamento diário atual</p><p className="text-sm font-bold tabular-nums text-success">{fmt(dailyBudget)}</p></div>
                 <span className="text-[10px] text-muted-foreground">por dia</span>
               </div>
               <div className="flex items-center justify-between rounded-xl bg-muted/50 border border-border px-4 py-3">
-                <div>
-                  <p className="text-[10px] text-muted-foreground">Novo orçamento diário</p>
-                  <p className={`text-sm font-bold tabular-nums ${simValue > 0 ? "text-warning" : "text-success"}`}>{fmt(orcamentoDiarioNovo)}</p>
-                </div>
+                <div><p className="text-[10px] text-muted-foreground">Novo orçamento diário</p><p className={`text-sm font-bold tabular-nums ${simValue > 0 ? "text-warning" : "text-success"}`}>{fmt(orcamentoDiarioNovo)}</p></div>
                 <span className="text-[10px] text-muted-foreground">por dia</span>
               </div>
               {simValue > 0 && (
                 <div className="flex items-center justify-between rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3">
-                  <div>
-                    <p className="text-[10px] text-muted-foreground">Redução diária</p>
-                    <p className="text-sm font-bold tabular-nums text-destructive">- {fmt(reducao)}</p>
-                  </div>
+                  <div><p className="text-[10px] text-muted-foreground">Redução diária</p><p className="text-sm font-bold tabular-nums text-destructive">- {fmt(reducao)}</p></div>
                   <span className="text-[10px] text-destructive font-medium">por dia</span>
                 </div>
               )}
@@ -194,31 +148,19 @@ const SpendingOverview = () => {
       <div className="grid grid-cols-2 gap-2">
         <div className="card-zelo fade-in-up stagger-1">
           <div className="flex items-center gap-2 mb-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15">
-              <Wallet size={14} className="text-primary" />
-            </div>
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15"><Wallet size={14} className="text-primary" /></div>
             <span className="text-[10px] text-muted-foreground font-medium">Receita Mensal</span>
           </div>
-          <p className="text-lg font-bold tabular-nums">{fmt(data.income)}</p>
-          {hasData && (
-            <span className="text-[10px] text-success font-medium flex items-center gap-0.5">
-              <ArrowUpRight size={10} /> Receita registrada
-            </span>
-          )}
+          <p className="text-lg font-bold tabular-nums">{hideValues ? masked : fmt(data.income)}</p>
+          {hasData && !hideValues && (<span className="text-[10px] text-success font-medium flex items-center gap-0.5"><ArrowUpRight size={10} /> Receita registrada</span>)}
         </div>
         <div className="card-zelo fade-in-up stagger-2">
           <div className="flex items-center gap-2 mb-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-destructive/15">
-              <CreditCard size={14} className="text-destructive" />
-            </div>
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-destructive/15"><CreditCard size={14} className="text-destructive" /></div>
             <span className="text-[10px] text-muted-foreground font-medium">Gasto Mensal</span>
           </div>
-          <p className="text-lg font-bold tabular-nums">{fmt(data.expenses)}</p>
-          {hasData && (
-            <span className="text-[10px] text-destructive font-medium flex items-center gap-0.5">
-              <ArrowUpRight size={10} className="rotate-90" /> Despesas registradas
-            </span>
-          )}
+          <p className="text-lg font-bold tabular-nums">{hideValues ? masked : fmt(data.expenses)}</p>
+          {hasData && !hideValues && (<span className="text-[10px] text-destructive font-medium flex items-center gap-0.5"><ArrowUpRight size={10} className="rotate-90" /> Despesas registradas</span>)}
         </div>
       </div>
 
@@ -247,33 +189,7 @@ const SpendingOverview = () => {
       )}
 
       {/* Ritmo & Autonomia */}
-      <div className="card-zelo fade-in-up stagger-4">
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15">
-              <ShieldCheck size={20} className="text-primary" />
-            </div>
-            <div>
-              <p className="text-label">RITMO & AUTONOMIA</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <p className="text-lg font-bold">{cashDays} dias</p>
-            <p className="text-[10px] text-muted-foreground">de caixa</p>
-          </div>
-        </div>
-        <div className="h-2.5 w-full rounded-full bg-muted overflow-hidden">
-          <div className="h-full rounded-full bg-warning transition-all duration-700" style={{ width: `${hasData ? Math.min(100, (cashDays / daysLeft) * 100) : 0}%` }} />
-        </div>
-        <div className="flex justify-between mt-2">
-          <span className="text-[10px] text-muted-foreground">Faltam {daysLeft} dias no mês</span>
-          {hasData && cashDays < daysLeft && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-destructive">
-              <AlertTriangle size={10} /> Ritmo Acelerado
-            </span>
-          )}
-        </div>
-      </div>
+      <PaceBar />
 
       {/* Entradas vs Saídas */}
       {hasData && (
@@ -285,25 +201,15 @@ const SpendingOverview = () => {
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                 <XAxis dataKey="day" tick={{ fontSize: 8, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} interval={4} />
                 <YAxis tick={{ fontSize: 8, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-                <Tooltip
-                  contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "12px", fontSize: "11px" }}
-                  labelFormatter={(v) => `DIA ${v}`}
-                  formatter={(value: number, name: string) => [fmt(value), name === "entradas" ? "Entradas" : "Saídas"]}
-                />
+                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "12px", fontSize: "11px" }} labelFormatter={(v) => `DIA ${v}`} formatter={(value: number, name: string) => [fmt(value), name === "entradas" ? "Entradas" : "Saídas"]} />
                 <Bar dataKey="entradas" fill="hsl(var(--success))" radius={[3, 3, 0, 0]} />
                 <Bar dataKey="saidas" fill="hsl(var(--destructive))" radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
           <div className="flex items-center gap-4 mt-2 justify-center">
-            <div className="flex items-center gap-1.5">
-              <div className="h-2 w-2 rounded-full bg-success" />
-              <span className="text-[10px] text-muted-foreground">Entradas</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="h-2 w-2 rounded-full bg-destructive" />
-              <span className="text-[10px] text-muted-foreground">Saídas</span>
-            </div>
+            <div className="flex items-center gap-1.5"><div className="h-2 w-2 rounded-full bg-success" /><span className="text-[10px] text-muted-foreground">Entradas</span></div>
+            <div className="flex items-center gap-1.5"><div className="h-2 w-2 rounded-full bg-destructive" /><span className="text-[10px] text-muted-foreground">Saídas</span></div>
           </div>
         </div>
       )}
