@@ -146,7 +146,8 @@ const PlanejamentoTab = () => {
 
     setDepositGoalId(null);
     setDepositAmount("");
-    toast.success(`R$ ${fmtLocal(amount)} depositado na meta!`);
+    awardPoints("invest_deposit", `Depósito: ${investmentGoals.find(g => g.id === depositGoalId)?.name || "Meta"}`);
+    toast.success(`R$ ${fmtLocal(amount)} depositado na meta! +2 pts 📈`);
   };
 
   return (
