@@ -13,7 +13,7 @@ const BalanceCard = ({ onVisibilityChange }: BalanceCardProps) => {
   const [adjustType, setAdjustType] = useState<"add" | "sub">("add");
   const [adjustValue, setAdjustValue] = useState("");
   const [adjustDesc, setAdjustDesc] = useState("");
-  const { available, data, updateData } = useFinancialData();
+  const { available, data, addTransaction } = useFinancialData();
 
   useEffect(() => {
     onVisibilityChange?.(visible);
@@ -21,33 +21,28 @@ const BalanceCard = ({ onVisibilityChange }: BalanceCardProps) => {
 
   const dailyBudget = available * 0.20;
 
-  const handleAdjust = () => {
+  const handleAdjust = async () => {
     const raw = adjustValue.replace(/\./g, "").replace(",", ".");
     const val = parseFloat(raw);
     if (isNaN(val) || val <= 0) {
       toast.error("Digite um valor válido");
       return;
     }
-    const delta = adjustType === "add" ? val : -val;
-    const newBalance = data.balance + delta;
-    const newTx = {
-      id: crypto.randomUUID(),
-      date: new Date().toISOString(),
-      description: adjustDesc || "Ajuste de saldo",
-      amount: Math.abs(val),
-      type: (adjustType === "add" ? "income" : "expense") as "income" | "expense",
-      category: "Ajuste",
-    };
-    updateData({
-      balance: newBalance,
-      income: adjustType === "add" ? data.income + val : data.income,
-      expenses: adjustType === "sub" ? data.expenses + val : data.expenses,
-      transactions: [newTx, ...data.transactions],
-    });
-    toast.success(`Saldo ajustado: ${adjustType === "add" ? "+" : "-"}${fmt(val)}`);
-    setAdjustValue("");
-    setAdjustDesc("");
-    setEditing(false);
+    try {
+      await addTransaction({
+        date: new Date().toISOString(),
+        description: adjustDesc || "Ajuste de saldo",
+        amount: val,
+        type: adjustType === "add" ? "income" : "expense",
+        category: "Ajuste",
+      });
+      toast.success(`Saldo ajustado: ${adjustType === "add" ? "+" : "-"}${fmt(val)}`);
+      setAdjustValue("");
+      setAdjustDesc("");
+      setEditing(false);
+    } catch {
+      toast.error("Erro ao ajustar saldo");
+    }
   };
 
   return (

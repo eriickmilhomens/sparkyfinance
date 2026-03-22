@@ -56,6 +56,42 @@ export type Database = {
         }
         Relationships: []
       }
+      transactions: {
+        Row: {
+          amount: number
+          card_id: string | null
+          category: string
+          created_at: string
+          date: string
+          description: string
+          id: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          card_id?: string | null
+          category?: string
+          created_at?: string
+          date?: string
+          description: string
+          id?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          card_id?: string | null
+          category?: string
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

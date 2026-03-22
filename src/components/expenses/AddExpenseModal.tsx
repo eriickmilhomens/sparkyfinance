@@ -80,7 +80,7 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
   const [expMonth, setExpMonth] = useState(String(now.getMonth()));
   const [expYear, setExpYear] = useState(String(now.getFullYear()));
 
-  const { data, updateData } = useFinancialData();
+  const { data, addTransaction } = useFinancialData();
 
   const cards = (() => {
     try { return JSON.parse(localStorage.getItem(CARDS_KEY) || "[]"); } catch { return []; }
@@ -96,7 +96,7 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
 
   const finalCategory = isOthers && customCategory.trim() ? customCategory.trim() : selectedCategory || "Outros";
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name.trim()) { toast.error("Preencha o nome"); return; }
     const numValue = parseBRLInput(value);
     if (numValue <= 0) { toast.error("Informe um valor válido"); return; }
@@ -106,22 +106,15 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
 
     const expDate = new Date(parseInt(expYear), parseInt(expMonth), parseInt(expDay) || 1);
 
-    const newTransaction = {
-      id: crypto.randomUUID(),
-      date: expDate.toISOString(),
-      description: name.trim() + (split ? ` (÷${splitPeople})` : "") + (recurring ? " 🔄" : ""),
-      amount: finalValue,
-      type: (isIncome ? "income" : "expense") as "income" | "expense",
-      category: finalCategory,
-      cardId: isCardCategory ? selectedCardId : undefined,
-    };
-
-    const newTransactions = [newTransaction, ...data.transactions];
-    if (isIncome) {
-      updateData({ income: data.income + finalValue, balance: data.balance + finalValue, transactions: newTransactions });
-    } else {
-      updateData({ expenses: data.expenses + finalValue, balance: data.balance - finalValue, transactions: newTransactions });
-    }
+    try {
+      await addTransaction({
+        date: expDate.toISOString(),
+        description: name.trim() + (split ? ` (÷${splitPeople})` : "") + (recurring ? " 🔄" : ""),
+        amount: finalValue,
+        type: (isIncome ? "income" : "expense") as "income" | "expense",
+        category: finalCategory,
+        cardId: isCardCategory ? selectedCardId : undefined,
+      });
 
     if (isCardCategory && selectedCardId) {
       try {
@@ -157,6 +150,9 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
     setName(""); setValue("R$ 0,00"); setSelectedCategory(null); setCustomCategory(""); setInstallments(1); setSelectedCardId(""); setRecurring(false); setSplit(false); setSplitPeople(2);
     setExpDay(String(now.getDate())); setExpMonth(String(now.getMonth())); setExpYear(String(now.getFullYear()));
     onClose();
+    } catch {
+      toast.error("Erro ao salvar. Tente novamente.");
+    }
   };
 
   if (!open) return null;

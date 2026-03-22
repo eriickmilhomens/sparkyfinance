@@ -38,7 +38,7 @@ const ExtratoTab = () => {
   const [editAmount, setEditAmount] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
-  const { data, updateData } = useFinancialData();
+  const { data, deleteTransaction, updateTransaction } = useFinancialData();
 
   const filtered = data.transactions.filter((t) => {
     const d = new Date(t.date);
@@ -61,50 +61,26 @@ const ExtratoTab = () => {
 
   const selectedMonthLabel = months.find(m => m.value === selectedMonth)?.label || "";
 
-  const handleDelete = (id: string) => {
-    const tx = data.transactions.find(t => t.id === id);
-    if (!tx) return;
-    const newTransactions = data.transactions.filter(t => t.id !== id);
-    const newIncome = tx.type === "income" ? data.income - tx.amount : data.income;
-    const newExpenses = tx.type === "expense" ? data.expenses - tx.amount : data.expenses;
-    const newBalance = tx.type === "income" ? data.balance - tx.amount : data.balance + tx.amount;
-    updateData({
-      transactions: newTransactions,
-      income: Math.max(0, newIncome),
-      expenses: Math.max(0, newExpenses),
-      balance: newBalance,
-    });
-    setDeleteConfirm(null);
-    toast.success("Transação excluída e saldo recalculado");
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteTransaction(id);
+      setDeleteConfirm(null);
+      toast.success("Transação excluída e saldo recalculado");
+    } catch {
+      toast.error("Erro ao excluir transação");
+    }
   };
 
-  const handleEdit = (id: string) => {
-    const tx = data.transactions.find(t => t.id === id);
-    if (!tx) return;
+  const handleEdit = async (id: string) => {
     const newAmount = parseBRL(editAmount);
     if (newAmount <= 0) { toast.error("Valor inválido"); return; }
-    const diff = newAmount - tx.amount;
-    const newTransactions = data.transactions.map(t =>
-      t.id === id ? { ...t, description: editDesc || t.description, amount: newAmount } : t
-    );
-    let newBalance = data.balance;
-    let newIncome = data.income;
-    let newExpenses = data.expenses;
-    if (tx.type === "income") {
-      newBalance += diff;
-      newIncome += diff;
-    } else {
-      newBalance -= diff;
-      newExpenses += diff;
+    try {
+      await updateTransaction(id, { description: editDesc, amount: newAmount });
+      setEditingId(null);
+      toast.success("Transação atualizada");
+    } catch {
+      toast.error("Erro ao atualizar transação");
     }
-    updateData({
-      transactions: newTransactions,
-      balance: newBalance,
-      income: Math.max(0, newIncome),
-      expenses: Math.max(0, newExpenses),
-    });
-    setEditingId(null);
-    toast.success("Transação atualizada");
   };
 
   return (
