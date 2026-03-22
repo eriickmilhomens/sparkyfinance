@@ -73,7 +73,10 @@ const ProfileSwitcher = () => {
   const [completedCrop, setCompletedCrop] = useState<Crop>();
   const cropImgRef = useRef<HTMLImageElement>(null);
 
-  // Initialize profiles from DB profile
+  // Support chat state
+  const [supportMessages, setSupportMessages] = useState<{ from: string; text: string; time: string }[]>([]);
+  const [supportInput, setSupportInput] = useState("");
+  const [supportClosed, setSupportClosed] = useState(false);
   useEffect(() => {
     if (dbProfile && profiles.length === 0) {
       const initial: Profile = {
