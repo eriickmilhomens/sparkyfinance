@@ -319,9 +319,17 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
 
   const handleSendNotification = () => {
     if (!notifMessage.trim()) return;
-    const notifs = JSON.parse(localStorage.getItem("sparky-global-notifications") || "[]");
-    notifs.unshift({ id: Date.now().toString(), message: notifMessage, date: new Date().toISOString(), read: false });
-    localStorage.setItem("sparky-global-notifications", JSON.stringify(notifs));
+    // Store as a blocking notification with 5-second delay
+    const notif = {
+      id: Date.now().toString(),
+      message: notifMessage,
+      date: new Date().toISOString(),
+      read: false,
+      blocking: true,
+      minDisplaySeconds: 5,
+    };
+    localStorage.setItem("sparky-active-notification", JSON.stringify(notif));
+    window.dispatchEvent(new Event("sparky-notification-push"));
     addAuditLog("SEND_NOTIFICATION", "Todos os usuários", notifMessage);
     toast.success("Notificação enviada para todos os usuários!");
     setNotifMessage("");
