@@ -447,7 +447,7 @@ const PlanejamentoTab = () => {
               <div>
                 <label className="text-[11px] text-muted-foreground mb-1.5 block">Valor da Meta (R$)</label>
                 <input type="text" inputMode="numeric" placeholder="R$ 0,00" value={newGoal.targetAmount}
-                  onChange={(e) => setNewGoal(prev => ({ ...prev, targetAmount: e.target.value }))}
+                  onChange={(e) => setNewGoal(prev => ({ ...prev, targetAmount: handleBRLChange(e.target.value) }))}
                   className="w-full rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm outline-none tabular-nums focus:border-primary focus:ring-1 focus:ring-primary transition-all" />
               </div>
             </div>
