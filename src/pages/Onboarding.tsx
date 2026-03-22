@@ -23,12 +23,8 @@ const CatLogo = () => (
 
 const Onboarding = () => {
   const [step, setStep] = useState<"register" | "welcome" | "join">("register");
-  const [registerMethod, setRegisterMethod] = useState<"email" | "phone">("email");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [countryCode, setCountryCode] = useState("+55");
-  const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
