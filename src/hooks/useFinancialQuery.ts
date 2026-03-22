@@ -147,18 +147,41 @@ export const useFinancialQuery = () => {
 
   // Computed values
   const computed = useMemo(() => {
-    const available = data.balance - data.scheduled;
-    const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
-    const today = new Date().getDate();
+    // Read subscriptions for A Pagar
+    let unpaidSubsTotal = 0;
+    try {
+      const subs = JSON.parse(localStorage.getItem("sparky-subscriptions") || "[]");
+      const paidBills = JSON.parse(localStorage.getItem("sparky-paid-bills") || "[]");
+      unpaidSubsTotal = subs
+        .filter((s: any) => !paidBills.includes(s.id))
+        .reduce((sum: number, s: any) => sum + (s.amount || 0), 0);
+    } catch {}
+
+    const aPagar = data.scheduled > 0 ? data.scheduled : unpaidSubsTotal;
+    const available = data.balance - aPagar;
+
+    const now = new Date();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const today = now.getDate();
     const daysLeft = Math.max(1, daysInMonth - today);
-    const BUDGET_PERCENT = 0.20;
-    const spendablePool = Math.max(0, available * BUDGET_PERCENT);
+
+    // Reserve percentage from user settings
+    let reservePct = 0.20;
+    try { reservePct = parseInt(localStorage.getItem("sparky-reserve-pct") || "20") / 100; } catch {}
+
+    const reserve = Math.max(0, data.balance * reservePct);
+    const spendablePool = Math.max(0, data.balance - reserve - aPagar);
+
+    // 30% accumulation rule
+    const ACCUMULATION_RATE = 0.30;
+    const expectedDailySpend = spendablePool / daysInMonth;
     const pastDays = Math.max(1, today);
-    const idealDailySpend = (available * BUDGET_PERCENT) / daysInMonth;
     const actualDailySpend = data.expenses > 0 ? data.expenses / pastDays : 0;
-    const savedSoFar = Math.max(0, (idealDailySpend - actualDailySpend) * pastDays);
-    const adjustedPool = Math.max(0, spendablePool - savedSoFar);
+    const savedPerDay = Math.max(0, expectedDailySpend - actualDailySpend);
+    const accumulatedSavings = savedPerDay * pastDays * ACCUMULATION_RATE;
+    const adjustedPool = Math.max(0, spendablePool - accumulatedSavings);
     const dailyBudget = daysLeft > 0 ? adjustedPool / daysLeft : 0;
+
     return { available, daysLeft, dailyBudget };
   }, [data]);
 
