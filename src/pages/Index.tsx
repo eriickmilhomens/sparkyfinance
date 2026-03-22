@@ -9,7 +9,8 @@ import DocsView from "@/components/views/DocsView";
 import MembersView from "@/components/views/MembersView";
 import ChatView from "@/components/views/ChatView";
 import { syncLocalDataOwner } from "@/lib/userLocalData";
-import { Settings, Timer, Eye, X } from "lucide-react";
+import GlobalNotificationPopup from "@/components/layout/GlobalNotificationPopup";
+import { Settings, Timer, Eye, X, ShieldAlert, Ban } from "lucide-react";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("home");
