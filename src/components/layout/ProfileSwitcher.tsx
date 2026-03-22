@@ -5,7 +5,7 @@ import "react-image-crop/dist/ReactCrop.css";
 import {
   ChevronDown, Check, UserPlus, User, Trophy, Crown, Star,
   Settings, Users, LogOut, Gift, Camera, Mail, Calendar, X,
-  Image, Sparkles, Clock, Trash2, Shield
+  Image, Sparkles, Clock, Trash2, Shield, MessageSquare, Send
 } from "lucide-react";
 import AdminPanel from "@/components/admin/AdminPanel";
 import { cn } from "@/lib/utils";
