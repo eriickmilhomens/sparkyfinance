@@ -104,6 +104,58 @@ const ProfileSwitcher = () => {
     }
   }, [dbProfile]);
 
+  // Check for active support ticket
+  const hasActiveSupport = (() => {
+    try {
+      const userId = dbProfile?.user_id;
+      if (!userId) return false;
+      const key = `sparky-support-chat-${userId}`;
+      const msgs = JSON.parse(localStorage.getItem(key) || "[]");
+      const status = localStorage.getItem(`sparky-support-status-${userId}`);
+      return msgs.length > 0 && status !== "closed";
+    } catch { return false; }
+  })();
+
+  // Load support messages when opening support view
+  useEffect(() => {
+    if (subView !== "support") return;
+    const userId = dbProfile?.user_id;
+    if (!userId) return;
+    const key = `sparky-support-chat-${userId}`;
+    const msgs = JSON.parse(localStorage.getItem(key) || "[]");
+    setSupportMessages(msgs);
+    const status = localStorage.getItem(`sparky-support-status-${userId}`);
+    setSupportClosed(status === "closed");
+
+    // Poll for new messages
+    const interval = setInterval(() => {
+      const updated = JSON.parse(localStorage.getItem(key) || "[]");
+      setSupportMessages(updated);
+      const s = localStorage.getItem(`sparky-support-status-${userId}`);
+      if (s === "closed") setSupportClosed(true);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [subView, dbProfile?.user_id]);
+
+  const handleSendSupportMessage = () => {
+    if (!supportInput.trim() || !dbProfile?.user_id || supportClosed) return;
+    const msg = { from: "user", text: supportInput, time: new Date().toISOString() };
+    const key = `sparky-support-chat-${dbProfile.user_id}`;
+    const existing = JSON.parse(localStorage.getItem(key) || "[]");
+    existing.push(msg);
+    localStorage.setItem(key, JSON.stringify(existing));
+    // Mark as active
+    localStorage.setItem(`sparky-support-status-${dbProfile.user_id}`, "active");
+    setSupportMessages(existing);
+    setSupportInput("");
+  };
+
+  const startSupportTicket = () => {
+    if (!dbProfile?.user_id) return;
+    localStorage.setItem(`sparky-support-status-${dbProfile.user_id}`, "active");
+    openSubView("support");
+  };
+
   const current = profiles.find((p) => p.id === active) || profiles[0];
   const isLoading = !current;
   const prizes = allPrizes[active] || [];
