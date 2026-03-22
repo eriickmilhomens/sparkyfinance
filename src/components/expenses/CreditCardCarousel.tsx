@@ -76,6 +76,8 @@ const CreditCardCarousel = () => {
 
   const { data, updateData } = useFinancialData();
 
+  useDockVisibility(expandedId !== null || showPayment);
+
   const saveCards = useCallback((updated: CreditCardData[]) => {
     setCards(updated);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
