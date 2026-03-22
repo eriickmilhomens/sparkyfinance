@@ -13,7 +13,7 @@ const BalanceCard = ({ onVisibilityChange }: BalanceCardProps) => {
   const [adjustType, setAdjustType] = useState<"add" | "sub">("add");
   const [adjustValue, setAdjustValue] = useState("");
   const [adjustDesc, setAdjustDesc] = useState("");
-  const { available, data, updateData } = useFinancialData();
+  const { available, data, addTransaction } = useFinancialData();
 
   useEffect(() => {
     onVisibilityChange?.(visible);
