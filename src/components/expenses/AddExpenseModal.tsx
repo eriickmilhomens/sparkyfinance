@@ -80,7 +80,7 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
   const [expMonth, setExpMonth] = useState(String(now.getMonth()));
   const [expYear, setExpYear] = useState(String(now.getFullYear()));
 
-  const { data, updateData } = useFinancialData();
+  const { data, addTransaction } = useFinancialData();
 
   const cards = (() => {
     try { return JSON.parse(localStorage.getItem(CARDS_KEY) || "[]"); } catch { return []; }
