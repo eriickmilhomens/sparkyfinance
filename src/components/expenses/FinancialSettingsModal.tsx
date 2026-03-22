@@ -134,8 +134,8 @@ const FinancialSettingsModal = ({ open, onClose }: FinancialSettingsModalProps) 
                   className="w-full accent-primary h-1.5" />
               </div>
             ) : (
-              <input type="text" placeholder="R$ 0,00" value={settings.reserveFixed}
-                onChange={(e) => updateSetting("reserveFixed", e.target.value)}
+              <input type="text" inputMode="numeric" placeholder="R$ 0,00" value={settings.reserveFixed}
+                onChange={(e) => updateSetting("reserveFixed", handleBRLChange(e.target.value))}
                 className="w-full rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm outline-none placeholder:text-muted-foreground focus:border-primary transition-all tabular-nums" />
             )}
           </div>
