@@ -48,11 +48,13 @@ const Login = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  const handleLogoTap = useCallback(() => {
+  const handleLogoTap = useCallback(async () => {
     const newCount = tapCount + 1;
     if (tapTimer) clearTimeout(tapTimer);
 
     if (newCount >= 7) {
+      // Sign out any existing session first to prevent race condition
+      await supabase.auth.signOut().catch(() => {});
       localStorage.setItem("sparky-demo-mode", "true");
       seedDemoData();
       toast.success("🎮 Modo Demo ativado!");
