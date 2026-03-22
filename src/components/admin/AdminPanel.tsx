@@ -305,8 +305,13 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
 
   const handleAdjustPoints = async (userId: string, newPoints: number) => {
     try {
-      const { error } = await supabase.from("profiles").update({ points: newPoints }).eq("user_id", userId);
-      if (error) throw error;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Sessão expirada");
+      const res = await fetch(
+        `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/admin-users`,
+        { method: "POST", headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" }, body: JSON.stringify({ action: "adjust_points", userId, points: newPoints }) }
+      );
+      if (!res.ok) { const err = await res.json(); throw new Error(err.error || "Erro"); }
       addAuditLog("ADJUST_POINTS", selectedUser?.name || userId, `Pontos alterados para ${newPoints}`);
       setSelectedUser(null);
       setAdjustPoints("");
