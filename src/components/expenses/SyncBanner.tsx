@@ -120,6 +120,7 @@ const SyncBanner = ({ onNavigateToMetas, hideSyncBanner }: SyncBannerProps) => {
 
       <AddExpenseModal open={expenseModalOpen} onClose={() => setExpenseModalOpen(false)} type={expenseModalType} />
       <ImportModal open={importOpen} onClose={() => setImportOpen(false)} />
+      <ScanReceiptModal open={scanOpen} onClose={() => setScanOpen(false)} />
     </div>
   );
 };
