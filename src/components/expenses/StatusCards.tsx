@@ -114,7 +114,7 @@ const StatusCards = () => {
                   </button>
                 )}
               </div>
-              <p className={cn("text-sm font-bold tabular-nums", s.color)}>{s.value}</p>
+              {s.value ? <p className={cn("text-sm font-bold tabular-nums", s.color)}>{s.value}</p> : null}
               <p className={cn("text-[9px] mt-0.5 leading-tight", isNegative && s.infoKey === "disponivel" ? "text-destructive/80" : "text-muted-foreground")}>{s.sub}</p>
             </>
           );
