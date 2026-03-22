@@ -64,7 +64,7 @@ const SubscriptionsCard = () => {
 
   const handleAdd = () => {
     if (!newName.trim()) return;
-    const amount = parseFloat(newAmount.replace(/\D/g, "")) / 100 || 0;
+    const amount = parseBRLInput(newAmount);
     const preset = PRESET_SUBS.find(p => p.name.toLowerCase() === newName.toLowerCase());
     const sub: Subscription = {
       id: editingId || crypto.randomUUID(),
