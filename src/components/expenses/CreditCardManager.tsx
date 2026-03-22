@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { handleBRLChange } from "@/lib/brlInput";
 import { X, ArrowLeft, Plus, CreditCard, ChevronRight, Receipt, Calendar, DollarSign, Wallet, Building2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
