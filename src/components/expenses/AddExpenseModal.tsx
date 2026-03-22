@@ -98,13 +98,7 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
 
   const handleSave = () => {
     if (!name.trim()) { toast.error("Preencha o nome"); return; }
-    const cleanedValue = value.replace(/[^\d.,]/g, "");
-    let numValue: number;
-    if (cleanedValue.includes(",")) {
-      numValue = parseFloat(cleanedValue.replace(/\./g, "").replace(",", ".")) || 0;
-    } else {
-      numValue = parseFloat(cleanedValue) || 0;
-    }
+    const numValue = parseBRLInput(value);
     if (numValue <= 0) { toast.error("Informe um valor válido"); return; }
 
     // If split, divide by number of people
