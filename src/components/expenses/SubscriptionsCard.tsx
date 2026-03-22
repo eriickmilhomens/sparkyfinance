@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { handleBRLChange, parseBRLInput } from "@/lib/brlInput";
 import { MoreVertical, Plus, X, CheckCircle2, Clock, Pencil, Trash2, CalendarDays, Undo2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFinancialData, fmt } from "@/hooks/useFinancialData";
