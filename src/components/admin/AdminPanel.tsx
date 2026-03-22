@@ -510,6 +510,17 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
     setSelectedUser(null);
   };
 
+  // Poll for new support messages while chat is open
+  useEffect(() => {
+    if (!showSupportChat || !supportChatTarget) return;
+    const interval = setInterval(() => {
+      const key = `sparky-support-chat-${supportChatTarget.id}`;
+      const msgs = JSON.parse(localStorage.getItem(key) || "[]");
+      setSupportMessages(msgs);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [showSupportChat, supportChatTarget]);
+
   const recentUsers = [...users].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5);
   const activeToday = users.filter(u => u.last_sign_in && new Date(u.last_sign_in).toDateString() === new Date().toDateString());
   const googleUsers = users.filter(u => u.provider === "google");
@@ -1547,7 +1558,30 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
                   <p className="text-[9px] text-muted-foreground">{supportChatTarget.email}</p>
                 </div>
               </div>
-              <button onClick={() => { setShowSupportChat(false); setSupportChatTarget(null); }} className="text-muted-foreground"><X size={16} /></button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => {
+                    // Encerrar suporte — save history to admin logs, mark as closed for user
+                    const key = `sparky-support-chat-${supportChatTarget.id}`;
+                    const msgs = JSON.parse(localStorage.getItem(key) || "[]");
+                    // Save to admin archive
+                    const archiveKey = `sparky-support-archive-${supportChatTarget.id}`;
+                    const archive = JSON.parse(localStorage.getItem(archiveKey) || "[]");
+                    archive.push({ messages: msgs, closedAt: new Date().toISOString() });
+                    localStorage.setItem(archiveKey, JSON.stringify(archive));
+                    // Mark status as closed for user
+                    localStorage.setItem(`sparky-support-status-${supportChatTarget.id}`, "closed");
+                    addAuditLog("CLOSE_SUPPORT", supportChatTarget.name, `Chamado encerrado com ${msgs.length} mensagens`);
+                    toast.success(`Suporte com ${supportChatTarget.name} encerrado!`);
+                    setShowSupportChat(false);
+                    setSupportChatTarget(null);
+                  }}
+                  className="rounded-lg bg-destructive/15 px-2.5 py-1.5 text-[9px] font-semibold text-destructive active:scale-95"
+                >
+                  Encerrar
+                </button>
+                <button onClick={() => { setShowSupportChat(false); setSupportChatTarget(null); }} className="text-muted-foreground"><X size={16} /></button>
+              </div>
             </div>
 
             {/* Messages */}

@@ -238,7 +238,61 @@ const CreditCardCarousel = () => {
                 )}
                 <div className="flex gap-2">
                   <button onClick={() => setShowPayment(false)} className="flex-1 rounded-lg border border-border py-2 text-xs text-muted-foreground">Cancelar</button>
-                  <button onClick={() => setShowPayment(false)} className="flex-1 rounded-lg bg-success py-2 text-xs font-semibold text-white">Confirmar</button>
+                  <button onClick={() => {
+                    const invoiceAmt = expandedCard.invoiceAmount;
+                    if (invoiceAmt <= 0) {
+                      toast.error("Não há fatura a pagar.");
+                      setShowPayment(false);
+                      return;
+                    }
+                    const payAmt = payFull ? invoiceAmt : parseFloat(payAmount.replace(/\D/g, "")) / 100;
+                    if (!payAmt || payAmt <= 0) {
+                      toast.error("Informe um valor válido.");
+                      return;
+                    }
+                    if (payAmt > invoiceAmt) {
+                      toast.error("O valor não pode ser maior que a fatura.");
+                      return;
+                    }
+                    // Check balance
+                    const balanceAvailable = data.balance;
+                    if (balanceAvailable < payAmt) {
+                      toast.error("Saldo insuficiente para pagar a fatura.");
+                      return;
+                    }
+                    // Process payment
+                    const now = new Date();
+                    const dateStr = now.toLocaleDateString("pt-BR");
+                    const monthStr = now.toLocaleDateString("pt-BR", { month: "short", year: "numeric" });
+                    const remaining = Math.max(0, invoiceAmt - payAmt);
+                    const updated = cards.map(c => c.id === expandedCard.id ? {
+                      ...c,
+                      invoiceAmount: remaining,
+                      usedAmount: Math.max(0, c.usedAmount - payAmt),
+                      paidInvoices: [...c.paidInvoices, { month: monthStr, amount: payAmt, paidAt: dateStr }],
+                      transactions: remaining === 0 ? [] : c.transactions,
+                    } : c);
+                    saveCards(updated);
+                    // Update global financial data
+                    updateData({
+                      expenses: Math.max(0, data.expenses + payAmt),
+                      balance: data.balance - payAmt,
+                    });
+                    setShowPayment(false);
+                    setPayAmount("");
+                    // Show success popup
+                    toast.custom(() => (
+                      <div className="rounded-2xl border border-border bg-card p-5 shadow-xl max-w-sm mx-auto text-center space-y-2">
+                        <div className="h-12 w-12 rounded-full bg-success/15 flex items-center justify-center mx-auto">
+                          <DollarSign size={20} className="text-success" />
+                        </div>
+                        <p className="text-sm font-bold">Parabéns pelo pagamento da sua fatura! 🎉</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {payFull ? "Fatura paga integralmente!" : `Pago: ${fmt(payAmt)} — Restante: ${fmt(remaining)}`}
+                        </p>
+                      </div>
+                    ), { duration: 4000 });
+                  }} className="flex-1 rounded-lg bg-success py-2 text-xs font-semibold text-white">Confirmar</button>
                 </div>
               </div>
             )}
