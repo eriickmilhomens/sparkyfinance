@@ -133,7 +133,7 @@ const PlanejamentoTab = () => {
   };
 
   const handleDeposit = () => {
-    const amount = parseBRL(depositAmount);
+    const amount = parseBRLInput(depositAmount);
     if (amount <= 0) { toast.error("Informe um valor válido"); return; }
     const updated = investmentGoals.map(g =>
       g.id === depositGoalId ? { ...g, savedAmount: g.savedAmount + amount } : g
