@@ -85,7 +85,7 @@ const TabBar = ({ activeTab, onTabChange }: TabBarProps) => {
             </div>
             <input
               type="range"
-              min={0}
+              min={-40}
               max={80}
               value={tempOffset}
               onChange={(e) => setTempOffset(parseInt(e.target.value, 10))}

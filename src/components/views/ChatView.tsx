@@ -466,11 +466,20 @@ const ChatView = () => {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden" style={{ paddingTop: 'env(safe-area-inset-top, 20px)' }}>
       {showNewChatConfirm && <NewChatConfirmPopup />}
       {/* Header - fixed at top */}
       <div className="flex-shrink-0 px-4 pt-3 pb-2 flex items-center justify-between border-b border-border bg-background">
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              if ((window as any).__sparkyGoHome) (window as any).__sparkyGoHome();
+            }}
+            className="p-1.5 rounded-full hover:bg-muted active:scale-95 text-muted-foreground"
+            title="Voltar"
+          >
+            <ChevronLeft size={20} />
+          </button>
           <div className="h-8 w-8 rounded-full bg-primary/15 flex items-center justify-center">
             <Bot size={16} className="text-primary" />
           </div>
