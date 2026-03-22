@@ -129,7 +129,7 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
         const perInstallment = finalValue / installments;
         const updated = allCards.map((c: any) => {
           if (c.id === selectedCardId) {
-            const newTx = { id: crypto.randomUUID(), desc: name.trim(), value: perInstallment, date: expDate.toLocaleDateString("pt-BR"), category: "Cartão" };
+            const newTx = { id: crypto.randomUUID(), desc: name.trim(), value: perInstallment, date: expDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }), category: finalCategory };
             return {
               ...c, usedAmount: (c.usedAmount || 0) + perInstallment, invoiceAmount: (c.invoiceAmount || 0) + perInstallment,
               transactions: [newTx, ...(c.transactions || [])],

@@ -109,10 +109,12 @@
     overflow: hidden;
     touch-action: manipulation;
     -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
     height: 100dvh;
     min-height: 100dvh;
     max-height: 100dvh;
     overscroll-behavior: none;
+    -ms-content-zooming: none;
   }
 
   html {

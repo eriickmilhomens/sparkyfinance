@@ -43,6 +43,8 @@ const SubscriptionsCard = () => {
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [menuId, setMenuId] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
   const [newAmount, setNewAmount] = useState("R$ 0,00");
   const [newDueDay, setNewDueDay] = useState("10");
@@ -268,6 +270,26 @@ const SubscriptionsCard = () => {
         </div>
       )}
 
+      {/* Delete confirmation */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowDeleteConfirm(false)} />
+          <div className="relative w-[85%] max-w-sm rounded-2xl bg-card border border-border p-5 text-center">
+            <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-destructive/15 flex items-center justify-center">
+              <Trash2 size={22} className="text-destructive" />
+            </div>
+            <h3 className="text-base font-bold mb-1">Excluir assinatura?</h3>
+            <p className="text-xs text-muted-foreground mb-5">
+              Tem certeza que deseja excluir <span className="font-semibold text-foreground">{subs.find(s => s.id === deleteTargetId)?.name}</span>? Esta ação não pode ser desfeita.
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowDeleteConfirm(false)} className="flex-1 rounded-xl border border-border py-2.5 text-sm font-medium text-muted-foreground active:scale-[0.98]">Cancelar</button>
+              <button onClick={() => { if (deleteTargetId) handleDelete(deleteTargetId); setShowDeleteConfirm(false); resetForm(); }} className="flex-1 rounded-xl bg-destructive py-2.5 text-sm font-bold text-destructive-foreground active:scale-[0.98]">Excluir</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add/Edit Modal */}
       {showAdd && (
         <div className="fixed inset-0 z-[60] flex items-end justify-center">
@@ -292,7 +314,6 @@ const SubscriptionsCard = () => {
                       {p.name}
                     </button>
                   ))}
-                  {/* Outros button */}
                   <button onClick={() => { setShowCustomInput(true); setNewName(""); setNewLogo(""); setNewColor("bg-primary"); }}
                     className={cn("flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-[10px] font-medium border transition-all active:scale-95",
                       showCustomInput ? "border-primary bg-primary/10" : "border-border bg-muted/20")}>
@@ -336,6 +357,13 @@ const SubscriptionsCard = () => {
               <button onClick={resetForm} className="flex-1 rounded-xl border border-border py-3 text-sm font-medium text-muted-foreground active:scale-[0.98]">Cancelar</button>
               <button onClick={handleAdd} className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground active:scale-[0.98]">{editingId ? "Salvar" : "Adicionar"}</button>
             </div>
+
+            {editingId && (
+              <button onClick={() => { setDeleteTargetId(editingId); setShowDeleteConfirm(true); }}
+                className="w-full mt-3 rounded-xl border border-destructive/30 bg-destructive/10 py-3 text-sm font-semibold text-destructive active:scale-[0.98] flex items-center justify-center gap-2 transition-all">
+                <Trash2 size={15} /> Excluir Assinatura
+              </button>
+            )}
           </div>
         </div>
       )}
