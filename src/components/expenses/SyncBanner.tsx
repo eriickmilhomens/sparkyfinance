@@ -14,6 +14,7 @@ const SyncBanner = ({ onNavigateToMetas, hideSyncBanner }: SyncBannerProps) => {
   const [expenseModalType, setExpenseModalType] = useState<"expense" | "income">("expense");
   const [syncPopup, setSyncPopup] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [scanOpen, setScanOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDespesa = () => {
