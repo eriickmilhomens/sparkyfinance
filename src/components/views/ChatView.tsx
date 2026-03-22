@@ -490,7 +490,7 @@ const ChatView = () => {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 space-y-3 pb-4">
+      <div className="flex-1 overflow-y-auto overscroll-contain px-4 space-y-3 pb-4" style={{ touchAction: 'pan-y' }}>
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
