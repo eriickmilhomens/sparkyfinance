@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { AnimatePresence, motion } from "framer-motion";
 import TabBar from "@/components/layout/TabBar";
 import DashboardView from "@/components/views/DashboardView";
 import TasksView from "@/components/views/TasksView";
@@ -10,23 +9,6 @@ import DocsView from "@/components/views/DocsView";
 import MembersView from "@/components/views/MembersView";
 import ChatView from "@/components/views/ChatView";
 import { syncLocalDataOwner } from "@/lib/userLocalData";
-import { Skeleton } from "@/components/ui/skeleton";
-
-const PageSkeleton = () => (
-  <div className="space-y-4 px-4 pt-6">
-    <Skeleton className="h-10 w-40 mx-auto" />
-    <Skeleton className="h-6 w-60 mx-auto" />
-    <Skeleton className="h-32 w-full rounded-2xl" />
-    <Skeleton className="h-48 w-full rounded-2xl" />
-    <Skeleton className="h-24 w-full rounded-2xl" />
-  </div>
-);
-
-const pageVariants = {
-  initial: { opacity: 0, y: 12, filter: "blur(4px)" },
-  animate: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } },
-  exit: { opacity: 0, y: -8, filter: "blur(4px)", transition: { duration: 0.2, ease: "easeIn" as const } },
-};
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("home");
@@ -80,11 +62,7 @@ const Index = () => {
     return () => { delete (window as any).__sparkyGoHome; };
   }, []);
 
-  if (!ready) return (
-    <div className="bg-background relative mx-auto flex w-full max-w-lg flex-col lg:max-w-4xl xl:max-w-6xl" style={{ height: '100dvh' }}>
-      <PageSkeleton />
-    </div>
-  );
+  if (!ready) return null;
 
   const renderView = () => {
     switch (activeTab) {
@@ -111,19 +89,7 @@ const Index = () => {
       }}
     >
       <div data-main-scroll className={`relative flex-1 min-h-0 overflow-x-hidden ${activeTab === 'chat' ? 'overflow-hidden' : 'overflow-y-auto'}`} style={{ overscrollBehavior: 'none', paddingBottom: activeTab === 'chat' ? '0' : 'calc(100px + env(safe-area-inset-bottom, 0px))' }}>
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            variants={pageVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            className="will-change-transform"
-            style={{ minHeight: activeTab === 'chat' ? '100%' : undefined }}
-          >
-            {renderView()}
-          </motion.div>
-        </AnimatePresence>
+        {renderView()}
       </div>
       {activeTab !== 'chat' && <TabBar activeTab={activeTab} onTabChange={handleTabChange} />}
     </div>
