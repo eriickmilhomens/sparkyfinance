@@ -8,6 +8,7 @@ import SyncStatusBanner from "@/components/expenses/SyncStatusBanner";
 import SyncBanner from "@/components/expenses/SyncBanner";
 import FinancialStatusCard from "@/components/expenses/FinancialStatusCard";
 import SubscriptionsCard from "@/components/expenses/SubscriptionsCard";
+import DailyBudgetWidget from "@/components/expenses/DailyBudgetWidget";
 import { useFinancialData } from "@/hooks/useFinancialData";
 
 interface VisaoGeralTabProps {
@@ -49,6 +50,7 @@ const VisaoGeralTab = ({ onNavigateToMetas }: VisaoGeralTabProps) => {
       <FinancialStatusCard />
       <BudgetAlert />
       <StatusCards />
+      <DailyBudgetWidget />
       <CreditCardCarousel />
       <SubscriptionsCard />
       <TrendChart title="Histórico de Saldo" data={balanceHistory} color="hsl(var(--primary))" gradientId="balGrad" />

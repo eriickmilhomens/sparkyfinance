@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useFinancialData } from "@/hooks/useFinancialData";
 import { usePoints } from "@/hooks/usePoints";
+import { useDockVisibility } from "@/hooks/useDockVisibility";
 
 const BUDGET_KEY = "sparky-budgets";
 const GOALS_KEY = "sparky-investment-goals";
@@ -86,6 +87,9 @@ const PlanejamentoTab = () => {
   const [newGoal, setNewGoal] = useState({ type: "emergency", name: "", targetAmount: "" });
   const [depositGoalId, setDepositGoalId] = useState<string | null>(null);
   const [depositAmount, setDepositAmount] = useState("");
+
+  // Hide dock when any modal is open
+  useDockVisibility(goalModalOpen || editBudgetOpen || newGoalOpen);
 
   // Compute savings goal from real data
   const totalSaved = investmentGoals.reduce((s, g) => s + g.savedAmount, 0);

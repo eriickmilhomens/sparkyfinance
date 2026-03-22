@@ -65,6 +65,7 @@ export const usePoints = () => {
     const freshPoints = profileRef.current?.points || 0;
     const newTotal = freshPoints + rule.points;
     await updateProfile({ points: newTotal });
+    window.dispatchEvent(new Event("sparky-points-updated"));
 
     return rule.points;
   }, [updateProfile]);
@@ -90,6 +91,7 @@ export const usePoints = () => {
     const freshPoints = profileRef.current?.points || 0;
     const newTotal = Math.max(0, freshPoints - rule.points);
     await updateProfile({ points: newTotal });
+    window.dispatchEvent(new Event("sparky-points-updated"));
 
     return rule.points;
   }, [updateProfile]);

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { PiggyBank, CalendarClock, Banknote, Info, X } from "lucide-react";
 import { useFinancialData, fmt } from "@/hooks/useFinancialData";
 import APagarModal from "./APagarModal";
+import { cn } from "@/lib/utils";
 
 const InfoPopup = ({ title, message, onClose }: { title: string; message: string; onClose: () => void }) => (
   <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
@@ -26,33 +27,52 @@ const StatusCards = () => {
   const [aPagarOpen, setAPagarOpen] = useState(false);
   const [infoPopup, setInfoPopup] = useState<string | null>(null);
 
-  const now = new Date();
-  const currentMonth = now.getMonth();
-  const currentYear = now.getFullYear();
+  // Calculate A Pagar from subscriptions + scheduled
+  const subs = (() => {
+    try { return JSON.parse(localStorage.getItem("sparky-subscriptions") || "[]"); } catch { return []; }
+  })();
+  const paidBills = (() => {
+    try { return JSON.parse(localStorage.getItem("sparky-paid-bills") || "[]"); } catch { return []; }
+  })();
+  const unpaidSubsTotal = subs
+    .filter((s: any) => !paidBills.includes(s.id))
+    .reduce((sum: number, s: any) => sum + (s.amount || 0), 0);
 
-  const currentMonthExpenses = data.transactions
-    .filter(t => {
-      const d = new Date(t.date);
-      return t.type === "expense" && d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-    })
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const nextMonth = (currentMonth + 1) % 12;
-  const nextYear = nextMonth === 0 ? currentYear + 1 : currentYear;
-  const nextMonthExpenses = data.transactions
-    .filter(t => {
-      const d = new Date(t.date);
-      return t.type === "expense" && d.getMonth() === nextMonth && d.getFullYear() === nextYear;
-    })
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const aPagar = data.scheduled > 0 ? data.scheduled : (currentMonthExpenses > 0 ? currentMonthExpenses : nextMonthExpenses);
-  const aPagarLabel = data.scheduled > 0 ? "total agendado" : (currentMonthExpenses > 0 ? "gastos este mês" : "gastos próximo mês");
+  const aPagar = data.scheduled > 0 ? data.scheduled : unpaidSubsTotal;
+  const saldoDisponivel = data.balance - aPagar;
+  const isNegative = saldoDisponivel < 0;
 
   const statuses = [
-    { label: "Saldo Real", value: fmt(data.balance), color: "text-foreground", sub: "em conta agora", icon: PiggyBank, iconColor: "text-primary", clickable: false, infoKey: "saldo" },
-    { label: "A Pagar", value: fmt(aPagar), color: "text-warning", sub: aPagarLabel, icon: CalendarClock, iconColor: "text-warning", clickable: true, infoKey: "apagar" },
-    { label: "Saldo Disponível", value: fmt(available), color: "text-success", sub: "livre após contas", icon: Banknote, iconColor: "text-success", clickable: false, infoKey: "disponivel" },
+    {
+      label: "Saldo Real",
+      value: fmt(data.balance),
+      color: "text-foreground",
+      sub: "em conta agora",
+      icon: PiggyBank,
+      iconColor: "text-primary",
+      clickable: false,
+      infoKey: "saldo",
+    },
+    {
+      label: "A Pagar",
+      value: fmt(aPagar),
+      color: "text-warning",
+      sub: aPagar > 0 ? `${subs.filter((s: any) => !paidBills.includes(s.id)).length} pendente(s)` : "tudo pago",
+      icon: CalendarClock,
+      iconColor: "text-warning",
+      clickable: true,
+      infoKey: "apagar",
+    },
+    {
+      label: "Saldo Disponível",
+      value: fmt(saldoDisponivel),
+      color: isNegative ? "text-destructive" : "text-success",
+      sub: isNegative ? "saldo insuficiente!" : "livre após contas",
+      icon: Banknote,
+      iconColor: isNegative ? "text-destructive" : "text-success",
+      clickable: false,
+      infoKey: "disponivel",
+    },
   ];
 
   const infoTexts: Record<string, { title: string; message: string }> = {
@@ -66,7 +86,7 @@ const StatusCards = () => {
     },
     disponivel: {
       title: "Saldo Disponível",
-      message: "O Saldo Disponível é o valor que sobra após descontar todas as contas agendadas e pendentes do seu saldo real. Este é o valor que você realmente pode gastar sem comprometer suas obrigações financeiras do mês.",
+      message: "O Saldo Disponível é o valor que sobra após descontar todas as contas agendadas e pendentes do seu saldo real. Este é o valor que você realmente pode gastar sem comprometer suas obrigações financeiras do mês. Se estiver vermelho, significa que seu saldo é insuficiente para cobrir todas as contas.",
     },
   };
 
@@ -91,8 +111,8 @@ const StatusCards = () => {
                   </button>
                 )}
               </div>
-              <p className={`text-sm font-bold tabular-nums ${s.color}`}>{s.value}</p>
-              <p className="text-[9px] text-muted-foreground mt-0.5 leading-tight">{s.sub}</p>
+              <p className={cn("text-sm font-bold tabular-nums", s.color)}>{s.value}</p>
+              <p className={cn("text-[9px] mt-0.5 leading-tight", isNegative && s.infoKey === "disponivel" ? "text-destructive/80" : "text-muted-foreground")}>{s.sub}</p>
             </>
           );
 

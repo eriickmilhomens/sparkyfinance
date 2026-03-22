@@ -19,7 +19,9 @@ const BalanceCard = ({ onVisibilityChange }: BalanceCardProps) => {
     onVisibilityChange?.(visible);
   }, [visible, onVisibilityChange]);
 
-  const dailyBudget = available * 0.20;
+  // Use the hook's dailyBudget which has proper 30% accumulation logic
+  const { dailyBudget: hookDailyBudget } = useFinancialData();
+  const dailyBudget = hookDailyBudget;
 
   const handleAdjust = async () => {
     const raw = adjustValue.replace(/\./g, "").replace(",", ".");
@@ -68,7 +70,7 @@ const BalanceCard = ({ onVisibilityChange }: BalanceCardProps) => {
           <span>Despesas: <span className="text-destructive font-medium">{visible ? fmt(data.expenses) : "••••••"}</span></span>
         </div>
         <p className="text-[10px] text-muted-foreground">
-          Pode gastar hoje: <span className="font-semibold text-primary">{visible ? fmt(dailyBudget) : "••••••"}</span> (20% do saldo)
+          Pode gastar hoje: <span className="font-semibold text-primary">{visible ? fmt(dailyBudget) : "••••••"}</span>
         </p>
       </div>
 

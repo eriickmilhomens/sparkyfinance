@@ -1,0 +1,202 @@
+import { useState } from "react";
+import { Wallet, Info, X, TrendingDown } from "lucide-react";
+import { useFinancialData, fmt } from "@/hooks/useFinancialData";
+import { cn } from "@/lib/utils";
+
+const RESERVE_KEY = "sparky-reserve-pct";
+const ACCUMULATION_RATE = 0.30; // 30% rule
+
+const DailyBudgetWidget = () => {
+  const { data, available, daysLeft } = useFinancialData();
+  const [showPopup, setShowPopup] = useState(false);
+
+  const reservePct = (() => {
+    try { return parseInt(localStorage.getItem(RESERVE_KEY) || "20") / 100; } catch { return 0.20; }
+  })();
+
+  // Calculate using aggressive savings logic
+  const now = new Date();
+  const dayOfMonth = now.getDate();
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const remainingDays = Math.max(1, daysInMonth - dayOfMonth);
+
+  // Reserve separated from available balance
+  const reserve = Math.max(0, data.balance * reservePct);
+  const spendablePool = Math.max(0, data.balance - reserve);
+
+  // Subtract pending obligations
+  const subs = (() => {
+    try { return JSON.parse(localStorage.getItem("sparky-subscriptions") || "[]"); } catch { return []; }
+  })();
+  const paidBills = (() => {
+    try { return JSON.parse(localStorage.getItem("sparky-paid-bills") || "[]"); } catch { return []; }
+  })();
+  const unpaidTotal = subs
+    .filter((s: any) => !paidBills.includes(s.id))
+    .reduce((sum: number, s: any) => sum + (s.amount || 0), 0);
+
+  const afterObligations = Math.max(0, spendablePool - unpaidTotal);
+
+  // Ideal daily spend (linear distribution)
+  const idealDaily = afterObligations / remainingDays;
+
+  // Today's expenses
+  const todayStr = now.toISOString().slice(0, 10);
+  const todayExpenses = data.transactions
+    .filter(t => t.type === "expense" && t.date.startsWith(todayStr))
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  // 30% accumulation rule: only 30% of yesterday's unspent carries over
+  // This is simplified: we calculate what the daily budget should be with gradual decrease
+  const pastDays = Math.max(1, dayOfMonth);
+  const expectedDailySpend = afterObligations / daysInMonth;
+  const actualPastSpend = data.expenses > 0 ? data.expenses / pastDays : 0;
+  const savedPerDay = Math.max(0, expectedDailySpend - actualPastSpend);
+  const accumulatedSavings = savedPerDay * pastDays * ACCUMULATION_RATE; // Only 30% carries
+  const adjustedPool = afterObligations - accumulatedSavings;
+  
+  const dailyBudget = Math.max(0, adjustedPool / remainingDays);
+  const remainingToday = Math.max(0, dailyBudget - todayExpenses);
+
+  // Monthly accumulated "can spend" pool
+  const monthlyPool = dailyBudget * remainingDays;
+  const progressPct = dailyBudget > 0 ? Math.min(100, (todayExpenses / dailyBudget) * 100) : 0;
+  const isOver = todayExpenses > dailyBudget;
+
+  return (
+    <>
+      <button
+        onClick={() => setShowPopup(true)}
+        className="card-zelo fade-in-up w-full text-left active:scale-[0.98] transition-all hover:border-primary/30"
+      >
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/15">
+              <Wallet size={16} className="text-primary" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold">Pode Gastar Hoje</p>
+              <p className="text-[9px] text-muted-foreground">{remainingDays} dias restantes no mês</p>
+            </div>
+          </div>
+          <Info size={14} className="text-muted-foreground/50" />
+        </div>
+
+        <div className="flex items-baseline gap-2 mb-2">
+          <p className={cn("text-2xl font-extrabold tabular-nums", isOver ? "text-destructive" : "text-primary")}>
+            {fmt(remainingToday)}
+          </p>
+          {isOver && (
+            <span className="flex items-center gap-0.5 text-[10px] font-medium text-destructive">
+              <TrendingDown size={10} /> Acima do limite
+            </span>
+          )}
+        </div>
+
+        {/* Daily progress bar */}
+        <div className="space-y-1">
+          <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+            <div
+              className={cn("h-full rounded-full transition-all duration-500", isOver ? "bg-destructive" : "bg-primary")}
+              style={{ width: `${Math.min(progressPct, 100)}%` }}
+            />
+          </div>
+          <div className="flex justify-between text-[9px] text-muted-foreground">
+            <span>Gasto hoje: {fmt(todayExpenses)}</span>
+            <span>Limite: {fmt(dailyBudget)}</span>
+          </div>
+        </div>
+
+        {/* Monthly pool */}
+        <div className="mt-2 pt-2 border-t border-border">
+          <div className="flex justify-between items-center">
+            <span className="text-[10px] text-muted-foreground">Saldo acumulado restante</span>
+            <span className="text-xs font-bold tabular-nums text-foreground">{fmt(monthlyPool)}</span>
+          </div>
+        </div>
+      </button>
+
+      {/* Educational popup */}
+      {showPopup && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="w-full max-w-sm card-zelo space-y-4 max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/15">
+                  <Wallet size={16} className="text-primary" />
+                </div>
+                <h3 className="text-sm font-bold">Como funciona?</h3>
+              </div>
+              <button onClick={() => setShowPopup(false)} className="p-1 rounded-lg text-muted-foreground hover:text-foreground">
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div className="rounded-xl bg-muted/30 border border-border p-3">
+                <p className="text-xs font-semibold mb-1">📊 Reserva Dinâmica ({Math.round(reservePct * 100)}%)</p>
+                <p className="text-[10px] text-muted-foreground leading-relaxed">
+                  O sistema separa {Math.round(reservePct * 100)}% do seu saldo como reserva de segurança.
+                  O restante é dividido pelos dias faltantes do mês para gerar seu limite diário.
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-warning/5 border border-warning/20 p-3">
+                <p className="text-xs font-semibold mb-1 text-warning">💡 Regra de Acúmulo de 30%</p>
+                <p className="text-[10px] text-muted-foreground leading-relaxed">
+                  Se você não gastar todo o valor disponível no dia, apenas 30% do saldo restante é acumulado
+                  para o dia seguinte. O objetivo é diminuir gradualmente seu gasto diário e incentivar a economia
+                  do valor que sobrou. Os outros 70% vão direto para sua reserva implícita.
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-success/5 border border-success/20 p-3">
+                <p className="text-xs font-semibold mb-1 text-success">🎯 Na Prática</p>
+                <p className="text-[10px] text-muted-foreground leading-relaxed">
+                  Exemplo: Se seu limite diário é R$ 100 e você gasta R$ 60, sobraram R$ 40.
+                  No dia seguinte, apenas R$ 12 (30% de R$ 40) serão acrescentados ao limite.
+                  Isso incentiva você a economizar cada vez mais ao longo do mês.
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-muted/30 border border-border p-3">
+                <p className="text-xs font-semibold mb-1">📈 Seus Números Hoje</p>
+                <div className="space-y-1.5 mt-2">
+                  <div className="flex justify-between text-[10px]">
+                    <span className="text-muted-foreground">Saldo Real</span>
+                    <span className="font-medium">{fmt(data.balance)}</span>
+                  </div>
+                  <div className="flex justify-between text-[10px]">
+                    <span className="text-muted-foreground">Reserva ({Math.round(reservePct * 100)}%)</span>
+                    <span className="font-medium text-warning">-{fmt(reserve)}</span>
+                  </div>
+                  <div className="flex justify-between text-[10px]">
+                    <span className="text-muted-foreground">Contas pendentes</span>
+                    <span className="font-medium text-destructive">-{fmt(unpaidTotal)}</span>
+                  </div>
+                  <div className="flex justify-between text-[10px] pt-1 border-t border-border">
+                    <span className="text-muted-foreground font-semibold">Disponível para gastar</span>
+                    <span className="font-bold text-primary">{fmt(afterObligations)}</span>
+                  </div>
+                  <div className="flex justify-between text-[10px]">
+                    <span className="text-muted-foreground">÷ {remainingDays} dias restantes</span>
+                    <span className="font-bold text-primary">{fmt(dailyBudget)}/dia</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowPopup(false)}
+              className="w-full rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground active:scale-[0.98]"
+            >
+              Entendi
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+export default DailyBudgetWidget;
