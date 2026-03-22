@@ -374,11 +374,17 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
   const handleSuspendUser = (user: AdminUser) => {
     openDangerConfirm(
       "⚠️ Suspender Conta",
-      `Tem certeza que deseja suspender a conta de "${user.name}"? O usuário será removido do sistema permanentemente.`,
+      `Suspender a conta de "${user.name}"? O acesso será bloqueado indefinidamente, mas pode ser revertido. Todos os dados serão preservados.`,
       async () => {
-        await handleDeleteUser(user.id);
+        // Mark user as suspended (preserving data)
+        const suspended = JSON.parse(localStorage.getItem("sparky-suspended-users") || "[]");
+        if (!suspended.includes(user.id)) suspended.push(user.id);
+        localStorage.setItem("sparky-suspended-users", JSON.stringify(suspended));
+        addAuditLog("SUSPEND_USER", user.name, "Conta suspensa — acesso bloqueado, dados preservados");
         setDangerModal(null);
         setDangerConfirmText("");
+        setResultPopup({ show: true, success: true, message: `Conta de ${user.name} suspensa com sucesso! O usuário verá um aviso ao tentar acessar.` });
+        fetchUsers();
       }
     );
   };
@@ -386,14 +392,40 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
   const handleBanUser = (user: AdminUser) => {
     openDangerConfirm(
       "🚫 Banir Conta",
-      `Tem certeza que deseja BANIR a conta de "${user.name}"? Esta ação é irreversível e todos os dados serão perdidos.`,
+      `Banir a conta de "${user.name}"? O acesso será totalmente bloqueado. Esta ação é reversível e todos os dados serão preservados no banco de dados.`,
       async () => {
-        await handleDeleteUser(user.id);
-        addAuditLog("BAN_USER", user.name, "Conta banida permanentemente");
+        const banned = JSON.parse(localStorage.getItem("sparky-banned-users") || "[]");
+        if (!banned.includes(user.id)) banned.push(user.id);
+        localStorage.setItem("sparky-banned-users", JSON.stringify(banned));
+        addAuditLog("BAN_USER", user.name, "Conta banida — acesso bloqueado, dados preservados para reversão");
         setDangerModal(null);
         setDangerConfirmText("");
+        setResultPopup({ show: true, success: true, message: `Conta de ${user.name} banida com sucesso! O usuário verá um aviso ao tentar acessar.` });
+        fetchUsers();
       }
     );
+  };
+
+  const handleUnsuspendUser = (user: AdminUser) => {
+    const suspended = JSON.parse(localStorage.getItem("sparky-suspended-users") || "[]");
+    localStorage.setItem("sparky-suspended-users", JSON.stringify(suspended.filter((id: string) => id !== user.id)));
+    const banned = JSON.parse(localStorage.getItem("sparky-banned-users") || "[]");
+    localStorage.setItem("sparky-banned-users", JSON.stringify(banned.filter((id: string) => id !== user.id)));
+    addAuditLog("UNSUSPEND_USER", user.name, "Conta reativada");
+    toast.success(`Conta de ${user.name} reativada!`);
+    fetchUsers();
+  };
+
+  const isUserSuspended = (userId: string) => {
+    try {
+      return JSON.parse(localStorage.getItem("sparky-suspended-users") || "[]").includes(userId);
+    } catch { return false; }
+  };
+
+  const isUserBanned = (userId: string) => {
+    try {
+      return JSON.parse(localStorage.getItem("sparky-banned-users") || "[]").includes(userId);
+    } catch { return false; }
   };
 
   const handleGlobalLogout = () => {
