@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { useGroupMembers } from "@/hooks/useGroupMembers";
+import { toast } from "sonner";
 
 interface Prize {
   name: string;
