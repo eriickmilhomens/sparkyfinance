@@ -225,6 +225,9 @@ const ImportModal = ({ open, onClose }: ImportModalProps) => {
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] text-muted-foreground tabular-nums">{t.date}</span>
                         <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-muted text-muted-foreground font-medium">{t.category}</span>
+                        {(t as any).confidence !== undefined && (t as any).confidence < 0.7 && (
+                          <span className="text-[8px] px-1 py-0.5 rounded bg-warning/20 text-warning font-medium">⚠ Revisar</span>
+                        )}
                       </div>
                       <p className="text-xs font-medium truncate mt-0.5">{t.description}</p>
                     </div>
