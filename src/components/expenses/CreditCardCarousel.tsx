@@ -273,7 +273,20 @@ const CreditCardCarousel = () => {
                       <div className="flex justify-between items-center">
                         <div>
                           <p className="text-xs font-medium">{t.desc}</p>
-                          <p className="text-[10px] text-muted-foreground">{t.date} • {t.category}</p>
+                          <p className="text-[10px] text-muted-foreground">{(() => {
+                            try {
+                              const d = new Date(t.date);
+                              if (!isNaN(d.getTime())) {
+                                const dd = String(d.getDate()).padStart(2, '0');
+                                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                                const yyyy = d.getFullYear();
+                                const hh = String(d.getHours()).padStart(2, '0');
+                                const min = String(d.getMinutes()).padStart(2, '0');
+                                return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
+                              }
+                              return t.date;
+                            } catch { return t.date; }
+                          })()} • {t.category}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <p className="text-xs font-bold text-destructive">-{fmt(t.value)}</p>

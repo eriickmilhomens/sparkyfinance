@@ -123,7 +123,18 @@ const SubscriptionsCard = () => {
     toast.success(`${sub.name} desmarcada — estorno e pontos removidos`);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    const sub = subs.find(s => s.id === id);
+    // If sub was paid, refund the financial data and remove points
+    if (sub && sub.paid) {
+      const updatedTx = data.transactions.filter(t => t.description !== `Assinatura: ${sub.name}`);
+      updateData({
+        expenses: Math.max(0, data.expenses - sub.amount),
+        balance: data.balance + sub.amount,
+        transactions: updatedTx,
+      });
+      await removePoints("bill_paid", `Pagou assinatura: ${sub.name}`);
+    }
     update(subs.filter(s => s.id !== id));
     setMenuId(null);
     toast.success("Assinatura removida");

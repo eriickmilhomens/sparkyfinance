@@ -85,10 +85,7 @@ const Index = () => {
     >
       <div data-main-scroll className={`relative flex-1 min-h-0 overflow-x-hidden ${activeTab === 'chat' ? 'overflow-hidden' : 'overflow-y-auto'}`} style={{ overscrollBehavior: 'none', paddingBottom: activeTab === 'chat' ? '0' : 'calc(100px + env(safe-area-inset-bottom, 0px))' }}>
         {renderView()}
-        {/* Bottom fade gradient — inside scroll area so it doesn't cover chart */}
-        {activeTab !== 'chat' && (
-          <div className="pointer-events-none sticky bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background via-background/60 to-transparent" />
-        )}
+        {/* Removed: dark gradient overlay that was obscuring content above taskbar */}
       </div>
       <TabBar activeTab={activeTab} onTabChange={handleTabChange} />
     </div>
