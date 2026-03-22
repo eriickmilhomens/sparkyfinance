@@ -454,15 +454,13 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
   };
 
   const isUserSuspended = (userId: string) => {
-    try {
-      return JSON.parse(localStorage.getItem("sparky-suspended-users") || "[]").includes(userId);
-    } catch { return false; }
+    const u = users.find(u => u.id === userId);
+    return u?.user_metadata?.suspended === true;
   };
 
   const isUserBanned = (userId: string) => {
-    try {
-      return JSON.parse(localStorage.getItem("sparky-banned-users") || "[]").includes(userId);
-    } catch { return false; }
+    const u = users.find(u => u.id === userId);
+    return u?.banned === true;
   };
 
   const handleGlobalLogout = () => {
