@@ -1,16 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import TabBar from "@/components/layout/TabBar";
-import DashboardView from "@/components/views/DashboardView";
-import TasksView from "@/components/views/TasksView";
-import ExpensesView from "@/components/views/ExpensesView";
-import DocsView from "@/components/views/DocsView";
-import MembersView from "@/components/views/MembersView";
-import ChatView from "@/components/views/ChatView";
 import { syncLocalDataOwner } from "@/lib/userLocalData";
 import GlobalNotificationPopup from "@/components/layout/GlobalNotificationPopup";
-import { Settings, Timer, Eye, X, ShieldAlert, Ban } from "lucide-react";
+import { Settings, Timer, Eye, X } from "lucide-react";
+
+const DashboardView = lazy(() => import("@/components/views/DashboardView"));
+const TasksView = lazy(() => import("@/components/views/TasksView"));
+const ExpensesView = lazy(() => import("@/components/views/ExpensesView"));
+const DocsView = lazy(() => import("@/components/views/DocsView"));
+const MembersView = lazy(() => import("@/components/views/MembersView"));
+const ChatView = lazy(() => import("@/components/views/ChatView"));
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("home");
