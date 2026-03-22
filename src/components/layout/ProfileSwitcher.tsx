@@ -1,5 +1,7 @@
-import { useState, useRef, useEffect, type ReactNode } from "react";
+import { useState, useRef, useEffect, useCallback, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from "react-image-crop";
+import "react-image-crop/dist/ReactCrop.css";
 import {
   ChevronDown, Check, UserPlus, User, Trophy, Crown, Star,
   Settings, Users, LogOut, Gift, Camera, Mail, Calendar, X,
@@ -63,6 +65,13 @@ const ProfileSwitcher = () => {
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
 
+  // Image crop state
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [cropImgSrc, setCropImgSrc] = useState("");
+  const [crop, setCrop] = useState<Crop>();
+  const [completedCrop, setCompletedCrop] = useState<Crop>();
+  const cropImgRef = useRef<HTMLImageElement>(null);
+
   // Initialize profiles from DB profile
   useEffect(() => {
     if (dbProfile && profiles.length === 0) {
@@ -80,7 +89,6 @@ const ProfileSwitcher = () => {
       setProfiles([initial]);
       setActive(dbProfile.id);
     } else if (dbProfile) {
-      // Update the original profile data from DB
       setProfiles(prev => prev.map(p => p.isOriginal ? {
         ...p,
         name: dbProfile.name,
@@ -138,15 +146,60 @@ const ProfileSwitcher = () => {
     setPrizes(updated);
   };
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
       const base64 = ev.target?.result as string;
-      setProfiles(profiles.map(p => p.id === active ? { ...p, avatar: base64 } : p));
+      setCropImgSrc(base64);
+      setCropModalOpen(true);
     };
     reader.readAsDataURL(file);
+    // Reset input so same file can be re-selected
+    e.target.value = "";
+  };
+
+  const onImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
+    const { width, height } = e.currentTarget;
+    const c = centerCrop(
+      makeAspectCrop({ unit: "%", width: 80 }, 1, width, height),
+      width, height
+    );
+    setCrop(c);
+    setCompletedCrop(c);
+  }, []);
+
+  const handleCropSave = useCallback(() => {
+    const image = cropImgRef.current;
+    if (!image || !completedCrop) return;
+
+    const canvas = document.createElement("canvas");
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
+    const pixelCrop = {
+      x: (completedCrop.x / 100) * image.width * scaleX,
+      y: (completedCrop.y / 100) * image.height * scaleY,
+      width: (completedCrop.width / 100) * image.width * scaleX,
+      height: (completedCrop.height / 100) * image.height * scaleY,
+    };
+    canvas.width = pixelCrop.width;
+    canvas.height = pixelCrop.height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(
+      image,
+      pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height,
+      0, 0, pixelCrop.width, pixelCrop.height
+    );
+    const croppedBase64 = canvas.toDataURL("image/jpeg", 0.9);
+    setProfiles(profiles.map(p => p.id === active ? { ...p, avatar: croppedBase64 } : p));
+    setCropModalOpen(false);
+    setCropImgSrc("");
+  }, [completedCrop, active, profiles]);
+
+  const handleDeletePhoto = () => {
+    setProfiles(profiles.map(p => p.id === active ? { ...p, avatar: undefined } : p));
   };
 
   const handleLogout = async () => {
@@ -189,6 +242,50 @@ const ProfileSwitcher = () => {
       </div>
     );
   };
+
+  // Image crop modal
+  if (cropModalOpen && cropImgSrc) {
+    return renderLayer(
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm px-4">
+        <div className="w-full max-w-sm card-zelo space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold">Ajustar Foto</h3>
+              <p className="text-[10px] text-muted-foreground">Arraste para reposicionar</p>
+            </div>
+            <button onClick={() => { setCropModalOpen(false); setCropImgSrc(""); }} className="text-muted-foreground hover:text-foreground">
+              <X size={16} />
+            </button>
+          </div>
+          <div className="flex items-center justify-center rounded-xl overflow-hidden bg-black/50 max-h-[50vh]">
+            <ReactCrop
+              crop={crop}
+              onChange={(_, pc) => setCrop(pc)}
+              onComplete={(_, pc) => setCompletedCrop(pc)}
+              aspect={1}
+              circularCrop
+            >
+              <img
+                ref={cropImgRef}
+                src={cropImgSrc}
+                onLoad={onImageLoad}
+                className="max-h-[50vh] w-auto"
+                alt="Crop"
+              />
+            </ReactCrop>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => { setCropModalOpen(false); setCropImgSrc(""); }} className="flex-1 rounded-xl border border-border py-3 text-sm font-medium text-muted-foreground active:scale-[0.98]">
+              Cancelar
+            </button>
+            <button onClick={handleCropSave} className="flex-1 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground active:scale-[0.98]">
+              Salvar Foto
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Logout confirmation modal
   if (showLogoutConfirm) {
@@ -306,7 +403,6 @@ const ProfileSwitcher = () => {
             })}
           </div>
 
-          {/* Como funciona o sistema de pontos */}
           <p className="text-label px-1">COMO FUNCIONA</p>
           <div className="card-zelo space-y-4">
             <div>
@@ -324,55 +420,23 @@ const ProfileSwitcher = () => {
             <div>
               <p className="text-[10px] font-semibold text-muted-foreground mb-2">COMO GANHAR PONTOS</p>
               <div className="space-y-1.5">
-                <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm">💳</span>
-                    <span className="text-[11px]">Pagar contas em dia</span>
+                {[
+                  { emoji: "💳", text: "Pagar contas em dia", pts: "+3 pts" },
+                  { emoji: "🐷", text: "Economizar 10% da renda", pts: "+5 pts" },
+                  { emoji: "🏆", text: "Economizar 20% da renda", pts: "+8 pts" },
+                  { emoji: "📈", text: "Depositar em meta de investimento", pts: "+4 pts" },
+                  { emoji: "✅", text: "Fechar mês no verde", pts: "+10 pts" },
+                  { emoji: "🔥", text: "7 dias registrando gastos", pts: "+3 pts" },
+                  { emoji: "🧘", text: "Mês sem compra impulsiva", pts: "+7 pts" },
+                ].map(item => (
+                  <div key={item.text} className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">{item.emoji}</span>
+                      <span className="text-[11px]">{item.text}</span>
+                    </div>
+                    <span className="text-[10px] font-bold text-warning">{item.pts}</span>
                   </div>
-                  <span className="text-[10px] font-bold text-warning">+3 pts</span>
-                </div>
-                <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm">🐷</span>
-                    <span className="text-[11px]">Economizar 10% da renda</span>
-                  </div>
-                  <span className="text-[10px] font-bold text-warning">+5 pts</span>
-                </div>
-                <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm">🏆</span>
-                    <span className="text-[11px]">Economizar 20% da renda</span>
-                  </div>
-                  <span className="text-[10px] font-bold text-warning">+8 pts</span>
-                </div>
-                <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm">📈</span>
-                    <span className="text-[11px]">Depositar em meta de investimento</span>
-                  </div>
-                  <span className="text-[10px] font-bold text-warning">+4 pts</span>
-                </div>
-                <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm">✅</span>
-                    <span className="text-[11px]">Fechar mês no verde</span>
-                  </div>
-                  <span className="text-[10px] font-bold text-warning">+10 pts</span>
-                </div>
-                <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm">🔥</span>
-                    <span className="text-[11px]">7 dias registrando gastos</span>
-                  </div>
-                  <span className="text-[10px] font-bold text-warning">+3 pts</span>
-                </div>
-                <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm">🧘</span>
-                    <span className="text-[11px]">Mês sem compra impulsiva</span>
-                  </div>
-                  <span className="text-[10px] font-bold text-warning">+7 pts</span>
-                </div>
+                ))}
               </div>
             </div>
 
@@ -433,11 +497,21 @@ const ProfileSwitcher = () => {
           <div className="card-zelo flex flex-col items-center py-6">
             <div className="relative">
               {renderAvatar(current, "h-20 w-20", "text-2xl")}
-              <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoUpload} />
+              <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoSelect} />
               <button onClick={() => fileInputRef.current?.click()} className="absolute bottom-0 right-0 h-7 w-7 rounded-full bg-primary flex items-center justify-center text-white">
                 <Camera size={12} />
               </button>
             </div>
+            {/* Delete photo button */}
+            {current.avatar && (
+              <button
+                onClick={handleDeletePhoto}
+                className="mt-2 flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[10px] font-medium text-muted-foreground bg-muted/50 hover:bg-destructive/10 hover:text-destructive transition-colors active:scale-[0.97]"
+              >
+                <Trash2 size={10} />
+                Remover foto
+              </button>
+            )}
             <p className="text-sm font-bold mt-3">{current.name}</p>
             <p className="text-xs text-muted-foreground">{current.email}</p>
           </div>
@@ -849,7 +923,6 @@ const ProfileSwitcher = () => {
                   <span className="text-sm font-medium flex-1">{p.name}</span>
                   {active === p.id && <Check size={14} className="text-primary" />}
                 </button>
-                {/* Delete button - only for non-original profiles */}
                 {!p.isOriginal && (
                   <button
                     onClick={(e) => { e.stopPropagation(); handleDeleteProfile(p.id); }}

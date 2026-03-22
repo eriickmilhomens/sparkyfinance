@@ -1,5 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
-import { Users, Trash2, Shield, ChevronDown, RefreshCw, AlertTriangle, Mail, Phone, Calendar, Star, Download, BarChart3, Settings, Bell, Database, Activity, Search, UserX, UserCheck, Clock } from "lucide-react";
+import {
+  Users, Trash2, Shield, ChevronDown, RefreshCw, AlertTriangle, Mail, Phone,
+  Calendar, Star, Download, BarChart3, Settings, Bell, Database, Activity,
+  Search, UserX, UserCheck, Clock, DollarSign, TrendingUp, TrendingDown,
+  Percent, Ban, Eye, RotateCcw, FileText, Send, ToggleLeft, Award,
+  Edit2, Plus, Package, Hash, X, Check, Coins
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -17,7 +23,22 @@ interface AdminUser {
   last_sign_in: string | null;
 }
 
-type AdminTab = "users" | "stats" | "tools" | "settings";
+interface AuditLog {
+  id: string;
+  action: string;
+  target: string;
+  details: string;
+  timestamp: string;
+}
+
+interface Prize {
+  id: string;
+  name: string;
+  pointsCost: number;
+  stock: number;
+}
+
+type AdminTab = "users" | "stats" | "tools" | "prizes";
 
 const AdminPanel = ({ onClose }: { onClose: () => void }) => {
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -30,27 +51,52 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [resultPopup, setResultPopup] = useState<{ show: boolean; success: boolean; message: string }>({ show: false, success: false, message: "" });
 
+  // Dangerous action confirmation
+  const [dangerModal, setDangerModal] = useState<{ show: boolean; title: string; description: string; action: () => void } | null>(null);
+  const [dangerConfirmText, setDangerConfirmText] = useState("");
+
+  // User detail / adjust modal
+  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+  const [adjustPoints, setAdjustPoints] = useState("");
+
+  // Audit log
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+
+  // Prizes management
+  const [prizes, setPrizes] = useState<Prize[]>([]);
+  const [showPrizeForm, setShowPrizeForm] = useState(false);
+  const [editPrize, setEditPrize] = useState<Prize | null>(null);
+  const [prizeForm, setPrizeForm] = useState({ name: "", pointsCost: "100", stock: "10" });
+
+  // Notification broadcast
+  const [showNotifModal, setShowNotifModal] = useState(false);
+  const [notifMessage, setNotifMessage] = useState("");
+
+  // System config
+  const [pointsRate, setPointsRate] = useState("1.0");
+  const [withdrawLimit, setWithdrawLimit] = useState("500");
+
+  const addAuditLog = useCallback((action: string, target: string, details: string) => {
+    const log: AuditLog = {
+      id: Date.now().toString(),
+      action,
+      target,
+      details,
+      timestamp: new Date().toISOString(),
+    };
+    setAuditLogs(prev => [log, ...prev].slice(0, 100));
+  }, []);
+
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-
       const res = await fetch(
         `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/admin-users?action=list`,
-        {
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-            "Content-Type": "application/json",
-          },
-        }
+        { headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" } }
       );
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Erro ao buscar usuários");
-      }
-
+      if (!res.ok) { const err = await res.json(); throw new Error(err.error || "Erro ao buscar usuários"); }
       const data = await res.json();
       setUsers(data.users || []);
     } catch (e: any) {
@@ -62,29 +108,29 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
+  // Load prizes from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("sparky-admin-prizes");
+    if (saved) setPrizes(JSON.parse(saved));
+  }, []);
+
+  const savePrizes = (p: Prize[]) => {
+    setPrizes(p);
+    localStorage.setItem("sparky-admin-prizes", JSON.stringify(p));
+  };
+
   const handleDeleteUser = async (userId: string) => {
     setActionLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-
       const res = await fetch(
         `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/admin-users`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ action: "delete_user", userId }),
-        }
+        { method: "POST", headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" }, body: JSON.stringify({ action: "delete_user", userId }) }
       );
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Erro ao deletar");
-      }
-
+      if (!res.ok) { const err = await res.json(); throw new Error(err.error || "Erro ao deletar"); }
+      const deletedUser = users.find(u => u.id === userId);
+      addAuditLog("DELETE_USER", deletedUser?.name || userId, `Usuário removido pelo admin`);
       toast.success("Usuário removido com sucesso");
       setDeleteTarget(null);
       fetchUsers();
@@ -100,31 +146,23 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-
       const res = await fetch(
         `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/admin-users`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ action: "delete_all_users" }),
-        }
+        { method: "POST", headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" }, body: JSON.stringify({ action: "delete_all_users" }) }
       );
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Erro ao deletar");
-      }
-
+      if (!res.ok) { const err = await res.json(); throw new Error(err.error || "Erro ao deletar"); }
       const data = await res.json();
+      addAuditLog("DELETE_ALL_USERS", "Todos", `${data.deleted} usuários removidos`);
       setDeleteAllConfirm(false);
+      setDangerModal(null);
+      setDangerConfirmText("");
       setResultPopup({ show: true, success: true, message: `${data.deleted} usuário(s) removido(s) com sucesso!` });
       fetchUsers();
     } catch (e: any) {
       setDeleteAllConfirm(false);
-      setResultPopup({ show: true, success: false, message: e.message || "Erro ao deletar usuários. Tente novamente." });
+      setDangerModal(null);
+      setDangerConfirmText("");
+      setResultPopup({ show: true, success: false, message: e.message || "Erro ao deletar usuários." });
     } finally {
       setActionLoading(false);
     }
@@ -132,7 +170,13 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
 
   const formatDate = (d: string | null) => {
     if (!d) return "Nunca";
-    return new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    const date = new Date(d);
+    const dd = String(date.getDate()).padStart(2, '0');
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const yyyy = date.getFullYear();
+    const hh = String(date.getHours()).padStart(2, '0');
+    const min = String(date.getMinutes()).padStart(2, '0');
+    return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
   };
 
   const filteredUsers = users.filter(u =>
@@ -149,11 +193,65 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
     const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url;
-    a.download = `sparky-users-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
+    a.href = url; a.download = `sparky-users-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
     URL.revokeObjectURL(url);
+    addAuditLog("EXPORT_CSV", "Usuários", `${users.length} usuários exportados`);
     toast.success("CSV exportado com sucesso!");
+  };
+
+  const handleAdjustPoints = async (userId: string, newPoints: number) => {
+    try {
+      const { error } = await supabase.from("profiles").update({ points: newPoints }).eq("user_id", userId);
+      if (error) throw error;
+      addAuditLog("ADJUST_POINTS", selectedUser?.name || userId, `Pontos alterados para ${newPoints}`);
+      toast.success(`Pontos atualizados para ${newPoints}`);
+      setSelectedUser(null);
+      setAdjustPoints("");
+      fetchUsers();
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao ajustar pontos");
+    }
+  };
+
+  const handleSendNotification = () => {
+    if (!notifMessage.trim()) return;
+    // Store notification in localStorage for all users to see
+    const notifs = JSON.parse(localStorage.getItem("sparky-global-notifications") || "[]");
+    notifs.unshift({ id: Date.now().toString(), message: notifMessage, date: new Date().toISOString(), read: false });
+    localStorage.setItem("sparky-global-notifications", JSON.stringify(notifs));
+    addAuditLog("SEND_NOTIFICATION", "Todos os usuários", notifMessage);
+    toast.success("Notificação enviada para todos os usuários!");
+    setNotifMessage("");
+    setShowNotifModal(false);
+  };
+
+  const handleSavePrize = () => {
+    if (!prizeForm.name.trim()) return;
+    if (editPrize) {
+      const updated = prizes.map(p => p.id === editPrize.id ? { ...p, name: prizeForm.name, pointsCost: parseInt(prizeForm.pointsCost) || 0, stock: parseInt(prizeForm.stock) || 0 } : p);
+      savePrizes(updated);
+      addAuditLog("EDIT_PRIZE", prizeForm.name, `Custo: ${prizeForm.pointsCost} pts, Estoque: ${prizeForm.stock}`);
+      toast.success("Prêmio atualizado!");
+    } else {
+      const newPrize: Prize = { id: Date.now().toString(), name: prizeForm.name, pointsCost: parseInt(prizeForm.pointsCost) || 0, stock: parseInt(prizeForm.stock) || 0 };
+      savePrizes([...prizes, newPrize]);
+      addAuditLog("CREATE_PRIZE", prizeForm.name, `Custo: ${prizeForm.pointsCost} pts, Estoque: ${prizeForm.stock}`);
+      toast.success("Prêmio criado!");
+    }
+    setShowPrizeForm(false);
+    setEditPrize(null);
+    setPrizeForm({ name: "", pointsCost: "100", stock: "10" });
+  };
+
+  const handleDeletePrize = (prize: Prize) => {
+    savePrizes(prizes.filter(p => p.id !== prize.id));
+    addAuditLog("DELETE_PRIZE", prize.name, "Prêmio removido");
+    toast.success("Prêmio removido!");
+  };
+
+  const openDangerConfirm = (title: string, description: string, action: () => void) => {
+    setDangerConfirmText("");
+    setDangerModal({ show: true, title, description, action });
   };
 
   const recentUsers = [...users].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5);
@@ -161,11 +259,19 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
   const googleUsers = users.filter(u => u.provider === "google");
   const emailUsers = users.filter(u => u.provider === "email" || u.provider === "phone");
   const adminUsers = users.filter(u => u.role === "admin");
+  const totalPoints = users.reduce((sum, u) => sum + u.points, 0);
+  const avgPoints = users.length > 0 ? Math.round(totalPoints / users.length) : 0;
+
+  // Churn: users who never signed in or not in last 30 days
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const inactiveUsers = users.filter(u => !u.last_sign_in || new Date(u.last_sign_in) < thirtyDaysAgo);
+  const churnRate = users.length > 0 ? Math.round((inactiveUsers.length / users.length) * 100) : 0;
 
   const tabs: { id: AdminTab; label: string; icon: any }[] = [
     { id: "users", label: "Usuários", icon: Users },
-    { id: "stats", label: "Estatísticas", icon: BarChart3 },
+    { id: "stats", label: "Dashboard", icon: BarChart3 },
     { id: "tools", label: "Ferramentas", icon: Settings },
+    { id: "prizes", label: "Prêmios", icon: Award },
   ];
 
   return (
@@ -182,7 +288,7 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
                 <Shield size={18} className="text-primary" />
                 Painel Admin
               </h1>
-              <p className="text-xs text-muted-foreground">{users.length} usuários • v2.0</p>
+              <p className="text-xs text-muted-foreground">{users.length} usuários • v3.0</p>
             </div>
           </div>
           <button onClick={fetchUsers} className={cn("p-2 rounded-xl hover:bg-muted/50 transition-colors", loading && "animate-spin")}>
@@ -197,11 +303,11 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "flex-1 rounded-lg py-2 text-[11px] font-medium transition-all flex items-center justify-center gap-1.5",
+                "flex-1 rounded-lg py-2 text-[10px] font-medium transition-all flex items-center justify-center gap-1",
                 activeTab === tab.id ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
               )}
             >
-              <tab.icon size={13} />
+              <tab.icon size={12} />
               {tab.label}
             </button>
           ))}
@@ -210,7 +316,6 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
         {/* ═══ USERS TAB ═══ */}
         {activeTab === "users" && (
           <div className="space-y-3">
-            {/* Quick Stats */}
             <div className="grid grid-cols-4 gap-2">
               <div className="card-zelo text-center py-2">
                 <p className="text-base font-bold">{users.length}</p>
@@ -230,7 +335,6 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
               </div>
             </div>
 
-            {/* Search */}
             <div className="relative">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
@@ -242,21 +346,6 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
               />
             </div>
 
-            {/* Delete All */}
-            <button
-              onClick={() => setDeleteAllConfirm(true)}
-              className="w-full card-zelo border-destructive/30 bg-destructive/5 flex items-center gap-3 active:scale-[0.98] transition-transform"
-            >
-              <div className="h-9 w-9 rounded-xl bg-destructive/15 flex items-center justify-center shrink-0">
-                <Trash2 size={16} className="text-destructive" />
-              </div>
-              <div className="text-left">
-                <p className="text-xs font-semibold text-destructive">Limpar todos os usuários</p>
-                <p className="text-[9px] text-muted-foreground">Remove todos exceto admin</p>
-              </div>
-            </button>
-
-            {/* Users List */}
             <p className="text-label px-1">
               {searchQuery ? `RESULTADOS (${filteredUsers.length})` : "USUÁRIOS REGISTRADOS"}
             </p>
@@ -300,11 +389,6 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
                               <Mail size={8} /> {user.email}
                             </span>
                           )}
-                          {user.phone && (
-                            <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
-                              <Phone size={8} /> {user.phone}
-                            </span>
-                          )}
                         </div>
                         <div className="flex items-center gap-3 mt-1">
                           <span className="text-[9px] text-muted-foreground flex items-center gap-0.5">
@@ -315,12 +399,21 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
                           </span>
                         </div>
                       </div>
-                      <button
-                        onClick={() => setDeleteTarget(user)}
-                        className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all active:scale-95"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => { setSelectedUser(user); setAdjustPoints(String(user.points)); }}
+                          className="p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all active:scale-95"
+                          title="Gerenciar"
+                        >
+                          <Edit2 size={13} />
+                        </button>
+                        <button
+                          onClick={() => setDeleteTarget(user)}
+                          className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all active:scale-95"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -332,10 +425,10 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
           </div>
         )}
 
-        {/* ═══ STATS TAB ═══ */}
+        {/* ═══ STATS / DASHBOARD TAB ═══ */}
         {activeTab === "stats" && (
           <div className="space-y-3">
-            <p className="text-label px-1">VISÃO GERAL</p>
+            <p className="text-label px-1">GOVERNANÇA FINANCEIRA</p>
 
             <div className="grid grid-cols-2 gap-2">
               <div className="card-zelo space-y-1">
@@ -362,24 +455,41 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
               </div>
               <div className="card-zelo space-y-1">
                 <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-lg bg-accent/50 flex items-center justify-center">
-                    <UserCheck size={14} className="text-foreground" />
+                  <div className="h-8 w-8 rounded-lg bg-warning/15 flex items-center justify-center">
+                    <Star size={14} className="text-warning" />
                   </div>
                   <div>
-                    <p className="text-lg font-bold">{adminUsers.length}</p>
-                    <p className="text-[9px] text-muted-foreground">Administradores</p>
+                    <p className="text-lg font-bold">{totalPoints}</p>
+                    <p className="text-[9px] text-muted-foreground">Pontos totais</p>
                   </div>
                 </div>
               </div>
               <div className="card-zelo space-y-1">
                 <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-lg bg-warning/15 flex items-center justify-center">
-                    <Star size={14} className="text-warning" />
+                  <div className="h-8 w-8 rounded-lg bg-accent/50 flex items-center justify-center">
+                    <Coins size={14} className="text-foreground" />
                   </div>
                   <div>
-                    <p className="text-lg font-bold">{users.reduce((sum, u) => sum + u.points, 0)}</p>
-                    <p className="text-[9px] text-muted-foreground">Pontos totais</p>
+                    <p className="text-lg font-bold">{avgPoints}</p>
+                    <p className="text-[9px] text-muted-foreground">Média por user</p>
                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Churn card */}
+            <div className={cn("card-zelo", churnRate > 50 ? "border-destructive/30" : "")}>
+              <div className="flex items-center gap-3">
+                <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center", churnRate > 50 ? "bg-destructive/15" : "bg-muted")}>
+                  <Percent size={16} className={churnRate > 50 ? "text-destructive" : "text-muted-foreground"} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold">Taxa de Churn</p>
+                  <p className="text-[10px] text-muted-foreground">Usuários inativos há 30+ dias</p>
+                </div>
+                <div className="text-right">
+                  <p className={cn("text-lg font-bold", churnRate > 50 ? "text-destructive" : "text-foreground")}>{churnRate}%</p>
+                  <p className="text-[9px] text-muted-foreground">{inactiveUsers.length} de {users.length}</p>
                 </div>
               </div>
             </div>
@@ -423,6 +533,27 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
                 <p className="text-xs text-muted-foreground text-center py-4">Nenhum registro recente</p>
               )}
             </div>
+
+            {/* Audit Log */}
+            <p className="text-label px-1">LOG DE AUDITORIA</p>
+            <div className="card-zelo space-y-2 max-h-48 overflow-y-auto">
+              {auditLogs.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-4">Nenhuma ação registrada nesta sessão</p>
+              ) : (
+                auditLogs.map(log => (
+                  <div key={log.id} className="flex items-start gap-2 py-1 border-b border-border/50 last:border-0">
+                    <FileText size={10} className="text-muted-foreground mt-0.5 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] font-medium">
+                        <span className="text-primary">{log.action}</span> → {log.target}
+                      </p>
+                      <p className="text-[9px] text-muted-foreground truncate">{log.details}</p>
+                    </div>
+                    <span className="text-[8px] text-muted-foreground shrink-0">{formatDate(log.timestamp)}</span>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         )}
 
@@ -445,7 +576,7 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
             </button>
 
             <button
-              onClick={() => { fetchUsers(); toast.success("Dados sincronizados!"); }}
+              onClick={() => { fetchUsers(); toast.success("Dados sincronizados!"); addAuditLog("SYNC_DB", "Sistema", "Dados recarregados do servidor"); }}
               className="w-full card-zelo flex items-center gap-3 active:scale-[0.98] transition-transform hover:border-primary/50"
             >
               <div className="h-10 w-10 rounded-xl bg-success/15 flex items-center justify-center shrink-0">
@@ -457,9 +588,25 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
               </div>
             </button>
 
+            {/* Send notification */}
+            <button
+              onClick={() => setShowNotifModal(true)}
+              className="w-full card-zelo flex items-center gap-3 active:scale-[0.98] transition-transform hover:border-primary/50"
+            >
+              <div className="h-10 w-10 rounded-xl bg-blue-500/15 flex items-center justify-center shrink-0">
+                <Bell size={18} className="text-blue-500" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-semibold">Enviar Notificação Global</p>
+                <p className="text-[10px] text-muted-foreground">Envie um aviso para todos os usuários</p>
+              </div>
+            </button>
+
+            {/* Maintenance mode */}
             <button
               onClick={() => {
                 setMaintenanceMode(!maintenanceMode);
+                addAuditLog("MAINTENANCE", "Sistema", maintenanceMode ? "Desativado" : "Ativado");
                 toast.success(maintenanceMode ? "Modo manutenção desativado" : "Modo manutenção ativado");
               }}
               className={cn(
@@ -481,10 +628,49 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
               </div>
             </button>
 
-            <p className="text-label px-1 mt-4">ZONA DE PERIGO</p>
+            {/* System Config */}
+            <p className="text-label px-1 mt-2">CONFIGURAÇÕES DO SISTEMA</p>
+
+            <div className="card-zelo space-y-3">
+              <div>
+                <label className="text-[10px] text-muted-foreground font-medium mb-1 block">Taxa de Conversão de Pontos</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text" inputMode="decimal" value={pointsRate}
+                    onChange={(e) => setPointsRate(e.target.value)}
+                    className="flex-1 rounded-xl border border-border bg-muted/30 px-3 py-2.5 text-sm outline-none focus:border-primary"
+                  />
+                  <span className="text-[10px] text-muted-foreground">pts/R$</span>
+                </div>
+              </div>
+              <div>
+                <label className="text-[10px] text-muted-foreground font-medium mb-1 block">Limite de Saque (R$)</label>
+                <input
+                  type="text" inputMode="numeric" value={withdrawLimit}
+                  onChange={(e) => setWithdrawLimit(e.target.value.replace(/\D/g, ""))}
+                  className="w-full rounded-xl border border-border bg-muted/30 px-3 py-2.5 text-sm outline-none focus:border-primary"
+                />
+              </div>
+              <button
+                onClick={() => {
+                  addAuditLog("UPDATE_CONFIG", "Sistema", `Taxa: ${pointsRate}, Limite: R$${withdrawLimit}`);
+                  toast.success("Configurações salvas!");
+                }}
+                className="w-full rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground active:scale-[0.98]"
+              >
+                Salvar Configurações
+              </button>
+            </div>
+
+            {/* Danger Zone */}
+            <p className="text-label px-1 mt-2">ZONA DE PERIGO</p>
 
             <button
-              onClick={() => setDeleteAllConfirm(true)}
+              onClick={() => openDangerConfirm(
+                "⚠️ Resetar Todos os Usuários",
+                "Isso vai remover TODOS os usuários do banco de dados, exceto sua conta de administrador. Esta ação NÃO pode ser desfeita!",
+                handleDeleteAll
+              )}
               className="w-full card-zelo border-destructive/30 bg-destructive/5 flex items-center gap-3 active:scale-[0.98] transition-transform"
             >
               <div className="h-10 w-10 rounded-xl bg-destructive/15 flex items-center justify-center shrink-0">
@@ -497,10 +683,17 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
             </button>
 
             <button
-              onClick={() => {
-                localStorage.clear();
-                toast.success("Cache local limpo com sucesso!");
-              }}
+              onClick={() => openDangerConfirm(
+                "⚠️ Limpar Cache Local",
+                "Remove todos os dados temporários do navegador. Configurações locais serão perdidas!",
+                () => {
+                  localStorage.clear();
+                  addAuditLog("CLEAR_CACHE", "Sistema", "Cache local limpo");
+                  toast.success("Cache local limpo com sucesso!");
+                  setDangerModal(null);
+                  setDangerConfirmText("");
+                }
+              )}
               className="w-full card-zelo border-destructive/30 bg-destructive/5 flex items-center gap-3 active:scale-[0.98] transition-transform"
             >
               <div className="h-10 w-10 rounded-xl bg-destructive/15 flex items-center justify-center shrink-0">
@@ -514,11 +707,85 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
           </div>
         )}
 
+        {/* ═══ PRIZES TAB ═══ */}
+        {activeTab === "prizes" && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-label px-1">GERENCIAR PRÊMIOS</p>
+              <button
+                onClick={() => {
+                  setEditPrize(null);
+                  setPrizeForm({ name: "", pointsCost: "100", stock: "10" });
+                  setShowPrizeForm(true);
+                }}
+                className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[10px] font-semibold text-primary-foreground active:scale-[0.98]"
+              >
+                <Plus size={12} /> Novo Prêmio
+              </button>
+            </div>
+
+            {prizes.length === 0 ? (
+              <div className="card-zelo flex flex-col items-center py-8">
+                <Award size={32} className="text-muted-foreground mb-3" />
+                <p className="text-sm font-medium text-muted-foreground">Nenhum prêmio cadastrado</p>
+                <p className="text-[10px] text-muted-foreground mt-1">Crie o primeiro prêmio para a loja</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {prizes.map(prize => (
+                  <div key={prize.id} className="card-zelo">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-warning/15 flex items-center justify-center shrink-0">
+                        <Award size={18} className="text-warning" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold">{prize.name}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-bold text-warning">
+                            <Star size={8} /> {prize.pointsCost} pts
+                          </span>
+                          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                            <Package size={8} /> {prize.stock} em estoque
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => {
+                            setEditPrize(prize);
+                            setPrizeForm({ name: prize.name, pointsCost: String(prize.pointsCost), stock: String(prize.stock) });
+                            setShowPrizeForm(true);
+                          }}
+                          className="p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 active:scale-95"
+                        >
+                          <Edit2 size={13} />
+                        </button>
+                        <button
+                          onClick={() => openDangerConfirm(
+                            "Excluir Prêmio",
+                            `Tem certeza que deseja excluir "${prize.name}"?`,
+                            () => { handleDeletePrize(prize); setDangerModal(null); setDangerConfirmText(""); }
+                          )}
+                          className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 active:scale-95"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Developer signature */}
         <p className="text-center text-[9px] text-muted-foreground/50 py-4">
-          Sparky Admin Panel v2.0 — Erick Developer © 2026
+          Sparky Admin Panel v3.0 — Erick Developer © 2026
         </p>
       </div>
+
+      {/* ═══ MODALS ═══ */}
 
       {/* Delete single user confirm */}
       {deleteTarget && (
@@ -548,29 +815,192 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
         </div>
       )}
 
-      {/* Delete all confirm */}
-      {deleteAllConfirm && (
+      {/* Danger confirmation modal (2-step) */}
+      {dangerModal?.show && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
           <div className="w-full max-w-sm card-zelo space-y-4 text-center">
             <div className="flex h-14 w-14 mx-auto items-center justify-center rounded-full bg-destructive/15">
               <AlertTriangle size={24} className="text-destructive" />
             </div>
-            <h3 className="text-base font-bold">⚠️ Ação Perigosa!</h3>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Isso vai remover <span className="font-semibold text-destructive">TODOS os usuários</span> do banco de dados,
-              exceto sua conta de administrador.
-            </p>
-            <p className="text-[10px] text-destructive font-semibold">Esta ação NÃO pode ser desfeita!</p>
+            <h3 className="text-base font-bold">{dangerModal.title}</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">{dangerModal.description}</p>
+            <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3">
+              <p className="text-[10px] text-destructive font-semibold mb-2">
+                Digite "CONFIRMAR" para liberar a ação:
+              </p>
+              <input
+                type="text"
+                value={dangerConfirmText}
+                onChange={(e) => setDangerConfirmText(e.target.value)}
+                placeholder="CONFIRMAR"
+                className="w-full rounded-lg border border-destructive/30 bg-background px-3 py-2 text-sm text-center outline-none focus:border-destructive font-mono tracking-wider"
+              />
+            </div>
             <div className="flex gap-2">
-              <button onClick={() => setDeleteAllConfirm(false)} className="flex-1 rounded-xl border border-border py-3 text-sm font-medium text-muted-foreground active:scale-[0.98]">
+              <button onClick={() => { setDangerModal(null); setDangerConfirmText(""); }} className="flex-1 rounded-xl border border-border py-3 text-sm font-medium text-muted-foreground active:scale-[0.98]">
                 Cancelar
               </button>
               <button
-                onClick={handleDeleteAll}
-                disabled={actionLoading}
-                className="flex-1 rounded-xl bg-destructive py-3 text-sm font-semibold text-destructive-foreground active:scale-[0.98] disabled:opacity-50"
+                onClick={() => dangerModal.action()}
+                disabled={dangerConfirmText !== "CONFIRMAR" || actionLoading}
+                className="flex-1 rounded-xl bg-destructive py-3 text-sm font-semibold text-destructive-foreground active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed"
               >
-                {actionLoading ? "Removendo..." : "Sim, deletar todos"}
+                {actionLoading ? "Executando..." : "Executar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* User detail / adjust modal */}
+      {selectedUser && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="w-full max-w-sm card-zelo space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold">Gerenciar Usuário</h3>
+              <button onClick={() => { setSelectedUser(null); setAdjustPoints(""); }} className="text-muted-foreground"><X size={16} /></button>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {selectedUser.avatar_url ? (
+                <img src={selectedUser.avatar_url} alt={selectedUser.name} className="h-12 w-12 rounded-full object-cover" />
+              ) : (
+                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-white font-bold">
+                  {selectedUser.name.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div>
+                <p className="text-sm font-bold">{selectedUser.name}</p>
+                <p className="text-[10px] text-muted-foreground">{selectedUser.email}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-xl bg-muted/50 p-2.5 text-center">
+                <p className="text-base font-bold">{selectedUser.points}</p>
+                <p className="text-[9px] text-muted-foreground">Pontos atuais</p>
+              </div>
+              <div className="rounded-xl bg-muted/50 p-2.5 text-center">
+                <p className="text-base font-bold capitalize">{selectedUser.role}</p>
+                <p className="text-[9px] text-muted-foreground">Cargo</p>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[10px] text-muted-foreground font-medium mb-1 block">Ajustar Pontos</label>
+              <input
+                type="text" inputMode="numeric"
+                value={adjustPoints}
+                onChange={(e) => setAdjustPoints(e.target.value.replace(/\D/g, ""))}
+                className="w-full rounded-xl border border-border bg-muted/30 px-3 py-2.5 text-sm outline-none focus:border-primary"
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <button onClick={() => { setSelectedUser(null); setAdjustPoints(""); }} className="flex-1 rounded-xl border border-border py-2.5 text-sm font-medium text-muted-foreground active:scale-[0.98]">
+                Cancelar
+              </button>
+              <button
+                onClick={() => handleAdjustPoints(selectedUser.id, parseInt(adjustPoints) || 0)}
+                className="flex-1 rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground active:scale-[0.98]"
+              >
+                Salvar
+              </button>
+            </div>
+
+            <button
+              onClick={() => openDangerConfirm(
+                "Suspender Conta",
+                `Tem certeza que deseja suspender a conta de "${selectedUser.name}"? O usuário será removido do sistema.`,
+                () => { handleDeleteUser(selectedUser.id); setSelectedUser(null); setDangerModal(null); setDangerConfirmText(""); }
+              )}
+              className="w-full rounded-xl border border-destructive/30 bg-destructive/5 py-2.5 text-sm font-semibold text-destructive flex items-center justify-center gap-2 active:scale-[0.98]"
+            >
+              <Ban size={14} /> Suspender / Banir Conta
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Notification modal */}
+      {showNotifModal && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="w-full max-w-sm card-zelo space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold">Notificação Global</h3>
+                <p className="text-[10px] text-muted-foreground">Envie um aviso para todos os usuários</p>
+              </div>
+              <button onClick={() => setShowNotifModal(false)} className="text-muted-foreground"><X size={16} /></button>
+            </div>
+            <textarea
+              value={notifMessage}
+              onChange={(e) => setNotifMessage(e.target.value)}
+              placeholder="Digite a mensagem da notificação..."
+              rows={3}
+              className="w-full rounded-xl border border-border bg-muted/30 px-3 py-2.5 text-sm outline-none focus:border-primary resize-none"
+            />
+            <div className="flex gap-2">
+              <button onClick={() => setShowNotifModal(false)} className="flex-1 rounded-xl border border-border py-2.5 text-sm font-medium text-muted-foreground active:scale-[0.98]">
+                Cancelar
+              </button>
+              <button onClick={handleSendNotification} disabled={!notifMessage.trim()} className="flex-1 rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2">
+                <Send size={14} /> Enviar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Prize form modal */}
+      {showPrizeForm && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="w-full max-w-sm card-zelo space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold">{editPrize ? "Editar Prêmio" : "Novo Prêmio"}</h3>
+                <p className="text-[10px] text-muted-foreground">{editPrize ? "Atualize as informações" : "Adicione um novo prêmio à loja"}</p>
+              </div>
+              <button onClick={() => { setShowPrizeForm(false); setEditPrize(null); }} className="text-muted-foreground"><X size={16} /></button>
+            </div>
+            <div>
+              <label className="text-[10px] text-muted-foreground font-medium mb-1 block">Nome do Prêmio*</label>
+              <input
+                value={prizeForm.name}
+                onChange={(e) => setPrizeForm({ ...prizeForm, name: e.target.value })}
+                placeholder="Ex: Sorveteria"
+                className="w-full rounded-xl border border-border bg-muted/30 px-3 py-2.5 text-sm outline-none focus:border-primary"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] text-muted-foreground font-medium mb-1 block">Custo em Pontos*</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text" inputMode="numeric"
+                  value={prizeForm.pointsCost}
+                  onChange={(e) => setPrizeForm({ ...prizeForm, pointsCost: e.target.value.replace(/\D/g, "") })}
+                  className="flex-1 rounded-xl border border-border bg-muted/30 px-3 py-2.5 text-sm outline-none focus:border-primary"
+                />
+                <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2.5 py-1.5 text-[10px] font-bold text-warning">
+                  <Star size={8} /> {prizeForm.pointsCost || 0}
+                </span>
+              </div>
+            </div>
+            <div>
+              <label className="text-[10px] text-muted-foreground font-medium mb-1 block">Estoque*</label>
+              <input
+                type="text" inputMode="numeric"
+                value={prizeForm.stock}
+                onChange={(e) => setPrizeForm({ ...prizeForm, stock: e.target.value.replace(/\D/g, "") })}
+                className="w-full rounded-xl border border-border bg-muted/30 px-3 py-2.5 text-sm outline-none focus:border-primary"
+              />
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => { setShowPrizeForm(false); setEditPrize(null); }} className="flex-1 rounded-xl border border-border py-2.5 text-sm font-medium text-muted-foreground active:scale-[0.98]">
+                Cancelar
+              </button>
+              <button onClick={handleSavePrize} className="flex-1 rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground active:scale-[0.98]">
+                {editPrize ? "Atualizar" : "Criar Prêmio"}
               </button>
             </div>
           </div>
