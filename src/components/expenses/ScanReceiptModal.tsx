@@ -1,5 +1,5 @@
-import { useState, useRef, useCallback } from "react";
-import { X, Camera, Loader2, RotateCcw, Check, AlertTriangle, ScanLine } from "lucide-react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { X, Camera, Loader2, RotateCcw, Check, AlertTriangle, ScanLine, ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,12 +27,18 @@ const ScanReceiptModal = ({ open, onClose }: ScanReceiptModalProps) => {
   const [result, setResult] = useState<ScanResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const { addTransaction } = useFinancialData();
   useDockVisibility(open);
+
+  // Check if getUserMedia is available
+  const hasGetUserMedia = typeof navigator !== "undefined" &&
+    !!navigator.mediaDevices?.getUserMedia;
 
   const stopCamera = useCallback(() => {
     streamRef.current?.getTracks().forEach(t => t.stop());
@@ -40,7 +46,21 @@ const ScanReceiptModal = ({ open, onClose }: ScanReceiptModalProps) => {
     setCameraActive(false);
   }, []);
 
+  // Cleanup on unmount or close
+  useEffect(() => {
+    if (!open) stopCamera();
+    return () => stopCamera();
+  }, [open, stopCamera]);
+
   const startCamera = useCallback(async () => {
+    setCameraError(null);
+
+    // Fallback: if getUserMedia not supported, use native file input with capture
+    if (!hasGetUserMedia) {
+      cameraInputRef.current?.click();
+      return;
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } }
@@ -48,13 +68,32 @@ const ScanReceiptModal = ({ open, onClose }: ScanReceiptModalProps) => {
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+        // Wait for video to be ready before playing
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play().catch(() => {});
+        };
       }
       setCameraActive(true);
-    } catch {
-      toast.error("Não foi possível acessar a câmera. Verifique as permissões.");
+    } catch (err: any) {
+      console.error("Camera error:", err);
+      const errName = err?.name || "";
+      if (errName === "NotAllowedError" || errName === "PermissionDeniedError") {
+        setCameraError("Permissão da câmera negada. Habilite nas configurações do navegador.");
+        toast.error("Permissão da câmera negada. Habilite nas configurações do navegador.");
+      } else if (errName === "NotFoundError" || errName === "DevicesNotFoundError") {
+        setCameraError("Nenhuma câmera encontrada neste dispositivo.");
+        toast.error("Nenhuma câmera encontrada.");
+      } else if (errName === "NotReadableError" || errName === "TrackStartError") {
+        setCameraError("Câmera em uso por outro aplicativo.");
+        toast.error("Câmera em uso por outro app.");
+      } else {
+        setCameraError("Não foi possível acessar a câmera. Use a galeria.");
+        toast.error("Erro ao acessar câmera. Tente pela galeria.");
+      }
+      // Offer native fallback
+      cameraInputRef.current?.click();
     }
-  }, []);
+  }, [hasGetUserMedia]);
 
   const capturePhoto = useCallback(() => {
     if (!videoRef.current || !canvasRef.current) return;
@@ -131,6 +170,7 @@ const ScanReceiptModal = ({ open, onClose }: ScanReceiptModalProps) => {
     setStep("capture");
     setImageData(null);
     setResult(null);
+    setCameraError(null);
   };
 
   const handleClose = () => {
@@ -138,6 +178,7 @@ const ScanReceiptModal = ({ open, onClose }: ScanReceiptModalProps) => {
     setStep("capture");
     setImageData(null);
     setResult(null);
+    setCameraError(null);
     onClose();
   };
 
@@ -193,6 +234,17 @@ const ScanReceiptModal = ({ open, onClose }: ScanReceiptModalProps) => {
                 </div>
               ) : (
                 <div className="space-y-3">
+                  {/* Camera error state */}
+                  {cameraError && (
+                    <div className="rounded-xl border border-warning/30 bg-warning/5 p-3 flex items-start gap-2">
+                      <AlertTriangle size={16} className="text-warning shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-xs font-semibold text-warning">Câmera indisponível</p>
+                        <p className="text-[10px] text-muted-foreground">{cameraError}</p>
+                      </div>
+                    </div>
+                  )}
+
                   <button onClick={startCamera}
                     className="w-full rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 py-12 flex flex-col items-center gap-3 transition-all active:scale-[0.98] hover:border-primary/50">
                     <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/15">
@@ -212,7 +264,7 @@ const ScanReceiptModal = ({ open, onClose }: ScanReceiptModalProps) => {
 
                   <button onClick={() => fileInputRef.current?.click()}
                     className="w-full rounded-xl border border-border bg-muted/30 py-4 flex items-center justify-center gap-2 transition-all active:scale-[0.98] hover:bg-muted/50">
-                    <ScanLine size={16} className="text-muted-foreground" />
+                    <ImageIcon size={16} className="text-muted-foreground" />
                     <span className="text-xs font-medium text-muted-foreground">Selecionar da Galeria</span>
                   </button>
                 </div>
@@ -316,7 +368,10 @@ const ScanReceiptModal = ({ open, onClose }: ScanReceiptModalProps) => {
         )}
 
         <canvas ref={canvasRef} className="hidden" />
-        <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileSelect} />
+        {/* Gallery picker */}
+        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
+        {/* Native camera fallback for devices without getUserMedia */}
+        <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileSelect} />
       </div>
     </div>
   );
