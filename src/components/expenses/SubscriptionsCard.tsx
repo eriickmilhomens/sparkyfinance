@@ -143,7 +143,7 @@ const SubscriptionsCard = () => {
     setShowAdd(false);
     setEditingId(null);
     setNewName("");
-    setNewAmount("");
+    setNewAmount("R$ 0,00");
     setNewDueDay("10");
     setNewLogo("");
     setNewColor("bg-primary");
