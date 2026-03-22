@@ -466,7 +466,7 @@ const ChatView = () => {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full overflow-hidden">
       {showNewChatConfirm && <NewChatConfirmPopup />}
       {/* Header */}
       <div className="px-4 pt-3 pb-2 flex items-center justify-between">
