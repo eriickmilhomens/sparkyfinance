@@ -251,12 +251,46 @@ export const useFinancialData = () => {
     await fetchFromSupabase();
   }, [fetchFromSupabase]);
 
-  // Legacy updateData for demo compatibility
-  const updateData = useCallback((partial: Partial<FinancialData>) => {
+  // Legacy updateData - works for both demo and Supabase
+  // For Supabase mode, detects new/removed transactions and syncs
+  const updateData = useCallback(async (partial: Partial<FinancialData>) => {
     if (isDemo()) {
       setData(prev => ({ ...prev, ...partial }));
+      return;
     }
-  }, []);
+
+    // If transactions changed, sync with Supabase
+    if (partial.transactions) {
+      const currentIds = new Set(data.transactions.map(t => t.id));
+      const newIds = new Set(partial.transactions.map(t => t.id));
+
+      // Find new transactions to insert
+      const toInsert = partial.transactions.filter(t => !currentIds.has(t.id));
+      // Find removed transactions to delete
+      const toDelete = data.transactions.filter(t => !newIds.has(t.id));
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      for (const tx of toInsert) {
+        await supabase.from("transactions").insert({
+          user_id: user.id,
+          date: tx.date,
+          description: tx.description,
+          amount: tx.amount,
+          type: tx.type,
+          category: tx.category,
+          card_id: tx.cardId || null,
+        });
+      }
+
+      for (const tx of toDelete) {
+        await supabase.from("transactions").delete().eq("id", tx.id);
+      }
+
+      await fetchFromSupabase();
+    }
+  }, [data.transactions, fetchFromSupabase]);
 
   const clearAll = useCallback(async () => {
     if (isDemo()) {
