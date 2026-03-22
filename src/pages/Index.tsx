@@ -78,16 +78,15 @@ const Index = () => {
         height: '100dvh',
         minHeight: '100dvh',
         maxHeight: '100dvh',
-        paddingTop: 'env(safe-area-inset-top, 20px)',
+        paddingTop: activeTab === 'chat' ? '0' : 'env(safe-area-inset-top, 20px)',
         overflow: 'hidden',
         overscrollBehavior: 'none',
       }}
     >
       <div data-main-scroll className={`relative flex-1 min-h-0 overflow-x-hidden ${activeTab === 'chat' ? 'overflow-hidden' : 'overflow-y-auto'}`} style={{ overscrollBehavior: 'none', paddingBottom: activeTab === 'chat' ? '0' : 'calc(100px + env(safe-area-inset-bottom, 0px))' }}>
         {renderView()}
-        {/* Removed: dark gradient overlay that was obscuring content above taskbar */}
       </div>
-      <TabBar activeTab={activeTab} onTabChange={handleTabChange} />
+      {activeTab !== 'chat' && <TabBar activeTab={activeTab} onTabChange={handleTabChange} />}
     </div>
   );
 };
