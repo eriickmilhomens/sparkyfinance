@@ -96,7 +96,7 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
 
   const finalCategory = isOthers && customCategory.trim() ? customCategory.trim() : selectedCategory || "Outros";
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name.trim()) { toast.error("Preencha o nome"); return; }
     const numValue = parseBRLInput(value);
     if (numValue <= 0) { toast.error("Informe um valor válido"); return; }
@@ -106,22 +106,15 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
 
     const expDate = new Date(parseInt(expYear), parseInt(expMonth), parseInt(expDay) || 1);
 
-    const newTransaction = {
-      id: crypto.randomUUID(),
-      date: expDate.toISOString(),
-      description: name.trim() + (split ? ` (÷${splitPeople})` : "") + (recurring ? " 🔄" : ""),
-      amount: finalValue,
-      type: (isIncome ? "income" : "expense") as "income" | "expense",
-      category: finalCategory,
-      cardId: isCardCategory ? selectedCardId : undefined,
-    };
-
-    const newTransactions = [newTransaction, ...data.transactions];
-    if (isIncome) {
-      updateData({ income: data.income + finalValue, balance: data.balance + finalValue, transactions: newTransactions });
-    } else {
-      updateData({ expenses: data.expenses + finalValue, balance: data.balance - finalValue, transactions: newTransactions });
-    }
+    try {
+      await addTransaction({
+        date: expDate.toISOString(),
+        description: name.trim() + (split ? ` (÷${splitPeople})` : "") + (recurring ? " 🔄" : ""),
+        amount: finalValue,
+        type: (isIncome ? "income" : "expense") as "income" | "expense",
+        category: finalCategory,
+        cardId: isCardCategory ? selectedCardId : undefined,
+      });
 
     if (isCardCategory && selectedCardId) {
       try {
