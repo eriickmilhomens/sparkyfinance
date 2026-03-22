@@ -40,53 +40,71 @@ const TasksView = () => {
     };
 
     const loadMembers = async () => {
-      const isDemo = localStorage.getItem("sparky-demo-mode") === "true";
-      if (isDemo) {
+      try {
+        const isDemo = localStorage.getItem("sparky-demo-mode") === "true";
+        if (isDemo) {
+          setMembers(buildCurrentUserCard());
+          return;
+        }
+
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setMembers(buildCurrentUserCard());
+          return;
+        }
+
+        // Get user's group_code first
+        const { data: myProfile } = await supabase
+          .from("profiles")
+          .select("group_code")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        let query = supabase.from("profiles").select("name, points, user_id, invite_code, group_code");
+        
+        if (myProfile?.group_code) {
+          query = query.eq("group_code", myProfile.group_code);
+        } else {
+          query = query.eq("user_id", user.id);
+        }
+
+        const { data: profiles, error } = await query.order("points", { ascending: false });
+
+        if (error) {
+          console.error("Ranking fetch error:", error.message);
+          setMembers(buildCurrentUserCard());
+          return;
+        }
+
+        if (profiles?.length) {
+          setMembers(profiles.map(p => ({
+            name: p.name,
+            points: p.points,
+            avatar: p.name.charAt(0).toUpperCase(),
+            isCurrentUser: p.user_id === user.id,
+            isLeader: profiles.length === 1 || p.invite_code === p.group_code,
+          })));
+          return;
+        }
+
         setMembers(buildCurrentUserCard());
-        return;
-      }
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      } catch (err) {
+        console.error("Ranking load error:", err);
         setMembers(buildCurrentUserCard());
-        return;
       }
-
-      // Get user's group_code first
-      const { data: myProfile } = await supabase
-        .from("profiles")
-        .select("group_code")
-        .eq("user_id", user.id)
-        .single();
-
-      let query = supabase.from("profiles").select("name, points, user_id, invite_code, group_code");
-      
-      if (myProfile?.group_code) {
-        query = query.eq("group_code", myProfile.group_code);
-      } else {
-        query = query.eq("user_id", user.id);
-      }
-
-      const { data: profiles } = await query.order("points", { ascending: false });
-
-      if (profiles?.length) {
-        setMembers(profiles.map(p => ({
-          name: p.name,
-          points: p.points,
-          avatar: p.name.charAt(0).toUpperCase(),
-          isCurrentUser: p.user_id === user.id,
-          isLeader: profiles.length === 1 || p.invite_code === p.group_code,
-        })));
-        return;
-      }
-
-      setMembers(buildCurrentUserCard());
     };
 
     loadMembers();
-    const interval = setInterval(loadMembers, 15000);
+    const interval = setInterval(loadMembers, 10000);
 
-    return () => clearInterval(interval);
+    // Listen for points changes to refresh ranking
+    const handler = () => loadMembers();
+    window.addEventListener("sparky-points-updated", handler);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("sparky-points-updated", handler);
+    };
   }, [profile]);
 
   // Dynamic achievements based on real data

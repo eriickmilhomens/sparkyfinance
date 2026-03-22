@@ -70,7 +70,7 @@ const BalanceCard = ({ onVisibilityChange }: BalanceCardProps) => {
           <span>Despesas: <span className="text-destructive font-medium">{visible ? fmt(data.expenses) : "••••••"}</span></span>
         </div>
         <p className="text-[10px] text-muted-foreground">
-          Pode gastar hoje: <span className="font-semibold text-primary">{visible ? fmt(dailyBudget) : "••••••"}</span> (20% do saldo)
+          Pode gastar hoje: <span className="font-semibold text-primary">{visible ? fmt(dailyBudget) : "••••••"}</span>
         </p>
       </div>
 
