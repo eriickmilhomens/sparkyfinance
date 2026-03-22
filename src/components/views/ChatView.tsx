@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Send, Bot, User, Loader2, Plus, Trash2, ChevronLeft, MoreVertical, Paperclip, Image, FileText, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { useFinancialQuery, fmt } from "@/hooks/useFinancialQuery";
 
 type Attachment = {
   type: "image" | "document";
