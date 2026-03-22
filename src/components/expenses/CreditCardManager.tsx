@@ -143,12 +143,28 @@ const CreditCardManager = ({ open, onClose }: Props) => {
   };
 
   const handlePayInvoice = (cardId: string) => {
-    const amount = payFull ? cards.find(c => c.id === cardId)?.invoiceAmount || 0 : parseFloat(payAmount.replace(/\D/g, "")) / 100;
+    const card = cards.find(c => c.id === cardId);
+    if (!card || card.invoiceAmount <= 0) {
+      toast.error("Não há fatura a pagar.");
+      setShowPayment(false);
+      return;
+    }
+    const amount = payFull ? card.invoiceAmount : parseFloat(payAmount.replace(/\D/g, "")) / 100;
+    if (!amount || amount <= 0) {
+      toast.error("Informe um valor válido.");
+      return;
+    }
+    if (amount > card.invoiceAmount) {
+      toast.error("Valor maior que a fatura.");
+      return;
+    }
+    const remaining = Math.max(0, card.invoiceAmount - amount);
     update(cards.map(c => c.id === cardId ? {
-      ...c, invoiceAmount: Math.max(0, c.invoiceAmount - amount), usedAmount: Math.max(0, c.usedAmount - amount),
+      ...c, invoiceAmount: remaining, usedAmount: Math.max(0, c.usedAmount - amount),
       paidInvoices: [...c.paidInvoices, { month: new Date().toLocaleDateString("pt-BR", { month: "short", year: "numeric" }), amount, paidAt: new Date().toLocaleDateString("pt-BR") }],
     } : c));
     setShowPayment(false); setPayAmount("");
+    toast.success(payFull ? "Parabéns pelo pagamento da sua fatura! 🎉" : `Pago ${fmt(amount)} — Restante: ${fmt(remaining)}`);
   };
 
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
