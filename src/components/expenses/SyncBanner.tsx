@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { Wallet, TrendingDown, TrendingUp, ScanLine, Download, Target } from "lucide-react";
 import AddExpenseModal from "@/components/expenses/AddExpenseModal";
 import ImportModal from "./ImportModal";
+import ScanReceiptModal from "./ScanReceiptModal";
 
 interface SyncBannerProps {
   onNavigateToMetas?: () => void;
