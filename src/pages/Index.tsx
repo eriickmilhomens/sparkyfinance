@@ -90,21 +90,39 @@ const Index = () => {
       return;
     }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const checkBanStatus = async (session: any) => {
+      if (!session?.user) return false;
+      // Re-fetch user to get latest metadata
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+      const isBanned = user.user_metadata?.banned === true;
+      const isSuspended = user.user_metadata?.suspended === true;
+      if (isBanned || isSuspended) {
+        await supabase.auth.signOut();
+        navigate("/login");
+        return true;
+      }
+      return false;
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!session && !localStorage.getItem("sparky-demo-mode")) {
         navigate("/login");
       } else if (session?.user) {
+        const blocked = await checkBanStatus(session);
+        if (blocked) return;
         syncLocalDataOwner(session.user.id);
         setReady(true);
-        // Check if admin
         setIsAdmin(session.user.email === "admin@sparky.app");
       }
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session && !localStorage.getItem("sparky-demo-mode")) {
         navigate("/login");
       } else if (session?.user) {
+        const blocked = await checkBanStatus(session);
+        if (blocked) return;
         syncLocalDataOwner(session.user.id);
         setReady(true);
         setIsAdmin(session.user.email === "admin@sparky.app");

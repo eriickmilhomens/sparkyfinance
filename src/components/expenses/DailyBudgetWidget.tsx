@@ -3,28 +3,28 @@ import { Wallet, Info, X, TrendingDown } from "lucide-react";
 import { useFinancialData, fmt } from "@/hooks/useFinancialData";
 import { cn } from "@/lib/utils";
 
-const RESERVE_KEY = "sparky-reserve-pct";
-const ACCUMULATION_RATE = 0.30; // 30% rule
-
 const DailyBudgetWidget = () => {
-  const { data, available, daysLeft } = useFinancialData();
+  const { data, dailyBudget, daysLeft } = useFinancialData();
   const [showPopup, setShowPopup] = useState(false);
 
   const reservePct = (() => {
-    try { return parseInt(localStorage.getItem(RESERVE_KEY) || "20") / 100; } catch { return 0.20; }
+    try { return parseInt(localStorage.getItem("sparky-reserve-pct") || "20") / 100; } catch { return 0.20; }
   })();
 
-  // Calculate using aggressive savings logic
+  // Today's expenses
   const now = new Date();
-  const dayOfMonth = now.getDate();
-  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  const remainingDays = Math.max(1, daysInMonth - dayOfMonth);
+  const todayStr = now.toISOString().slice(0, 10);
+  const todayExpenses = data.transactions
+    .filter(t => t.type === "expense" && t.date.startsWith(todayStr))
+    .reduce((sum, t) => sum + t.amount, 0);
 
-  // Reserve separated from available balance
+  const remainingToday = Math.max(0, dailyBudget - todayExpenses);
+  const monthlyPool = dailyBudget * daysLeft;
+  const progressPct = dailyBudget > 0 ? Math.min(100, (todayExpenses / dailyBudget) * 100) : 0;
+  const isOver = todayExpenses > dailyBudget;
+
+  // For popup display
   const reserve = Math.max(0, data.balance * reservePct);
-  const spendablePool = Math.max(0, data.balance - reserve);
-
-  // Subtract pending obligations
   const subs = (() => {
     try { return JSON.parse(localStorage.getItem("sparky-subscriptions") || "[]"); } catch { return []; }
   })();
@@ -34,34 +34,8 @@ const DailyBudgetWidget = () => {
   const unpaidTotal = subs
     .filter((s: any) => !paidBills.includes(s.id))
     .reduce((sum: number, s: any) => sum + (s.amount || 0), 0);
-
-  const afterObligations = Math.max(0, spendablePool - unpaidTotal);
-
-  // Ideal daily spend (linear distribution)
-  const idealDaily = afterObligations / remainingDays;
-
-  // Today's expenses
-  const todayStr = now.toISOString().slice(0, 10);
-  const todayExpenses = data.transactions
-    .filter(t => t.type === "expense" && t.date.startsWith(todayStr))
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  // 30% accumulation rule: only 30% of yesterday's unspent carries over
-  // This is simplified: we calculate what the daily budget should be with gradual decrease
-  const pastDays = Math.max(1, dayOfMonth);
-  const expectedDailySpend = afterObligations / daysInMonth;
-  const actualPastSpend = data.expenses > 0 ? data.expenses / pastDays : 0;
-  const savedPerDay = Math.max(0, expectedDailySpend - actualPastSpend);
-  const accumulatedSavings = savedPerDay * pastDays * ACCUMULATION_RATE; // Only 30% carries
-  const adjustedPool = afterObligations - accumulatedSavings;
-  
-  const dailyBudget = Math.max(0, adjustedPool / remainingDays);
-  const remainingToday = Math.max(0, dailyBudget - todayExpenses);
-
-  // Monthly accumulated "can spend" pool
-  const monthlyPool = dailyBudget * remainingDays;
-  const progressPct = dailyBudget > 0 ? Math.min(100, (todayExpenses / dailyBudget) * 100) : 0;
-  const isOver = todayExpenses > dailyBudget;
+  const aPagar = data.scheduled > 0 ? data.scheduled : unpaidTotal;
+  const afterObligations = Math.max(0, data.balance - reserve - aPagar);
 
   return (
     <>
@@ -76,7 +50,7 @@ const DailyBudgetWidget = () => {
             </div>
             <div>
               <p className="text-xs font-semibold">Pode Gastar Hoje</p>
-              <p className="text-[9px] text-muted-foreground">{remainingDays} dias restantes no mês</p>
+              <p className="text-[9px] text-muted-foreground">{daysLeft} dias restantes no mês</p>
             </div>
           </div>
           <Info size={14} className="text-muted-foreground/50" />
@@ -179,7 +153,7 @@ const DailyBudgetWidget = () => {
                     <span className="font-bold text-primary">{fmt(afterObligations)}</span>
                   </div>
                   <div className="flex justify-between text-[10px]">
-                    <span className="text-muted-foreground">÷ {remainingDays} dias restantes</span>
+                    <span className="text-muted-foreground">÷ {daysLeft} dias restantes</span>
                     <span className="font-bold text-primary">{fmt(dailyBudget)}/dia</span>
                   </div>
                 </div>
