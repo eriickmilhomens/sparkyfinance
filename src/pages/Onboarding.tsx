@@ -19,23 +19,7 @@ const CatLogo = () => (
   </svg>
 );
 
-const COUNTRIES = [
-  { code: "+55", flag: "🇧🇷", name: "Brasil" },
-  { code: "+1", flag: "🇺🇸", name: "EUA" },
-  { code: "+351", flag: "🇵🇹", name: "Portugal" },
-  { code: "+34", flag: "🇪🇸", name: "Espanha" },
-  { code: "+44", flag: "🇬🇧", name: "Reino Unido" },
-  { code: "+33", flag: "🇫🇷", name: "França" },
-  { code: "+49", flag: "🇩🇪", name: "Alemanha" },
-  { code: "+39", flag: "🇮🇹", name: "Itália" },
-  { code: "+81", flag: "🇯🇵", name: "Japão" },
-  { code: "+86", flag: "🇨🇳", name: "China" },
-  { code: "+91", flag: "🇮🇳", name: "Índia" },
-  { code: "+54", flag: "🇦🇷", name: "Argentina" },
-  { code: "+56", flag: "🇨🇱", name: "Chile" },
-  { code: "+57", flag: "🇨🇴", name: "Colômbia" },
-  { code: "+52", flag: "🇲🇽", name: "México" },
-];
+// Countries removed — only email auth is used
 
 const Onboarding = () => {
   const [step, setStep] = useState<"register" | "welcome" | "join">("register");
