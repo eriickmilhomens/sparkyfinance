@@ -134,6 +134,49 @@ const Index = () => {
 
   if (!ready) return null;
 
+  // Check if user is suspended or banned
+  const checkAccountStatus = () => {
+    try {
+      const userId = localStorage.getItem("sparky-current-user-id");
+      if (!userId || isAdmin) return null;
+      const suspended = JSON.parse(localStorage.getItem("sparky-suspended-users") || "[]");
+      if (suspended.includes(userId)) return "suspended";
+      const banned = JSON.parse(localStorage.getItem("sparky-banned-users") || "[]");
+      if (banned.includes(userId)) return "banned";
+    } catch {}
+    return null;
+  };
+
+  const accountStatus = checkAccountStatus();
+
+  // Suspended/Banned blocking screen
+  if (accountStatus) {
+    return (
+      <div className="bg-background flex flex-col items-center justify-center text-center px-8" style={{ height: '100dvh' }}>
+        <div className={`rounded-2xl border p-8 max-w-sm w-full space-y-4 ${accountStatus === "banned" ? "border-destructive/30 bg-destructive/5" : "border-yellow-500/30 bg-yellow-500/5"}`}>
+          <div className={`h-16 w-16 rounded-2xl flex items-center justify-center mx-auto ${accountStatus === "banned" ? "bg-destructive/20" : "bg-yellow-500/20"}`}>
+            {accountStatus === "banned"
+              ? <Ban size={32} className="text-destructive" />
+              : <ShieldAlert size={32} className="text-yellow-500" />
+            }
+          </div>
+          <h1 className="text-xl font-bold text-foreground">
+            {accountStatus === "banned" ? "Conta Banida" : "Conta Suspensa"}
+          </h1>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            {accountStatus === "banned"
+              ? "Sua conta foi banida por violar os termos de uso. Se acredita que isso foi um erro, entre em contato com o suporte."
+              : "Sua conta foi temporariamente suspensa pelo administrador. Seus dados estão preservados e serão restaurados quando a suspensão for removida."
+            }
+          </p>
+          <p className="text-[10px] text-muted-foreground">
+            {accountStatus === "banned" ? "Código: ACCOUNT_BANNED" : "Código: ACCOUNT_SUSPENDED"}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // Maintenance blocking screen — only for non-admins
   if (maintenanceActive && !isAdmin) {
     return (
@@ -186,6 +229,9 @@ const Index = () => {
         overscrollBehavior: 'none',
       }}
     >
+      {/* Global Notification Popup */}
+      <GlobalNotificationPopup />
+
       {/* Impersonate floating bar */}
       {impersonating && (
         <div className="shrink-0 flex items-center gap-2 px-4 py-2 bg-yellow-500/10 border-b border-yellow-500/30" style={{ zIndex: 55 }}>
