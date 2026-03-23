@@ -232,7 +232,6 @@ const ProfileSwitcher = () => {
     const image = cropImgRef.current;
     if (!image || !completedCrop) return;
 
-    const canvas = document.createElement("canvas");
     const scaleX = image.naturalWidth / image.width;
     const scaleY = image.naturalHeight / image.height;
     const pixelCrop = {
@@ -241,16 +240,25 @@ const ProfileSwitcher = () => {
       width: (completedCrop.width / 100) * image.width * scaleX,
       height: (completedCrop.height / 100) * image.height * scaleY,
     };
-    canvas.width = pixelCrop.width;
-    canvas.height = pixelCrop.height;
+
+    // Resize to max 500x500 for optimized avatar
+    const maxSize = 500;
+    const outW = Math.min(pixelCrop.width, maxSize);
+    const outH = Math.min(pixelCrop.height, maxSize);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = outW;
+    canvas.height = outH;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+    ctx.imageSmoothingQuality = "high";
     ctx.drawImage(
       image,
       pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height,
-      0, 0, pixelCrop.width, pixelCrop.height
+      0, 0, outW, outH
     );
-    const croppedBase64 = canvas.toDataURL("image/jpeg", 0.9);
+    // Compress to JPEG ~80% quality for small file size
+    const croppedBase64 = canvas.toDataURL("image/jpeg", 0.8);
     setProfiles(profiles.map(p => p.id === active ? { ...p, avatar: croppedBase64 } : p));
     setCropModalOpen(false);
     setCropImgSrc("");
