@@ -8,6 +8,7 @@ import {
   Image, Sparkles, Clock, Trash2, Shield, MessageSquare, Send
 } from "lucide-react";
 import AdminPanel from "@/components/admin/AdminPanel";
+import { useDockVisibility } from "@/hooks/useDockVisibility";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,6 +50,7 @@ const ProfileSwitcher = () => {
   const { profile: dbProfile, isDemo } = useProfile();
   const { members: groupMembers, isLeader: isGroupLeader } = useGroupMembers();
   const [open, setOpen] = useState(false);
+  useDockVisibility(open);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [active, setActive] = useState("");
   const [subView, setSubView] = useState<SubView>(null);
