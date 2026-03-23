@@ -24,6 +24,10 @@ const USER_LOCAL_DATA_KEYS = [
   "sparky-points-log",
   "sparky-paid-bills",
   "sparky-docs",
+  "sparky-subscriptions",
+  "sparky-current-user-id",
+  "sparky-demo-profile",
+  "sparky-reserve-pct",
 ];
 
 const hasStoredUserData = () =>

@@ -79,7 +79,7 @@ function generateCreditCards(): any[] {
   const selected = [...banks].sort(() => Math.random() - 0.5).slice(0, numCards);
 
   return selected.map((bank) => {
-    const limit = rand(1500, 8000);
+    const limit = Math.min(rand(1500, 8000), 15000);
     const used = rand(Math.floor(limit * 0.1), Math.floor(limit * 0.6));
     const numTxs = rand(2, 5);
     const txs: any[] = [];
