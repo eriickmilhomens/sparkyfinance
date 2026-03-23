@@ -100,7 +100,7 @@ const APagarModal = ({ open, onClose }: APagarModalProps) => {
   const totalBills = paidTotal + pendingTotal;
 
   const togglePaid = async (id: string) => {
-    const bill = bills.find(b => b.id === id);
+    const bill = allBills.find(b => b.id === id);
     if (!bill) return;
 
     const newPaid = new Set(paidIds);
