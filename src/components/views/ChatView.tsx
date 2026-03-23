@@ -579,10 +579,21 @@ const ChatView = () => {
             <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
               <Bot size={28} className="text-primary" />
             </div>
-            <p className="text-sm font-semibold mb-1">Olá! Sou o Sparky 🐈‍⬛</p>
-            <p className="text-xs text-muted-foreground max-w-[260px]">
+            <p className="text-sm font-semibold mb-1">Olá! Sou o Sparky</p>
+            <p className="text-xs text-muted-foreground max-w-[260px] mb-4">
               Pergunte sobre finanças, envie imagens de extratos ou documentos para análise!
             </p>
+            <div className="flex flex-wrap justify-center gap-2 max-w-[300px]">
+              {shuffledChips.map((chip) => (
+                <button
+                  key={chip}
+                  onClick={() => { setInput(chip); }}
+                  className="rounded-full bg-muted border border-border px-3 py-1.5 text-[11px] text-muted-foreground hover:text-foreground hover:border-primary/30 active:scale-95 transition-all"
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
           </div>
         )}
         {messages.map((msg, i) => (
