@@ -1368,9 +1368,10 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
 
             {/* Adjust Points */}
             <div>
-              <label className="text-[10px] text-muted-foreground font-medium mb-1 block">Ajustar Pontos</label>
-              <input type="text" inputMode="numeric" value={adjustPoints} onChange={(e) => setAdjustPoints(e.target.value.replace(/\D/g, ""))}
-                className="w-full rounded-xl border border-border bg-muted/30 px-3 py-2.5 text-sm outline-none focus:border-primary" />
+              <label className="text-[10px] text-muted-foreground font-medium mb-1 block">Ajustar Pontos (positivo ou negativo)</label>
+              <input type="text" inputMode="numeric" value={adjustPoints} onChange={(e) => setAdjustPoints(e.target.value.replace(/[^\d-]/g, ""))}
+                className="w-full rounded-xl border border-border bg-muted/30 px-3 py-2.5 text-sm outline-none focus:border-primary"
+                placeholder="Ex: 50 ou -20" />
             </div>
 
             <div className="flex gap-2">
