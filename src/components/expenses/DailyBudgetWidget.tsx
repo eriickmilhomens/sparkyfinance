@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { isDiscretionaryExpenseTransaction } from "@/lib/financialCalculations";
 
 const DailyBudgetWidget = () => {
-  const { data, dailyBudget, daysLeft, pendingTotal } = useFinancialData();
+  const { data, dailyBudget, daysLeft, pendingTotal, baseDailyBudget, rolloverBonus } = useFinancialData();
   const [showPopup, setShowPopup] = useState(false);
 
   const reservePct = (() => {
