@@ -172,7 +172,18 @@ const Index = () => {
     return () => { delete (window as any).__sparkyGoHome; };
   }, []);
 
-  if (!ready) return null;
+  if (!ready) {
+    return (
+      <div className="bg-background flex items-center justify-center" style={{ height: '100dvh' }}>
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          {authChecked && (
+            <p className="text-xs text-muted-foreground">Redirecionando...</p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   // Maintenance blocking screen — only for non-admins
   if (maintenanceActive && !isAdmin) {
