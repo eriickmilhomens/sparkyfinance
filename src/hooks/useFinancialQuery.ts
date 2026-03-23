@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useRef, useCallback, useMemo } from "react";
+import { useEffect, useRef, useCallback, useMemo, useState } from "react";
 
 export interface Transaction {
   id: string;
@@ -20,11 +20,20 @@ export interface FinancialData {
   transactions: Transaction[];
 }
 
-const QUERY_KEY = ["financial-data"];
+const QUERY_KEY = ["financial-data"] as const;
 
 const isDemo = () => localStorage.getItem("sparky-demo-mode") === "true";
 
 const STORAGE_KEY = "sparky-financial-data";
+const DEMO_SEED_VERSION_KEY = "sparky-demo-seed-version";
+
+const getFinancialScope = () => {
+  if (isDemo()) {
+    return `demo:${localStorage.getItem(DEMO_SEED_VERSION_KEY) || "0"}`;
+  }
+
+  return `user:${localStorage.getItem("sparky-data-owner") || "auth"}`;
+};
 
 const defaultData: FinancialData = {
   balance: 0,
@@ -87,9 +96,11 @@ async function fetchFinancialData(): Promise<FinancialData> {
 export const useFinancialQuery = () => {
   const queryClient = useQueryClient();
   const userIdRef = useRef<string | null>(null);
+  const [financialScope, setFinancialScope] = useState(getFinancialScope);
+  const financialQueryKey = useMemo(() => [...QUERY_KEY, financialScope] as const, [financialScope]);
 
   const queryResult = useQuery({
-    queryKey: QUERY_KEY,
+    queryKey: financialQueryKey,
     queryFn: fetchFinancialData,
     staleTime: 10_000,
     gcTime: 5 * 60_000,
@@ -127,6 +138,26 @@ export const useFinancialQuery = () => {
   }, [queryClient]);
 
   // Demo mode: persist to localStorage
+  useEffect(() => {
+    const refreshScope = () => {
+      setFinancialScope(getFinancialScope());
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+    };
+
+    window.addEventListener("storage", refreshScope);
+    window.addEventListener("sparky-data-cleared", refreshScope);
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      refreshScope();
+    });
+
+    return () => {
+      window.removeEventListener("storage", refreshScope);
+      window.removeEventListener("sparky-data-cleared", refreshScope);
+      subscription.unsubscribe();
+    };
+  }, [queryClient]);
+
   useEffect(() => {
     if (isDemo() && queryResult.data) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(queryResult.data));
@@ -190,7 +221,7 @@ export const useFinancialQuery = () => {
     mutationFn: async (tx: Omit<Transaction, "id">) => {
       if (isDemo()) {
         const newTx = { ...tx, id: crypto.randomUUID() };
-        queryClient.setQueryData<FinancialData>(QUERY_KEY, (old) => {
+        queryClient.setQueryData<FinancialData>(financialQueryKey, (old) => {
           if (!old) return { ...defaultData, transactions: [newTx] };
           const newIncome = tx.type === "income" ? old.income + tx.amount : old.income;
           const newExpenses = tx.type === "expense" ? old.expenses + tx.amount : old.expenses;
@@ -233,7 +264,7 @@ export const useFinancialQuery = () => {
   const updateMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<Transaction> }) => {
       if (isDemo()) {
-        queryClient.setQueryData<FinancialData>(QUERY_KEY, (old) => {
+        queryClient.setQueryData<FinancialData>(financialQueryKey, (old) => {
           if (!old) return old!;
           const oldTx = old.transactions.find(t => t.id === id);
           if (!oldTx) return old;
@@ -266,7 +297,7 @@ export const useFinancialQuery = () => {
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       if (isDemo()) {
-        queryClient.setQueryData<FinancialData>(QUERY_KEY, (old) => {
+        queryClient.setQueryData<FinancialData>(financialQueryKey, (old) => {
           if (!old) return old!;
           const tx = old.transactions.find(t => t.id === id);
           if (!tx) return old;
@@ -300,7 +331,7 @@ export const useFinancialQuery = () => {
 
   const updateData = useCallback(async (partial: Partial<FinancialData>) => {
     if (isDemo()) {
-      queryClient.setQueryData<FinancialData>(QUERY_KEY, (old) => ({ ...(old ?? defaultData), ...partial }));
+      queryClient.setQueryData<FinancialData>(financialQueryKey, (old) => ({ ...(old ?? defaultData), ...partial }));
       return;
     }
 
@@ -324,11 +355,11 @@ export const useFinancialQuery = () => {
       }
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
     }
-  }, [data.transactions, queryClient]);
+  }, [data.transactions, financialQueryKey, queryClient]);
 
   const clearAll = useCallback(async () => {
     if (isDemo()) {
-      queryClient.setQueryData<FinancialData>(QUERY_KEY, { ...defaultData });
+      queryClient.setQueryData<FinancialData>(financialQueryKey, { ...defaultData });
       const keys = [
         "sparky-balance", "sparky-transactions", "sparky-cards",
         "sparky-credit-cards", "sparky-budget", "sparky-goals",
@@ -349,7 +380,7 @@ export const useFinancialQuery = () => {
       await supabase.from("transactions").delete().eq("user_id", user.id);
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
     }
-  }, [queryClient]);
+  }, [financialQueryKey, queryClient]);
 
   const refetch = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: QUERY_KEY });

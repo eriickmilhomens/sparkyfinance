@@ -212,6 +212,7 @@ function generateSubscriptions(): { subs: GeneratedSub[]; paidBillIds: string[] 
 export function seedDemoData() {
   clearUserLocalData();
   markDemoLocalDataOwner();
+  localStorage.setItem("sparky-demo-seed-version", Date.now().toString());
 
   const income = rand(3500, 7500);
   const expenses = rand(Math.floor(income * 0.35), Math.floor(income * 0.65));
