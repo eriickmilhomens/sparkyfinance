@@ -186,9 +186,9 @@ export const useFinancialQuery = () => {
     };
   }, [queryClient]);
 
-  // Computed values
+  // All computed values derived from stable dependencies — NO setState, NO useEffect
   const computed = useMemo(() => {
-    const now = new Date();
+    const now = stableNow;
     const paidBillIds = readPaidBillIds();
     const txPending = getPendingExpenseSummary(data.transactions, { now, paidBillIds });
 
@@ -221,7 +221,7 @@ export const useFinancialQuery = () => {
     const { daysLeft, dailyBudget, baseDailyBudget, rolloverBonus } = getDailyBudget(data.balance, pendingTotal, reservePct, now, yesterdayUnspent);
 
     return { available, daysLeft, dailyBudget, baseDailyBudget, rolloverBonus, pendingTotal, pendingCount, allPaid, totalGoalReserved };
-  }, [data, billingRevision]);
+  }, [data, billingRevision, stableNow]);
 
   // Mutations with optimistic updates
   const addMutation = useMutation({
