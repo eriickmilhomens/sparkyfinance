@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 
@@ -20,29 +20,46 @@ export const useGroupMembers = () => {
   const [members, setMembers] = useState<GroupMember[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchMembers = useCallback(async () => {
     if (isDemo || !profile?.group_code) {
       setLoading(false);
       return;
     }
 
-    const fetchMembers = async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("group_code", profile.group_code!)
-        .order("points", { ascending: false });
+    const { data } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("group_code", profile.group_code)
+      .order("points", { ascending: false });
 
-      if (data) setMembers(data as GroupMember[]);
-      setLoading(false);
-    };
-
-    fetchMembers();
-
-    // Refresh every 30s
-    const interval = setInterval(fetchMembers, 30000);
-    return () => clearInterval(interval);
+    if (data) setMembers(data as GroupMember[]);
+    setLoading(false);
   }, [profile?.group_code, isDemo]);
+
+  useEffect(() => {
+    fetchMembers();
+  }, [fetchMembers]);
+
+  // Realtime subscription for instant group updates
+  useEffect(() => {
+    if (isDemo || !profile?.group_code) return;
+
+    const channel = supabase
+      .channel("group-members-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => {
+        fetchMembers();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [profile?.group_code, isDemo, fetchMembers]);
+
+  // Also listen to custom points events
+  useEffect(() => {
+    const handler = () => fetchMembers();
+    window.addEventListener("sparky-points-updated", handler);
+    return () => window.removeEventListener("sparky-points-updated", handler);
+  }, [fetchMembers]);
 
   // The group creator is the one whose invite_code === group_code
   const leader = members.find(m => m.invite_code === m.group_code);
@@ -50,5 +67,5 @@ export const useGroupMembers = () => {
 
   const isLeader = (member: GroupMember) => member.invite_code === member.group_code;
 
-  return { members, loading, leader, currentUserRank, isLeader };
+  return { members, loading, leader, currentUserRank, isLeader, refetch: fetchMembers };
 };
