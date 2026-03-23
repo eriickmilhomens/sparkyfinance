@@ -303,8 +303,14 @@ const CreditCardCarousel = () => {
                     setShowPayment(false);
                     setPayAmount("");
                     // Show success popup
-                    toast.custom(() => (
-                      <div className="rounded-2xl border border-border bg-card p-5 shadow-xl max-w-sm mx-auto text-center space-y-2">
+                    toast.custom((t) => (
+                      <div className="rounded-2xl border border-border bg-card p-5 shadow-xl max-w-sm mx-auto text-center space-y-2 relative">
+                        <button
+                          onClick={() => toast.dismiss(t)}
+                          className="absolute top-2 right-2 rounded-full bg-destructive p-1.5 text-white hover:bg-destructive/90 active:scale-90 transition-all"
+                        >
+                          <X size={14} />
+                        </button>
                         <div className="h-12 w-12 rounded-full bg-success/15 flex items-center justify-center mx-auto">
                           <DollarSign size={20} className="text-success" />
                         </div>
@@ -313,7 +319,7 @@ const CreditCardCarousel = () => {
                           {payFull ? "Fatura paga integralmente!" : `Pago: ${fmt(payAmt)} — Restante: ${fmt(remaining)}`}
                         </p>
                       </div>
-                    ), { duration: 4000 });
+                    ), { duration: 6000 });
                   }} className="flex-1 rounded-lg bg-success py-2 text-xs font-semibold text-white">Confirmar</button>
                 </div>
               </div>
