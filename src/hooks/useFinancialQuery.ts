@@ -172,11 +172,26 @@ export const useFinancialQuery = () => {
     const reserve = Math.max(0, data.balance * reservePct);
     const spendablePool = Math.max(0, data.balance - reserve - aPagar);
 
-    // 30% accumulation rule
+    // Filter out bill/subscription/invoice payments from discretionary spending
+    const SCHEDULED_CATEGORIES = ["Assinatura", "Fatura", "Conta"];
+    const SCHEDULED_PREFIXES = ["Assinatura:", "Fatura:", "Conta de "];
+    const discretionaryExpenses = data.transactions
+      .filter(t => {
+        if (t.type !== "expense") return false;
+        const d = new Date(t.date);
+        if (d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear()) return false;
+        // Exclude scheduled/bill payments
+        if (SCHEDULED_CATEGORIES.includes(t.category)) return false;
+        if (SCHEDULED_PREFIXES.some(p => t.description.startsWith(p))) return false;
+        return true;
+      })
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    // 30% accumulation rule — use only discretionary spending
     const ACCUMULATION_RATE = 0.30;
     const expectedDailySpend = spendablePool / daysInMonth;
     const pastDays = Math.max(1, today);
-    const actualDailySpend = data.expenses > 0 ? data.expenses / pastDays : 0;
+    const actualDailySpend = discretionaryExpenses > 0 ? discretionaryExpenses / pastDays : 0;
     const savedPerDay = Math.max(0, expectedDailySpend - actualDailySpend);
     const accumulatedSavings = savedPerDay * pastDays * ACCUMULATION_RATE;
     const adjustedPool = Math.max(0, spendablePool - accumulatedSavings);
