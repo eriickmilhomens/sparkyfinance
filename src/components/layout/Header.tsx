@@ -60,7 +60,7 @@ const Header = () => {
       window.dispatchEvent(new Event("sparky-data-cleared"));
       window.dispatchEvent(new Event("sparky-points-updated"));
 
-      toast.success("Dados sincronizados com sucesso! Seu saldo e ranking estão em dia.", { duration: 2500 });
+      toast.success("Dados sincronizados com sucesso!", { duration: 1800 });
     } catch {
       toast.error("Erro ao sincronizar", { duration: 2000 });
     } finally {

@@ -4,7 +4,6 @@ import { X, ArrowLeft, Plus, CreditCard, ChevronRight, Receipt, Calendar, Dollar
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useDockVisibility } from "@/hooks/useDockVisibility";
-import { usePoints } from "@/hooks/usePoints";
 
 const BANK_DATA: Record<string, { color: string; abbr: string }> = {
   "nubank": { color: "bg-purple-600", abbr: "NU" },
@@ -93,7 +92,6 @@ interface Props { open: boolean; onClose: () => void; }
 
 const CreditCardManager = ({ open, onClose }: Props) => {
   const [cards, setCards] = useState<CreditCardData[]>(loadCards);
-  const { awardPoints } = usePoints();
   useDockVisibility(open);
   const [showAdd, setShowAdd] = useState(false);
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
@@ -144,7 +142,7 @@ const CreditCardManager = ({ open, onClose }: Props) => {
     toast.success("Cartão salvo com sucesso!");
   };
 
-  const handlePayInvoice = async (cardId: string) => {
+  const handlePayInvoice = (cardId: string) => {
     const card = cards.find(c => c.id === cardId);
     if (!card || card.invoiceAmount <= 0) {
       toast.error("Não há fatura a pagar.");
@@ -166,11 +164,7 @@ const CreditCardManager = ({ open, onClose }: Props) => {
       paidInvoices: [...c.paidInvoices, { month: new Date().toLocaleDateString("pt-BR", { month: "short", year: "numeric" }), amount, paidAt: new Date().toLocaleDateString("pt-BR") }],
     } : c));
     setShowPayment(false); setPayAmount("");
-
-    // Award points for invoice payment
-    await awardPoints("bill_paid", `Fatura: ${card.cardName}`);
-
-    toast.success(payFull ? "Fatura paga com sucesso! +3 pts" : `Pago ${fmt(amount)} - Restante: ${fmt(remaining)} +3 pts`);
+    toast.success(payFull ? "Parabéns pelo pagamento da sua fatura! 🎉" : `Pago ${fmt(amount)} — Restante: ${fmt(remaining)}`);
   };
 
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
