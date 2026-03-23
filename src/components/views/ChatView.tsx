@@ -138,6 +138,16 @@ const ChatView = () => {
   }, [activeId]);
 
   // Set current user ID for scoped chat storage
+  // Rotate status phrases while loading
+  useEffect(() => {
+    if (!isLoading) return;
+    setStatusIndex(0);
+    const interval = setInterval(() => {
+      setStatusIndex(prev => (prev + 1) % STATUS_PHRASES.length);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, [isLoading]);
+
   useEffect(() => {
     const isDemo = localStorage.getItem("sparky-demo-mode") === "true";
     if (isDemo) return;
