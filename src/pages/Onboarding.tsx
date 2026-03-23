@@ -38,16 +38,17 @@ const Onboarding = () => {
   const [copiedCode, setCopiedCode] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogoTap = useCallback(() => {
+  const handleLogoTap = useCallback(async () => {
     const newCount = tapCount + 1;
     if (tapTimer) clearTimeout(tapTimer);
 
     if (newCount >= 7) {
+      await supabase.auth.signOut().catch(() => {});
       localStorage.setItem("sparky-demo-mode", "true");
       seedDemoData();
       toast.success("🎮 Modo Demo ativado!");
       setTapCount(0);
-      navigate("/");
+      navigate("/", { replace: true });
       return;
     }
 
