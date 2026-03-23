@@ -181,10 +181,10 @@ const APagarModal = ({ open, onClose }: APagarModalProps) => {
 
         {/* Bills list */}
         <div className="flex-1 overflow-y-auto space-y-2 min-h-0">
-          {bills.length === 0 ? (
+          {allBills.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">Nenhuma conta planejada pendente este mês.</p>
           ) : (
-            bills.map((bill) => {
+            allBills.map((bill) => {
               const isPaid = paidIds.has(bill.id);
               return (
                 <div
