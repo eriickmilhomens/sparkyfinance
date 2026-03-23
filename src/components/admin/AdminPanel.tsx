@@ -981,7 +981,18 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
                       setMaintenanceTimer(min * 60);
                       setMaintenanceTimerActive(true);
                       addAuditLog("SCHEDULE_MAINTENANCE", "Sistema", `Manutenção agendada em ${min} minutos`);
-                      toast.success(`Manutenção agendada em ${min} min`);
+                      // Send global notification to all users
+                      const notif = {
+                        id: Date.now().toString(),
+                        message: `O sistema entrará em manutenção em ${min} minutos. Salve seu trabalho!`,
+                        date: new Date().toISOString(),
+                        read: false,
+                        blocking: true,
+                        minDisplaySeconds: 5,
+                      };
+                      localStorage.setItem("sparky-active-notification", JSON.stringify(notif));
+                      window.dispatchEvent(new Event("sparky-notification-push"));
+                      toast.success(`Manutenção agendada em ${min} min — Notificação enviada!`);
                     }}
                     disabled={maintenanceTimerActive}
                     className="flex-1 rounded-lg border border-border py-2 text-[10px] font-medium text-muted-foreground hover:border-primary/50 active:scale-95 disabled:opacity-30"
