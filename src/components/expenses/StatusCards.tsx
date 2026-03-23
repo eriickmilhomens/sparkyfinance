@@ -28,7 +28,7 @@ const StatusCards = () => {
   const [infoPopup, setInfoPopup] = useState<string | null>(null);
 
   // SSOT: derive A Pagar from data.transactions — same source as APagarModal
-  const { pendingTotal, pendingCount, allPaid } = useMemo(() => {
+  const { pendingTotal, pendingCount, allPaid, totalGoalReserved } = useMemo(() => {
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
@@ -39,23 +39,35 @@ const StatusCards = () => {
     } catch {}
     const paidSet = new Set(paidBillIds);
 
-    // Same filter as APagarModal: current month expenses
+    // Only real expenses (exclude goal_deposit which are virtual reserves)
     const bills = data.transactions.filter(t => {
+      if (t.type !== "expense") return false;
       const d = new Date(t.date);
-      return t.type === "expense" && d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+      return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
     });
 
     const unpaid = bills.filter(b => !paidSet.has(b.id));
     const total = unpaid.reduce((s, t) => s + t.amount, 0);
 
+    // Sum goal_deposit transactions this month (virtual reserves, NOT expenses)
+    const goalReserved = data.transactions
+      .filter(t => {
+        if (t.type !== "goal_deposit") return false;
+        const d = new Date(t.date);
+        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+      })
+      .reduce((s, t) => s + t.amount, 0);
+
     return {
       pendingTotal: total,
       pendingCount: unpaid.length,
       allPaid: unpaid.length === 0,
+      totalGoalReserved: goalReserved,
     };
   }, [data.transactions]);
 
-  const saldoDisponivel = data.balance - pendingTotal;
+  // Saldo Disponível = Saldo Real - A Pagar - Reservas em Metas
+  const saldoDisponivel = data.balance - pendingTotal - totalGoalReserved;
   const isNegative = saldoDisponivel < 0;
 
   const statuses = [
