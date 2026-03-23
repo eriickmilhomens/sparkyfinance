@@ -169,6 +169,34 @@ const CreditCardManager = ({ open, onClose }: Props) => {
     } : c));
     setShowPayment(false); setPayAmount("");
 
+    // Mark invoice as paid in paid-bills so APagarModal picks it up
+    try {
+      const paidBills: string[] = JSON.parse(localStorage.getItem("sparky-paid-bills") || "[]");
+      const invoiceId = `card-invoice-${cardId}`;
+      if (!paidBills.includes(invoiceId)) {
+        paidBills.push(invoiceId);
+        localStorage.setItem("sparky-paid-bills", JSON.stringify(paidBills));
+      }
+    } catch {}
+
+    // Update financial data — deduct payment from balance
+    const newTx = {
+      id: crypto.randomUUID(),
+      date: new Date().toISOString(),
+      description: `Fatura: ${card.cardName}`,
+      amount,
+      type: "expense" as const,
+      category: "Fatura",
+    };
+    updateData({
+      expenses: data.expenses + amount,
+      balance: data.balance - amount,
+      transactions: [newTx, ...data.transactions],
+    });
+
+    // Dispatch sync events
+    window.dispatchEvent(new Event("sparky-paid-bills-updated"));
+
     // Award points for invoice payment
     await awardPoints("bill_paid", `Fatura: ${card.cardName}`);
 
