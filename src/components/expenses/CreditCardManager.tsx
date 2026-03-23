@@ -4,6 +4,7 @@ import { X, ArrowLeft, Plus, CreditCard, ChevronRight, Receipt, Calendar, Dollar
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useDockVisibility } from "@/hooks/useDockVisibility";
+import { usePoints } from "@/hooks/usePoints";
 
 const BANK_DATA: Record<string, { color: string; abbr: string }> = {
   "nubank": { color: "bg-purple-600", abbr: "NU" },
