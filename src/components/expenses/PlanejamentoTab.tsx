@@ -156,21 +156,13 @@ const PlanejamentoTab = () => {
     setInvestmentGoals(updated);
     localStorage.setItem(GOALS_KEY, JSON.stringify(updated));
 
-    // Deduct from balance as an expense
-    updateData({
-      balance: data.balance - amount,
-      expenses: data.expenses + amount,
-      transactions: [
-        ...data.transactions,
-        {
-          id: crypto.randomUUID(),
-          date: new Date().toISOString(),
-          description: `Depósito: ${investmentGoals.find(g => g.id === depositGoalId)?.name || "Meta"}`,
-          amount,
-          type: "expense" as const,
-          category: "Investimento",
-        },
-      ],
+    // Register as goal_deposit (virtual reserve, NOT a real expense)
+    addTransaction({
+      date: new Date().toISOString(),
+      description: `Depósito: ${investmentGoals.find(g => g.id === depositGoalId)?.name || "Meta"}`,
+      amount,
+      type: "goal_deposit" as any,
+      category: "Meta",
     });
 
     setDepositGoalId(null);

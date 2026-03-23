@@ -14,8 +14,9 @@ const DailyBudgetWidget = () => {
   // Today's expenses
   const now = new Date();
   const todayStr = now.toISOString().slice(0, 10);
+  const EXCLUDED_CATEGORIES = ["Assinatura", "Fatura", "Conta", "Meta"];
   const todayExpenses = data.transactions
-    .filter(t => t.type === "expense" && t.date.startsWith(todayStr))
+    .filter(t => t.type === "expense" && t.date.startsWith(todayStr) && !EXCLUDED_CATEGORIES.includes(t.category))
     .reduce((sum, t) => sum + t.amount, 0);
 
   const remainingToday = Math.max(0, dailyBudget - todayExpenses);
