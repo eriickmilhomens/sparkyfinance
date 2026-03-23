@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { ArrowDownLeft, ArrowUpRight, ChevronDown, Calendar, Pencil, Trash2, Check, X } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, ChevronDown, Calendar, Pencil, Trash2, Check, X, PiggyBank } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFinancialData, fmt } from "@/hooks/useFinancialData";
 import { toast } from "sonner";
+import { isGoalDepositTransaction } from "@/lib/financialCalculations";
 
 const filterOptions = ["Todos", "Receitas", "Despesas"];
 const months = [
@@ -44,12 +45,12 @@ const ExtratoTab = () => {
     const d = new Date(t.date);
     if (d.getMonth() !== selectedMonth || d.getFullYear() !== selectedYear) return false;
     if (filter === "Receitas") return t.type === "income";
-    if (filter === "Despesas") return t.type === "expense";
+    if (filter === "Despesas") return t.type === "expense" && !isGoalDepositTransaction(t);
     return true;
   });
 
   const totalIn = filtered.filter(t => t.type === "income").reduce((s, t) => s + t.amount, 0);
-  const totalOut = filtered.filter(t => t.type === "expense").reduce((s, t) => s + t.amount, 0);
+  const totalOut = filtered.filter(t => t.type === "expense" && !isGoalDepositTransaction(t)).reduce((s, t) => s + t.amount, 0);
 
   const grouped: Record<string, typeof filtered> = {};
   filtered.forEach((t) => {
@@ -169,7 +170,11 @@ const ExtratoTab = () => {
           <div className="card-zelo !p-0 divide-y divide-border">
             {items.map((t) => (
               <div key={t.id} className="relative">
-                {editingId === t.id ? (
+                {(() => {
+                  const isIncomeTx = t.type === "income";
+                  const isGoalTx = isGoalDepositTransaction(t);
+
+                  return editingId === t.id ? (
                   <div className="px-4 py-3 space-y-2">
                     <input
                       type="text"
@@ -211,11 +216,13 @@ const ExtratoTab = () => {
                   <div className="flex items-center gap-3 px-4 py-3">
                     <div className={cn(
                       "flex h-8 w-8 items-center justify-center rounded-xl",
-                      t.type === "income" ? "bg-success/15" : "bg-destructive/15"
+                      isIncomeTx ? "bg-success/15" : isGoalTx ? "bg-primary/15" : "bg-destructive/15"
                     )}>
-                      {t.type === "income"
+                      {isIncomeTx
                         ? <ArrowUpRight size={14} className="text-success" />
-                        : <ArrowDownLeft size={14} className="text-destructive" />
+                        : isGoalTx
+                          ? <PiggyBank size={14} className="text-primary" />
+                          : <ArrowDownLeft size={14} className="text-destructive" />
                       }
                     </div>
                     <div className="flex-1 min-w-0">
@@ -224,9 +231,9 @@ const ExtratoTab = () => {
                     </div>
                     <span className={cn(
                       "text-sm font-bold tabular-nums mr-2",
-                      t.type === "income" ? "text-success" : "text-foreground"
+                      isIncomeTx ? "text-success" : isGoalTx ? "text-primary" : "text-foreground"
                     )}>
-                      {t.type === "income" ? "+" : "−"} {fmt(t.amount)}
+                      {isIncomeTx ? "+" : isGoalTx ? "•" : "−"} {fmt(t.amount)}
                     </span>
                     <div className="flex items-center gap-1">
                       <button
@@ -243,7 +250,8 @@ const ExtratoTab = () => {
                       </button>
                     </div>
                   </div>
-                )}
+                );
+                })()}
               </div>
             ))}
           </div>

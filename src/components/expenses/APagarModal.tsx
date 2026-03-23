@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { X, CheckCircle2, Clock, Trash2, CalendarDays, Tag, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFinancialData, fmt, Transaction } from "@/hooks/useFinancialData";
 import { usePoints } from "@/hooks/usePoints";
 import { useDockVisibility } from "@/hooks/useDockVisibility";
 import { toast } from "sonner";
+import { getPendingExpenseSummary, readPaidBillIds } from "@/lib/financialCalculations";
 
 interface APagarModalProps {
   open: boolean;
@@ -16,27 +17,27 @@ const APagarModal = ({ open, onClose }: APagarModalProps) => {
   const { awardPoints, removePoints } = usePoints();
   useDockVisibility(open);
   const [paidIds, setPaidIds] = useState<Set<string>>(() => {
-    try {
-      const stored = localStorage.getItem("sparky-paid-bills");
-      return new Set(stored ? JSON.parse(stored) : []);
-    } catch { return new Set<string>(); }
+    return new Set(readPaidBillIds());
   });
 
   const now = new Date();
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
 
-  // Get current month expenses as bills
-  const bills = data.transactions
-    .filter(t => {
-      const d = new Date(t.date);
-      return t.type === "expense" && d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-    })
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const { bills, paidTotal, pendingTotal } = useMemo(() => {
+    const summary = getPendingExpenseSummary(data.transactions, {
+      now,
+      paidBillIds: [...paidIds],
+    });
 
-  const totalBills = bills.reduce((s, t) => s + t.amount, 0);
-  const paidTotal = bills.filter(b => paidIds.has(b.id)).reduce((s, t) => s + t.amount, 0);
-  const pendingTotal = totalBills - paidTotal;
+    return {
+      bills: [...summary.bills].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
+      paidTotal: summary.paidTotal,
+      pendingTotal: summary.pendingTotal,
+    };
+  }, [data.transactions, now, paidIds]);
+
+  const totalBills = paidTotal + pendingTotal;
 
   const togglePaid = async (id: string) => {
     const bill = bills.find(b => b.id === id);
@@ -56,6 +57,7 @@ const APagarModal = ({ open, onClose }: APagarModalProps) => {
     }
     setPaidIds(newPaid);
     localStorage.setItem("sparky-paid-bills", JSON.stringify([...newPaid]));
+    window.dispatchEvent(new Event("sparky-paid-bills-updated"));
   };
 
   const deleteBill = (id: string) => {
@@ -64,14 +66,13 @@ const APagarModal = ({ open, onClose }: APagarModalProps) => {
     const newTransactions = data.transactions.filter(t => t.id !== id);
     updateData({
       transactions: newTransactions,
-      expenses: Math.max(0, data.expenses - bill.amount),
-      balance: data.balance + bill.amount,
     });
     // Also remove from paid if it was there
     const newPaid = new Set(paidIds);
     newPaid.delete(id);
     setPaidIds(newPaid);
     localStorage.setItem("sparky-paid-bills", JSON.stringify([...newPaid]));
+    window.dispatchEvent(new Event("sparky-paid-bills-updated"));
     toast.success("Conta removida com sucesso");
   };
 
@@ -121,7 +122,7 @@ const APagarModal = ({ open, onClose }: APagarModalProps) => {
         {/* Bills list */}
         <div className="flex-1 overflow-y-auto space-y-2 min-h-0">
           {bills.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">Nenhuma conta registrada este mês.</p>
+            <p className="text-sm text-muted-foreground text-center py-8">Nenhuma conta planejada pendente este mês.</p>
           ) : (
             bills.map((bill) => {
               const isPaid = paidIds.has(bill.id);

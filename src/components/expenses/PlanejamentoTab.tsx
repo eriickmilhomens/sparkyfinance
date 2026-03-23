@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useFinancialData } from "@/hooks/useFinancialData";
 import { usePoints } from "@/hooks/usePoints";
 import { useDockVisibility } from "@/hooks/useDockVisibility";
+import { GOAL_DEPOSIT_TYPE } from "@/lib/financialCalculations";
 
 const BUDGET_KEY = "sparky-budgets";
 const GOALS_KEY = "sparky-investment-goals";
@@ -97,6 +98,7 @@ const PlanejamentoTab = () => {
   const [newGoal, setNewGoal] = useState({ type: "emergency", name: "", targetAmount: "" });
   const [depositGoalId, setDepositGoalId] = useState<string | null>(null);
   const [depositAmount, setDepositAmount] = useState("");
+  const [isDepositing, setIsDepositing] = useState(false);
 
   // Hide dock when any modal is open
   useDockVisibility(goalModalOpen || editBudgetOpen || newGoalOpen);
@@ -147,28 +149,41 @@ const PlanejamentoTab = () => {
     localStorage.setItem(GOALS_KEY, JSON.stringify(updated));
   };
 
-  const handleDeposit = () => {
+  const handleDeposit = async () => {
+    if (isDepositing) return;
     const amount = parseBRLInput(depositAmount);
     if (amount <= 0) { toast.error("Informe um valor válido"); return; }
+    const selectedGoal = investmentGoals.find(g => g.id === depositGoalId);
+    if (!selectedGoal) { toast.error("Selecione uma meta válida"); return; }
+
     const updated = investmentGoals.map(g =>
       g.id === depositGoalId ? { ...g, savedAmount: g.savedAmount + amount } : g
     );
+
+    setIsDepositing(true);
     setInvestmentGoals(updated);
     localStorage.setItem(GOALS_KEY, JSON.stringify(updated));
 
-    // Register as goal_deposit (virtual reserve, NOT a real expense)
-    addTransaction({
-      date: new Date().toISOString(),
-      description: `Depósito: ${investmentGoals.find(g => g.id === depositGoalId)?.name || "Meta"}`,
-      amount,
-      type: "goal_deposit" as any,
-      category: "Meta",
-    });
+    try {
+      await addTransaction({
+        date: new Date().toISOString(),
+        description: `Depósito: ${selectedGoal.name}`,
+        amount,
+        type: GOAL_DEPOSIT_TYPE,
+        category: "Meta",
+      });
 
-    setDepositGoalId(null);
-    setDepositAmount("");
-    awardPoints("invest_deposit", `Depósito: ${investmentGoals.find(g => g.id === depositGoalId)?.name || "Meta"}`);
-    toast.success(`R$ ${fmtLocal(amount)} depositado na meta!`);
+      setDepositGoalId(null);
+      setDepositAmount("");
+      await awardPoints("invest_deposit", `Depósito: ${selectedGoal.name}`);
+      toast.success(`R$ ${fmtLocal(amount)} reservado na meta!`);
+    } catch {
+      setInvestmentGoals(investmentGoals);
+      localStorage.setItem(GOALS_KEY, JSON.stringify(investmentGoals));
+      toast.error("Não foi possível registrar o depósito na meta.");
+    } finally {
+      setIsDepositing(false);
+    }
   };
 
   return (
@@ -291,8 +306,8 @@ const PlanejamentoTab = () => {
                         placeholder="R$ 0,00"
                         className="flex-1 rounded-lg border border-border bg-muted/50 px-3 py-2 text-xs outline-none tabular-nums focus:border-primary"
                       />
-                      <button onClick={handleDeposit} className="rounded-lg bg-success/15 px-3 py-2 text-xs font-medium text-success active:scale-95">
-                        Depositar
+                      <button onClick={handleDeposit} disabled={isDepositing} className="rounded-lg bg-success/15 px-3 py-2 text-xs font-medium text-success active:scale-95 disabled:opacity-60 disabled:pointer-events-none">
+                        {isDepositing ? "Salvando..." : "Depositar"}
                       </button>
                       <button onClick={() => { setDepositGoalId(null); setDepositAmount(""); }} className="rounded-lg bg-muted px-2 py-2 text-xs text-muted-foreground active:scale-95">
                         <X size={14} />

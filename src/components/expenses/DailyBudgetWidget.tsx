@@ -2,9 +2,10 @@ import { useState } from "react";
 import { Wallet, Info, X, TrendingDown } from "lucide-react";
 import { useFinancialData, fmt } from "@/hooks/useFinancialData";
 import { cn } from "@/lib/utils";
+import { isDiscretionaryExpenseTransaction } from "@/lib/financialCalculations";
 
 const DailyBudgetWidget = () => {
-  const { data, dailyBudget, daysLeft } = useFinancialData();
+  const { data, dailyBudget, daysLeft, pendingTotal } = useFinancialData();
   const [showPopup, setShowPopup] = useState(false);
 
   const reservePct = (() => {
@@ -14,9 +15,8 @@ const DailyBudgetWidget = () => {
   // Today's expenses
   const now = new Date();
   const todayStr = now.toISOString().slice(0, 10);
-  const EXCLUDED_CATEGORIES = ["Assinatura", "Fatura", "Conta", "Meta"];
   const todayExpenses = data.transactions
-    .filter(t => t.type === "expense" && t.date.startsWith(todayStr) && !EXCLUDED_CATEGORIES.includes(t.category))
+    .filter(t => isDiscretionaryExpenseTransaction(t) && t.date.startsWith(todayStr))
     .reduce((sum, t) => sum + t.amount, 0);
 
   const remainingToday = Math.max(0, dailyBudget - todayExpenses);
@@ -26,17 +26,7 @@ const DailyBudgetWidget = () => {
 
   // For popup display
   const reserve = Math.max(0, data.balance * reservePct);
-  const subs = (() => {
-    try { return JSON.parse(localStorage.getItem("sparky-subscriptions") || "[]"); } catch { return []; }
-  })();
-  const paidBills = (() => {
-    try { return JSON.parse(localStorage.getItem("sparky-paid-bills") || "[]"); } catch { return []; }
-  })();
-  const unpaidTotal = subs
-    .filter((s: any) => !paidBills.includes(s.id))
-    .reduce((sum: number, s: any) => sum + (s.amount || 0), 0);
-  const aPagar = data.scheduled > 0 ? data.scheduled : unpaidTotal;
-  const afterObligations = Math.max(0, data.balance - reserve - aPagar);
+  const afterObligations = Math.max(0, data.balance - reserve - pendingTotal);
 
   return (
     <>
@@ -117,20 +107,19 @@ const DailyBudgetWidget = () => {
               </div>
 
               <div className="rounded-xl bg-warning/5 border border-warning/20 p-3">
-                <p className="text-xs font-semibold mb-1 text-warning">💡 Regra de Acúmulo de 30%</p>
+                <p className="text-xs font-semibold mb-1 text-warning">💡 Fórmula do limite diário</p>
                 <p className="text-[10px] text-muted-foreground leading-relaxed">
-                  Se você não gastar todo o valor disponível no dia, apenas 30% do saldo restante é acumulado
-                  para o dia seguinte. O objetivo é diminuir gradualmente seu gasto diário e incentivar a economia
-                  do valor que sobrou. Os outros 70% vão direto para sua reserva implícita.
+                  O valor de hoje considera apenas seu saldo real, as contas pendentes do mês e a sua reserva de segurança.
+                  Depósitos em metas são reservas internas e não entram no cálculo do limite diário.
                 </p>
               </div>
 
               <div className="rounded-xl bg-success/5 border border-success/20 p-3">
                 <p className="text-xs font-semibold mb-1 text-success">🎯 Na Prática</p>
                 <p className="text-[10px] text-muted-foreground leading-relaxed">
-                  Exemplo: Se seu limite diário é R$ 100 e você gasta R$ 60, sobraram R$ 40.
-                  No dia seguinte, apenas R$ 12 (30% de R$ 40) serão acrescentados ao limite.
-                  Isso incentiva você a economizar cada vez mais ao longo do mês.
+                  Exemplo: se você receber R$ 3.000, tiver R$ 800 em contas pendentes e reservar 20% de segurança,
+                  o valor diário será calculado sobre o restante disponível para sobrevivência no mês.
+                  Poupar para uma meta não reduz esse limite novamente.
                 </p>
               </div>
 
@@ -147,7 +136,7 @@ const DailyBudgetWidget = () => {
                   </div>
                   <div className="flex justify-between text-[10px]">
                     <span className="text-muted-foreground">Contas pendentes</span>
-                    <span className="font-medium text-destructive">-{fmt(unpaidTotal)}</span>
+                    <span className="font-medium text-destructive">-{fmt(pendingTotal)}</span>
                   </div>
                   <div className="flex justify-between text-[10px] pt-1 border-t border-border">
                     <span className="text-muted-foreground font-semibold">Disponível para gastar</span>

@@ -1,6 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useRef, useCallback, useMemo } from "react";
+import { useEffect, useRef, useCallback, useMemo, useState } from "react";
+import {
+  getDailyBudget,
+  getGoalReservedTotal,
+  getNormalizedMonthlyTotals,
+  getPendingExpenseSummary,
+  readPaidBillIds,
+} from "@/lib/financialCalculations";
 
 export interface Transaction {
   id: string;
@@ -88,6 +95,7 @@ async function fetchFinancialData(): Promise<FinancialData> {
 export const useFinancialQuery = () => {
   const queryClient = useQueryClient();
   const userIdRef = useRef<string | null>(null);
+  const [billingRevision, setBillingRevision] = useState(0);
 
   const queryResult = useQuery({
     queryKey: QUERY_KEY,
@@ -99,7 +107,20 @@ export const useFinancialQuery = () => {
     placeholderData: defaultData,
   });
 
-  const data = queryResult.data ?? defaultData;
+  const data = useMemo(() => {
+    const baseData = queryResult.data ?? defaultData;
+    const { income, expenses, balance } = getNormalizedMonthlyTotals(baseData.transactions, {
+      now: new Date(),
+      paidBillIds: readPaidBillIds(),
+    });
+
+    return {
+      ...baseData,
+      income,
+      expenses,
+      balance,
+    };
+  }, [queryResult.data, billingRevision]);
   const loading = queryResult.isLoading;
 
   // Realtime subscription for instant updates
@@ -134,6 +155,17 @@ export const useFinancialQuery = () => {
     }
   }, [queryResult.data]);
 
+  useEffect(() => {
+    const handler = () => setBillingRevision((current) => current + 1);
+    window.addEventListener("storage", handler);
+    window.addEventListener("sparky-paid-bills-updated", handler);
+
+    return () => {
+      window.removeEventListener("storage", handler);
+      window.removeEventListener("sparky-paid-bills-updated", handler);
+    };
+  }, []);
+
   // Demo events
   useEffect(() => {
     if (!isDemo()) return;
@@ -148,69 +180,23 @@ export const useFinancialQuery = () => {
 
   // Computed values
   const computed = useMemo(() => {
-    // Read subscriptions for A Pagar
-    let unpaidSubsTotal = 0;
-    try {
-      const subs = JSON.parse(localStorage.getItem("sparky-subscriptions") || "[]");
-      const paidBills = JSON.parse(localStorage.getItem("sparky-paid-bills") || "[]");
-      unpaidSubsTotal = subs
-        .filter((s: any) => !paidBills.includes(s.id))
-        .reduce((sum: number, s: any) => sum + (s.amount || 0), 0);
-    } catch {}
-
-    const aPagar = data.scheduled > 0 ? data.scheduled : unpaidSubsTotal;
-
-    // Total reserved in goals (goal_deposit transactions this month)
     const now = new Date();
-    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-    const today = now.getDate();
-    const daysLeft = Math.max(1, daysInMonth - today);
-
-    const totalGoalReserved = data.transactions
-      .filter(t => {
-        if (t.type !== "goal_deposit") return false;
-        const d = new Date(t.date);
-        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-      })
-      .reduce((sum, t) => sum + t.amount, 0);
-
-    // Available = Balance - A Pagar - Goal Reserves
-    const available = data.balance - aPagar - totalGoalReserved;
+    const paidBillIds = readPaidBillIds();
+    const { pendingTotal, pendingCount, allPaid } = getPendingExpenseSummary(data.transactions, {
+      now,
+      paidBillIds,
+    });
+    const totalGoalReserved = getGoalReservedTotal(data.transactions);
+    const available = data.balance - pendingTotal - totalGoalReserved;
 
     // Reserve percentage from user settings
     let reservePct = 0.20;
     try { reservePct = parseInt(localStorage.getItem("sparky-reserve-pct") || "20") / 100; } catch {}
 
-    const reserve = Math.max(0, data.balance * reservePct);
-    const spendablePool = Math.max(0, data.balance - reserve - aPagar - totalGoalReserved);
+    const { daysLeft, dailyBudget } = getDailyBudget(data.balance, pendingTotal, reservePct, now);
 
-    // Filter out bill/subscription/invoice payments from discretionary spending
-    const SCHEDULED_CATEGORIES = ["Assinatura", "Fatura", "Conta"];
-    const SCHEDULED_PREFIXES = ["Assinatura:", "Fatura:", "Conta de "];
-    const discretionaryExpenses = data.transactions
-      .filter(t => {
-        if (t.type !== "expense") return false;
-        const d = new Date(t.date);
-        if (d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear()) return false;
-        // Exclude scheduled/bill payments
-        if (SCHEDULED_CATEGORIES.includes(t.category)) return false;
-        if (SCHEDULED_PREFIXES.some(p => t.description.startsWith(p))) return false;
-        return true;
-      })
-      .reduce((sum, t) => sum + t.amount, 0);
-
-    // 30% accumulation rule — use only discretionary spending
-    const ACCUMULATION_RATE = 0.30;
-    const expectedDailySpend = spendablePool / daysInMonth;
-    const pastDays = Math.max(1, today);
-    const actualDailySpend = discretionaryExpenses > 0 ? discretionaryExpenses / pastDays : 0;
-    const savedPerDay = Math.max(0, expectedDailySpend - actualDailySpend);
-    const accumulatedSavings = savedPerDay * pastDays * ACCUMULATION_RATE;
-    const adjustedPool = Math.max(0, spendablePool - accumulatedSavings);
-    const dailyBudget = daysLeft > 0 ? adjustedPool / daysLeft : 0;
-
-    return { available, daysLeft, dailyBudget };
-  }, [data]);
+    return { available, daysLeft, dailyBudget, pendingTotal, pendingCount, allPaid, totalGoalReserved };
+  }, [data, billingRevision]);
 
   // Mutations with optimistic updates
   const addMutation = useMutation({
@@ -387,6 +373,10 @@ export const useFinancialQuery = () => {
     available: computed.available,
     daysLeft: computed.daysLeft,
     dailyBudget: computed.dailyBudget,
+    pendingTotal: computed.pendingTotal,
+    pendingCount: computed.pendingCount,
+    allPaid: computed.allPaid,
+    totalGoalReserved: computed.totalGoalReserved,
     loading,
     updateData,
     clearAll,
