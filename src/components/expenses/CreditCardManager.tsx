@@ -144,7 +144,7 @@ const CreditCardManager = ({ open, onClose }: Props) => {
     toast.success("Cartão salvo com sucesso!");
   };
 
-  const handlePayInvoice = (cardId: string) => {
+  const handlePayInvoice = async (cardId: string) => {
     const card = cards.find(c => c.id === cardId);
     if (!card || card.invoiceAmount <= 0) {
       toast.error("Não há fatura a pagar.");
@@ -166,7 +166,11 @@ const CreditCardManager = ({ open, onClose }: Props) => {
       paidInvoices: [...c.paidInvoices, { month: new Date().toLocaleDateString("pt-BR", { month: "short", year: "numeric" }), amount, paidAt: new Date().toLocaleDateString("pt-BR") }],
     } : c));
     setShowPayment(false); setPayAmount("");
-    toast.success(payFull ? "Parabéns pelo pagamento da sua fatura! 🎉" : `Pago ${fmt(amount)} — Restante: ${fmt(remaining)}`);
+
+    // Award points for invoice payment
+    await awardPoints("bill_paid", `Fatura: ${card.cardName}`);
+
+    toast.success(payFull ? "Fatura paga com sucesso! +3 pts" : `Pago ${fmt(amount)} - Restante: ${fmt(remaining)} +3 pts`);
   };
 
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
