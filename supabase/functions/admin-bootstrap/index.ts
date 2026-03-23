@@ -3,13 +3,30 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-bootstrap-secret",
 };
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    // Require a shared secret to prevent unauthorized access
+    const BOOTSTRAP_SECRET = Deno.env.get("BOOTSTRAP_SECRET");
+    if (!BOOTSTRAP_SECRET) {
+      return new Response(JSON.stringify({ error: "Bootstrap function is disabled. Set BOOTSTRAP_SECRET to enable." }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const providedSecret = req.headers.get("x-bootstrap-secret");
+    if (!providedSecret || providedSecret !== BOOTSTRAP_SECRET) {
+      return new Response(JSON.stringify({ error: "Invalid or missing bootstrap secret" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
@@ -51,7 +68,7 @@ serve(async (req) => {
     });
   } catch (e) {
     console.error("admin-bootstrap error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
