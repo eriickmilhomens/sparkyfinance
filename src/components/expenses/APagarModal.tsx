@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { X, CheckCircle2, Clock, Trash2, CalendarDays, Tag } from "lucide-react";
+import { useMemo, useState } from "react";
+import { X, CheckCircle2, Clock, Trash2, CalendarDays, Tag, Undo2, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFinancialData, fmt } from "@/hooks/useFinancialData";
 import { usePoints } from "@/hooks/usePoints";
@@ -20,12 +20,14 @@ interface BillItem {
   date: string;
   category: string;
   source: "transaction" | "card" | "subscription";
+  paid: boolean;
 }
 
 const APagarModal = ({ open, onClose }: APagarModalProps) => {
-  const { data, updateData } = useFinancialData();
+  const { data, updateData, addTransaction, deleteTransaction } = useFinancialData();
   const { awardPoints, removePoints } = usePoints();
   const billingSnapshot = useBillingSnapshot();
+  const [showHistory, setShowHistory] = useState(false);
   useDockVisibility(open);
 
   const todayKey = new Date().toISOString().slice(0, 10);
@@ -37,88 +39,277 @@ const APagarModal = ({ open, onClose }: APagarModalProps) => {
 
   const paidIds = useMemo(() => new Set(billingSnapshot.paidBillIds), [billingSnapshot.paidBillIds]);
 
-  const { allBills, paidTotal, pendingTotal } = useMemo(() => {
+  const { pendingBills, paidBills, paidTotal, pendingTotal } = useMemo(() => {
     const summary = getPendingExpenseSummary(data.transactions, {
       now,
       paidBillIds: billingSnapshot.paidBillIds,
     });
 
-    const transactionBills: BillItem[] = summary.pendingBills.map((bill) => ({
+    // Transaction-based bills (pending)
+    const txPending: BillItem[] = summary.pendingBills.map((bill) => ({
       id: bill.id || crypto.randomUUID(),
       description: bill.description,
       amount: bill.amount,
       date: bill.date,
       category: bill.category,
       source: "transaction",
+      paid: false,
     }));
 
-    const cardBills: BillItem[] = billingSnapshot.cards
-      .filter((card) => (Number(card.invoiceAmount) || 0) > 0)
+    // Transaction-based bills (paid)
+    const txPaid: BillItem[] = summary.paidBills.map((bill) => ({
+      id: bill.id || crypto.randomUUID(),
+      description: bill.description,
+      amount: bill.amount,
+      date: bill.date,
+      category: bill.category,
+      source: "transaction",
+      paid: true,
+    }));
+
+    // Card invoices - pending (invoiceAmount > 0 and not in paidIds)
+    const cardPending: BillItem[] = billingSnapshot.cards
+      .filter((card) => {
+        const amount = Number(card.invoiceAmount) || 0;
+        const invoiceId = `card-invoice-${card.id}`;
+        return amount > 0 && !paidIds.has(invoiceId);
+      })
       .map((card) => {
         const dueDate = new Date(now.getFullYear(), now.getMonth(), card.dueDay || 10);
         if (dueDate < now) dueDate.setMonth(dueDate.getMonth() + 1);
-
         return {
           id: `card-invoice-${card.id}`,
           description: `Fatura: ${card.cardName || card.bankName}`,
           amount: Number(card.invoiceAmount) || 0,
           date: dueDate.toISOString(),
           category: "Fatura",
-          source: "card",
+          source: "card" as const,
+          paid: false,
         };
       });
 
-    const subscriptionBills: BillItem[] = billingSnapshot.subscriptions
-      .filter((subscription) => !subscription.paid)
-      .map((subscription) => {
-        const dueDate = new Date(now.getFullYear(), now.getMonth(), subscription.dueDay || 10);
+    // Card invoices - paid (in paidIds)
+    const cardPaid: BillItem[] = billingSnapshot.cards
+      .filter((card) => {
+        const invoiceId = `card-invoice-${card.id}`;
+        return paidIds.has(invoiceId);
+      })
+      .map((card) => {
+        const dueDate = new Date(now.getFullYear(), now.getMonth(), card.dueDay || 10);
         if (dueDate < now) dueDate.setMonth(dueDate.getMonth() + 1);
-
         return {
-          id: subscription.id,
-          description: `Assinatura: ${subscription.name}`,
-          amount: Number(subscription.amount) || 0,
+          id: `card-invoice-${card.id}`,
+          description: `Fatura: ${card.cardName || card.bankName}`,
+          amount: Number(card.invoiceAmount) || 0,
+          date: dueDate.toISOString(),
+          category: "Fatura",
+          source: "card" as const,
+          paid: true,
+        };
+      });
+
+    // Subscriptions - pending
+    const subPending: BillItem[] = billingSnapshot.subscriptions
+      .filter((sub) => !sub.paid)
+      .map((sub) => {
+        const dueDate = new Date(now.getFullYear(), now.getMonth(), sub.dueDay || 10);
+        if (dueDate < now) dueDate.setMonth(dueDate.getMonth() + 1);
+        return {
+          id: sub.id,
+          description: `Assinatura: ${sub.name}`,
+          amount: Number(sub.amount) || 0,
           date: dueDate.toISOString(),
           category: "Assinatura",
-          source: "subscription",
+          source: "subscription" as const,
+          paid: false,
         };
       });
 
-    const pendingBills = [...transactionBills, ...cardBills, ...subscriptionBills].sort(
+    // Subscriptions - paid
+    const subPaid: BillItem[] = billingSnapshot.subscriptions
+      .filter((sub) => sub.paid)
+      .map((sub) => {
+        const dueDate = new Date(now.getFullYear(), now.getMonth(), sub.dueDay || 10);
+        if (dueDate < now) dueDate.setMonth(dueDate.getMonth() + 1);
+        return {
+          id: sub.id,
+          description: `Assinatura: ${sub.name}`,
+          amount: Number(sub.amount) || 0,
+          date: dueDate.toISOString(),
+          category: "Assinatura",
+          source: "subscription" as const,
+          paid: true,
+        };
+      });
+
+    const allPending = [...txPending, ...cardPending, ...subPending].sort(
       (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    );
+    const allPaid = [...txPaid, ...cardPaid, ...subPaid].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
     );
 
     return {
-      allBills: pendingBills,
-      paidTotal: 0,
-      pendingTotal: pendingBills.reduce((sum, bill) => sum + bill.amount, 0),
+      pendingBills: allPending,
+      paidBills: allPaid,
+      paidTotal: allPaid.reduce((sum, bill) => sum + bill.amount, 0),
+      pendingTotal: allPending.reduce((sum, bill) => sum + bill.amount, 0),
     };
-  }, [data.transactions, now, billingSnapshot]);
+  }, [data.transactions, now, billingSnapshot, paidIds]);
 
-  const totalBills = pendingTotal;
+  const totalBills = pendingTotal + paidTotal;
 
-  const togglePaid = async (bill: BillItem) => {
-    if (bill.source !== "transaction") return;
+  // --- Payment handlers for each source ---
 
+  const handlePayTransaction = async (bill: BillItem) => {
     const newPaid = new Set(paidIds);
-    if (newPaid.has(bill.id)) {
-      newPaid.delete(bill.id);
-      await removePoints("bill_paid", `Pagou: ${bill.description}`);
-      toast.info("Conta desmarcada e pontos removidos");
-    } else {
-      newPaid.add(bill.id);
-      await awardPoints("bill_paid", `Pagou: ${bill.description}`);
-      toast.success("Conta marcada como paga! +3 pts");
-    }
-
+    newPaid.add(bill.id);
     localStorage.setItem("sparky-paid-bills", JSON.stringify([...newPaid]));
     window.dispatchEvent(new Event("sparky-paid-bills-updated"));
+    await awardPoints("bill_paid", `Pagou: ${bill.description}`);
+    toast.success("Conta marcada como paga! +3 pts");
+  };
+
+  const handleReverseTransaction = async (bill: BillItem) => {
+    const newPaid = new Set(paidIds);
+    newPaid.delete(bill.id);
+    localStorage.setItem("sparky-paid-bills", JSON.stringify([...newPaid]));
+    window.dispatchEvent(new Event("sparky-paid-bills-updated"));
+    await removePoints("bill_paid", `Pagou: ${bill.description}`);
+    toast.info("Conta desmarcada e pontos removidos");
+  };
+
+  const handlePaySubscription = async (bill: BillItem) => {
+    const subs = JSON.parse(localStorage.getItem("sparky-subscriptions") || "[]");
+    const updated = subs.map((s: any) => s.id === bill.id ? { ...s, paid: true } : s);
+    localStorage.setItem("sparky-subscriptions", JSON.stringify(updated));
+    window.dispatchEvent(new Event("sparky-subscriptions-updated"));
+    window.dispatchEvent(new Event("sparky-paid-bills-updated"));
+
+    await addTransaction({
+      date: new Date().toISOString(),
+      description: bill.description,
+      amount: bill.amount,
+      type: "expense",
+      category: "Assinatura",
+    });
+    await awardPoints("bill_paid", `Pagou: ${bill.description}`);
+    toast.success("Assinatura paga! +3 pts");
+  };
+
+  const handleReverseSubscription = async (bill: BillItem) => {
+    const subs = JSON.parse(localStorage.getItem("sparky-subscriptions") || "[]");
+    const updated = subs.map((s: any) => s.id === bill.id ? { ...s, paid: false } : s);
+    localStorage.setItem("sparky-subscriptions", JSON.stringify(updated));
+    window.dispatchEvent(new Event("sparky-subscriptions-updated"));
+    window.dispatchEvent(new Event("sparky-paid-bills-updated"));
+
+    const existingTx = data.transactions.find(
+      (t) => t.description === bill.description && t.category === "Assinatura",
+    );
+    if (existingTx) await deleteTransaction(existingTx.id);
+    await removePoints("bill_paid", `Pagou: ${bill.description}`);
+    toast.info("Assinatura estornada e pontos removidos");
+  };
+
+  const handlePayCard = async (bill: BillItem) => {
+    const cardId = bill.id.replace("card-invoice-", "");
+    const cards = JSON.parse(localStorage.getItem("sparky-credit-cards") || "[]");
+    const card = cards.find((c: any) => c.id === cardId);
+    if (!card) return;
+
+    // Mark as paid in paidBillIds
+    const newPaid = new Set(paidIds);
+    newPaid.add(bill.id);
+    localStorage.setItem("sparky-paid-bills", JSON.stringify([...newPaid]));
+    window.dispatchEvent(new Event("sparky-paid-bills-updated"));
+
+    // Update card data
+    const updatedCards = cards.map((c: any) =>
+      c.id === cardId
+        ? {
+            ...c,
+            invoiceAmount: 0,
+            usedAmount: Math.max(0, c.usedAmount - bill.amount),
+            paidInvoices: [
+              ...(c.paidInvoices || []),
+              {
+                month: new Date().toLocaleDateString("pt-BR", { month: "short", year: "numeric" }),
+                amount: bill.amount,
+                paidAt: new Date().toLocaleDateString("pt-BR"),
+              },
+            ],
+          }
+        : c,
+    );
+    localStorage.setItem("sparky-credit-cards", JSON.stringify(updatedCards));
+    window.dispatchEvent(new Event("sparky-cards-updated"));
+
+    await addTransaction({
+      date: new Date().toISOString(),
+      description: `Fatura: ${card.cardName}`,
+      amount: bill.amount,
+      type: "expense",
+      category: "Fatura",
+    });
+    await awardPoints("bill_paid", `Fatura: ${card.cardName}`);
+    toast.success("Fatura paga com sucesso! +3 pts");
+  };
+
+  const handleReverseCard = async (bill: BillItem) => {
+    const cardId = bill.id.replace("card-invoice-", "");
+
+    // Remove from paidBillIds
+    const newPaid = new Set(paidIds);
+    newPaid.delete(bill.id);
+    localStorage.setItem("sparky-paid-bills", JSON.stringify([...newPaid]));
+    window.dispatchEvent(new Event("sparky-paid-bills-updated"));
+
+    // Reverse the card data
+    const cards = JSON.parse(localStorage.getItem("sparky-credit-cards") || "[]");
+    const card = cards.find((c: any) => c.id === cardId);
+    if (card) {
+      const lastPaid = card.paidInvoices?.[card.paidInvoices.length - 1];
+      const restoreAmount = lastPaid?.amount || bill.amount;
+      const updatedCards = cards.map((c: any) =>
+        c.id === cardId
+          ? {
+              ...c,
+              invoiceAmount: c.invoiceAmount + restoreAmount,
+              usedAmount: c.usedAmount + restoreAmount,
+              paidInvoices: (c.paidInvoices || []).slice(0, -1),
+            }
+          : c,
+      );
+      localStorage.setItem("sparky-credit-cards", JSON.stringify(updatedCards));
+      window.dispatchEvent(new Event("sparky-cards-updated"));
+    }
+
+    // Remove the expense transaction
+    const existingTx = data.transactions.find(
+      (t) => t.description.startsWith("Fatura:") && t.category === "Fatura",
+    );
+    if (existingTx) await deleteTransaction(existingTx.id);
+    await removePoints("bill_paid", `Fatura estornada`);
+    toast.info("Fatura estornada e pontos removidos");
+  };
+
+  // Unified handlers
+  const handlePay = async (bill: BillItem) => {
+    if (bill.source === "transaction") return handlePayTransaction(bill);
+    if (bill.source === "subscription") return handlePaySubscription(bill);
+    if (bill.source === "card") return handlePayCard(bill);
+  };
+
+  const handleReverse = async (bill: BillItem) => {
+    if (bill.source === "transaction") return handleReverseTransaction(bill);
+    if (bill.source === "subscription") return handleReverseSubscription(bill);
+    if (bill.source === "card") return handleReverseCard(bill);
   };
 
   const deleteBill = (id: string) => {
-    const newTransactions = data.transactions.filter((transaction) => transaction.id !== id);
+    const newTransactions = data.transactions.filter((t) => t.id !== id);
     updateData({ transactions: newTransactions });
-
     const newPaid = billingSnapshot.paidBillIds.filter((paidId) => paidId !== id);
     localStorage.setItem("sparky-paid-bills", JSON.stringify(newPaid));
     window.dispatchEvent(new Event("sparky-paid-bills-updated"));
@@ -130,7 +321,94 @@ const APagarModal = ({ open, onClose }: APagarModalProps) => {
     return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
   };
 
+  const sourceLabel = (source: string) => {
+    if (source === "card") return "Cartão";
+    if (source === "subscription") return "Assinatura";
+    return "Conta";
+  };
+
   if (!open) return null;
+
+  const renderBillCard = (bill: BillItem) => (
+    <div
+      key={bill.id}
+      className={cn(
+        "rounded-xl border p-3 transition-all",
+        bill.paid
+          ? "bg-muted/30 border-success/20 opacity-80"
+          : "bg-card border-border hover:border-warning/30",
+      )}
+    >
+      <div className="flex items-center gap-3">
+        <div
+          className={cn(
+            "flex h-8 w-8 items-center justify-center rounded-full flex-shrink-0",
+            bill.paid ? "bg-success/15 text-success" : "bg-warning/15 text-warning",
+          )}
+        >
+          {bill.paid ? <CheckCircle2 size={16} /> : <Clock size={16} />}
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <p className={cn("text-xs font-medium truncate", bill.paid && "line-through text-muted-foreground")}>
+            {bill.description}
+          </p>
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className="text-[9px] text-muted-foreground flex items-center gap-0.5">
+              <CalendarDays size={9} /> {formatDate(bill.date)}
+            </span>
+            <span className="text-[9px] text-muted-foreground flex items-center gap-0.5">
+              <Tag size={9} /> {sourceLabel(bill.source)}
+            </span>
+          </div>
+        </div>
+
+        <p className={cn("text-sm font-bold tabular-nums flex-shrink-0", bill.paid ? "text-success" : "text-destructive")}>
+          {fmt(bill.amount)}
+        </p>
+
+        {bill.source === "transaction" && !bill.paid && (
+          <button
+            onClick={() => deleteBill(bill.id)}
+            className="text-muted-foreground hover:text-destructive transition-colors active:scale-90 p-1"
+          >
+            <Trash2 size={14} />
+          </button>
+        )}
+      </div>
+
+      <div className="mt-2 flex items-center justify-between">
+        <span
+          className={cn(
+            "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-semibold",
+            bill.paid ? "bg-success/15 text-success" : "bg-warning/15 text-warning",
+          )}
+        >
+          {bill.paid ? (
+            <><CheckCircle2 size={9} /> Pago</>
+          ) : (
+            <><Clock size={9} /> Aguardando pagamento</>
+          )}
+        </span>
+
+        {bill.paid ? (
+          <button
+            onClick={() => handleReverse(bill)}
+            className="text-[10px] font-medium px-2.5 py-1 rounded-lg transition-all active:scale-95 bg-muted text-muted-foreground hover:bg-destructive/15 hover:text-destructive flex items-center gap-1"
+          >
+            <Undo2 size={10} /> Estornar
+          </button>
+        ) : (
+          <button
+            onClick={() => handlePay(bill)}
+            className="text-[10px] font-medium px-2.5 py-1 rounded-lg transition-all active:scale-95 bg-success/15 text-success hover:bg-success/25 flex items-center gap-1"
+          >
+            <CheckCircle2 size={10} /> Marcar como pago
+          </button>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center">
@@ -166,75 +444,46 @@ const APagarModal = ({ open, onClose }: APagarModalProps) => {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto space-y-2 min-h-0">
-          {allBills.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">Nenhuma conta pendente neste mês.</p>
+        <div className="flex-1 overflow-y-auto space-y-3 min-h-0">
+          {/* Pending bills */}
+          {pendingBills.length === 0 && paidBills.length === 0 ? (
+            <div className="text-center py-8">
+              <CheckCircle2 size={32} className="text-success mx-auto mb-2" />
+              <p className="text-sm font-medium">Tudo em dia!</p>
+              <p className="text-xs text-muted-foreground">Nenhuma conta pendente neste mês.</p>
+            </div>
           ) : (
-            allBills.map((bill) => {
-              const canToggle = bill.source === "transaction";
-              return (
-                <div
-                  key={bill.id}
-                  className={cn("rounded-xl border p-3 transition-all bg-card border-border hover:border-warning/30")}
-                >
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => canToggle && togglePaid(bill)}
-                      disabled={!canToggle}
-                      className={cn(
-                        "flex h-8 w-8 items-center justify-center rounded-full transition-all active:scale-90 flex-shrink-0",
-                        canToggle ? "bg-warning/15 text-warning" : "bg-muted text-muted-foreground",
-                      )}
-                    >
-                      {canToggle ? <Clock size={16} /> : <CheckCircle2 size={16} />}
-                    </button>
-
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium truncate">{bill.description}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[9px] text-muted-foreground flex items-center gap-0.5">
-                          <CalendarDays size={9} /> {formatDate(bill.date)}
-                        </span>
-                        <span className="text-[9px] text-muted-foreground flex items-center gap-0.5">
-                          <Tag size={9} /> {bill.category}
-                        </span>
-                      </div>
-                    </div>
-
-                    <p className="text-sm font-bold tabular-nums flex-shrink-0 text-destructive">
-                      {fmt(bill.amount)}
-                    </p>
-
-                    {bill.source === "transaction" && (
-                      <button
-                        onClick={() => deleteBill(bill.id)}
-                        className="text-muted-foreground hover:text-destructive transition-colors active:scale-90 p-1"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="mt-2 flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-semibold bg-warning/15 text-warning">
-                      <Clock size={9} /> Aguardando pagamento
-                    </span>
-                    {canToggle ? (
-                      <button
-                        onClick={() => togglePaid(bill)}
-                        className="text-[10px] font-medium px-2.5 py-1 rounded-lg transition-all active:scale-95 bg-primary/15 text-primary hover:bg-primary/25"
-                      >
-                        Marcar como pago
-                      </button>
-                    ) : (
-                      <span className="text-[10px] text-muted-foreground">
-                        Pague na seção {bill.source === "card" ? "Cartões" : "Assinaturas"}
-                      </span>
-                    )}
-                  </div>
+            <>
+              {pendingBills.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                    Pendentes ({pendingBills.length})
+                  </p>
+                  {pendingBills.map(renderBillCard)}
                 </div>
-              );
-            })
+              )}
+
+              {pendingBills.length === 0 && paidBills.length > 0 && (
+                <div className="text-center py-4">
+                  <CheckCircle2 size={24} className="text-success mx-auto mb-1" />
+                  <p className="text-xs font-medium text-success">Contas todas pagas!</p>
+                </div>
+              )}
+
+              {/* Paid bills history */}
+              {paidBills.length > 0 && (
+                <div className="space-y-2">
+                  <button
+                    onClick={() => setShowHistory(!showHistory)}
+                    className="flex items-center gap-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors w-full"
+                  >
+                    Histórico ({paidBills.length})
+                    {showHistory ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                  </button>
+                  {showHistory && paidBills.map(renderBillCard)}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
