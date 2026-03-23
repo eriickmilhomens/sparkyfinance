@@ -95,7 +95,7 @@ interface Props { open: boolean; onClose: () => void; }
 const CreditCardManager = ({ open, onClose }: Props) => {
   const [cards, setCards] = useState<CreditCardData[]>(loadCards);
   const { awardPoints } = usePoints();
-  const { data, updateData } = useFinancialData();
+  const { addTransaction } = useFinancialData();
   useDockVisibility(open);
   const [showAdd, setShowAdd] = useState(false);
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
@@ -124,7 +124,6 @@ const CreditCardManager = ({ open, onClose }: Props) => {
     const bankName = capitalize(rawBankName);
     const limit = parseFloat(newLimit.replace(/\D/g, "")) / 100 || 0;
 
-    // For custom banks not in BANK_DATA, assign a random color
     const isKnown = Object.keys(BANK_DATA).some(k => bankName.toLowerCase().includes(k));
     if (!isKnown) {
       const color = getRandomColor();
@@ -162,42 +161,24 @@ const CreditCardManager = ({ open, onClose }: Props) => {
       toast.error("Valor maior que a fatura.");
       return;
     }
+
     const remaining = Math.max(0, card.invoiceAmount - amount);
     update(cards.map(c => c.id === cardId ? {
-      ...c, invoiceAmount: remaining, usedAmount: Math.max(0, c.usedAmount - amount),
+      ...c,
+      invoiceAmount: remaining,
+      usedAmount: Math.max(0, c.usedAmount - amount),
       paidInvoices: [...c.paidInvoices, { month: new Date().toLocaleDateString("pt-BR", { month: "short", year: "numeric" }), amount, paidAt: new Date().toLocaleDateString("pt-BR") }],
     } : c));
-    setShowPayment(false); setPayAmount("");
+    setShowPayment(false);
+    setPayAmount("");
 
-    // Mark invoice as paid in paid-bills so APagarModal picks it up
-    try {
-      const paidBills: string[] = JSON.parse(localStorage.getItem("sparky-paid-bills") || "[]");
-      const invoiceId = `card-invoice-${cardId}`;
-      if (!paidBills.includes(invoiceId)) {
-        paidBills.push(invoiceId);
-        localStorage.setItem("sparky-paid-bills", JSON.stringify(paidBills));
-      }
-    } catch {}
-
-    // Update financial data — deduct payment from balance
-    const newTx = {
-      id: crypto.randomUUID(),
+    await addTransaction({
       date: new Date().toISOString(),
       description: `Fatura: ${card.cardName}`,
       amount,
-      type: "expense" as const,
+      type: "expense",
       category: "Fatura",
-    };
-    updateData({
-      expenses: data.expenses + amount,
-      balance: data.balance - amount,
-      transactions: [newTx, ...data.transactions],
     });
-
-    // Dispatch sync events
-    window.dispatchEvent(new Event("sparky-paid-bills-updated"));
-
-    // Award points for invoice payment
     await awardPoints("bill_paid", `Fatura: ${card.cardName}`);
 
     toast.success(payFull ? "Fatura paga com sucesso! +3 pts" : `Pago ${fmt(amount)} - Restante: ${fmt(remaining)} +3 pts`);

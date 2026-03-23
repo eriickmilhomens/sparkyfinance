@@ -51,7 +51,7 @@ const SubscriptionsCard = () => {
   const [newLogo, setNewLogo] = useState("");
   const [newColor, setNewColor] = useState("bg-primary");
   const [showCustomInput, setShowCustomInput] = useState(false);
-  const { data, updateData } = useFinancialData();
+  const { data, addTransaction, deleteTransaction } = useFinancialData();
   const { awardPoints, removePoints } = usePoints();
   useDockVisibility(showAdd);
 
@@ -65,7 +65,6 @@ const SubscriptionsCard = () => {
   const update = (updated: Subscription[]) => {
     setSubs(updated);
     saveSubs(updated);
-    // Notify dashboard to re-compute pending totals
     window.dispatchEvent(new Event("sparky-paid-bills-updated"));
   };
 
@@ -99,52 +98,46 @@ const SubscriptionsCard = () => {
     resetForm();
   };
 
-  const handleMarkPaid = (id: string) => {
+  const handleMarkPaid = async (id: string) => {
     const sub = subs.find(s => s.id === id);
     if (!sub || sub.paid) return;
+
     update(subs.map(s => s.id === id ? { ...s, paid: true } : s));
-    const newTx = {
-      id: crypto.randomUUID(),
+    await addTransaction({
       date: new Date().toISOString(),
       description: `Assinatura: ${sub.name}`,
       amount: sub.amount,
-      type: "expense" as const,
+      type: "expense",
       category: "Assinatura",
-    };
-    updateData({
-      expenses: data.expenses + sub.amount,
-      balance: data.balance - sub.amount,
-      transactions: [newTx, ...data.transactions],
     });
-    awardPoints("bill_paid", `Pagou assinatura: ${sub.name}`);
+    await awardPoints("bill_paid", `Pagou assinatura: ${sub.name}`);
     toast.success(`${sub.name} marcada como paga! +3 pts`);
   };
 
   const handleUnmarkPaid = async (id: string) => {
     const sub = subs.find(s => s.id === id);
     if (!sub || !sub.paid) return;
+
     update(subs.map(s => s.id === id ? { ...s, paid: false } : s));
-    // Refund: remove from expenses, add back to balance
-    const updatedTx = data.transactions.filter(t => t.description !== `Assinatura: ${sub.name}`);
-    updateData({
-      expenses: Math.max(0, data.expenses - sub.amount),
-      balance: data.balance + sub.amount,
-      transactions: updatedTx,
-    });
+    const existingTransaction = data.transactions.find(
+      t => t.description === `Assinatura: ${sub.name}` && t.category === "Assinatura",
+    );
+    if (existingTransaction) {
+      await deleteTransaction(existingTransaction.id);
+    }
     await removePoints("bill_paid", `Pagou assinatura: ${sub.name}`);
     toast.success(`${sub.name} desmarcada — estorno e pontos removidos`);
   };
 
   const handleDelete = async (id: string) => {
     const sub = subs.find(s => s.id === id);
-    // If sub was paid, refund the financial data and remove points
-    if (sub && sub.paid) {
-      const updatedTx = data.transactions.filter(t => t.description !== `Assinatura: ${sub.name}`);
-      updateData({
-        expenses: Math.max(0, data.expenses - sub.amount),
-        balance: data.balance + sub.amount,
-        transactions: updatedTx,
-      });
+    if (sub?.paid) {
+      const existingTransaction = data.transactions.find(
+        t => t.description === `Assinatura: ${sub.name}` && t.category === "Assinatura",
+      );
+      if (existingTransaction) {
+        await deleteTransaction(existingTransaction.id);
+      }
       await removePoints("bill_paid", `Pagou assinatura: ${sub.name}`);
     }
     update(subs.filter(s => s.id !== id));
