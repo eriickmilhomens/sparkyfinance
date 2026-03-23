@@ -16,6 +16,7 @@ const ChatView = lazy(() => import("@/components/views/ChatView"));
 const Index = () => {
   const [activeTab, setActiveTab] = useState("home");
   const [ready, setReady] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
   const [, setTick] = useState(0);
   const navigate = useNavigate();
 
