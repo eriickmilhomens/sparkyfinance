@@ -88,49 +88,69 @@ const Index = () => {
     const isDemo = localStorage.getItem("sparky-demo-mode") === "true";
     if (isDemo) {
       setReady(true);
+      setAuthChecked(true);
       return;
     }
 
     const checkBanStatus = async (session: any) => {
       if (!session?.user) return false;
-      // Re-fetch user to get latest metadata
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return false;
-      const isBanned = user.user_metadata?.banned === true;
-      const isSuspended = user.user_metadata?.suspended === true;
-      if (isBanned || isSuspended) {
-        await supabase.auth.signOut();
-        navigate("/login");
-        return true;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return false;
+        const isBanned = user.user_metadata?.banned === true;
+        const isSuspended = user.user_metadata?.suspended === true;
+        if (isBanned || isSuspended) {
+          await supabase.auth.signOut();
+          navigate("/login");
+          return true;
+        }
+      } catch {
+        // ignore errors during ban check
       }
       return false;
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!session && !localStorage.getItem("sparky-demo-mode")) {
+        setAuthChecked(true);
         navigate("/login");
       } else if (session?.user) {
         const blocked = await checkBanStatus(session);
         if (blocked) return;
         syncLocalDataOwner(session.user.id);
         setReady(true);
+        setAuthChecked(true);
         setIsAdmin(session.user.email === "admin@sparky.app");
       }
     });
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session && !localStorage.getItem("sparky-demo-mode")) {
+        setAuthChecked(true);
         navigate("/login");
       } else if (session?.user) {
         const blocked = await checkBanStatus(session);
         if (blocked) return;
         syncLocalDataOwner(session.user.id);
         setReady(true);
+        setAuthChecked(true);
         setIsAdmin(session.user.email === "admin@sparky.app");
+      } else {
+        // Fallback: no session and no demo mode detected after check
+        setAuthChecked(true);
       }
     });
 
-    return () => subscription.unsubscribe();
+    // Safety timeout: if auth check takes too long, redirect to login
+    const safetyTimer = setTimeout(() => {
+      setAuthChecked(true);
+      if (!ready) navigate("/login");
+    }, 5000);
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(safetyTimer);
+    };
   }, [navigate]);
 
   const handleTabChange = (tab: string) => {
