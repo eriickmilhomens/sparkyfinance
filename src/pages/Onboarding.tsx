@@ -38,17 +38,16 @@ const Onboarding = () => {
   const [copiedCode, setCopiedCode] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogoTap = useCallback(async () => {
+  const handleLogoTap = useCallback(() => {
     const newCount = tapCount + 1;
     if (tapTimer) clearTimeout(tapTimer);
 
     if (newCount >= 7) {
       localStorage.setItem("sparky-demo-mode", "true");
       seedDemoData();
-      await supabase.auth.signOut().catch(() => {});
+      toast.success("🎮 Modo Demo ativado!");
       setTapCount(0);
-      toast.success("Modo Demo ativado!");
-      setTimeout(() => { window.location.href = "/"; }, 100);
+      navigate("/");
       return;
     }
 
@@ -151,20 +150,13 @@ const Onboarding = () => {
 
     const targetGroup = (result as any).group_code || trimmed;
 
-    // Update current user's group_code to match (don't change role - RLS blocks it)
+    // Update current user's group_code to match
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      const { error: updateError } = await supabase
+      await supabase
         .from("profiles")
-        .update({ group_code: targetGroup })
+        .update({ group_code: targetGroup, role: "member" })
         .eq("user_id", user.id);
-      
-      if (updateError) {
-        console.error("Group join error:", updateError.message);
-        setCodeError("Erro ao entrar no grupo. Tente novamente.");
-        setJoiningGroup(false);
-        return;
-      }
     }
 
     setJoiningGroup(false);

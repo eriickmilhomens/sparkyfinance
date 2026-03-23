@@ -10,14 +10,7 @@ import Onboarding from "./pages/Onboarding.tsx";
 import "@/integrations/lovable";
 import NotFound from "./pages/NotFound.tsx";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

@@ -106,12 +106,7 @@ const Index = () => {
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // Re-check demo flag inside listener to prevent race conditions
-      if (localStorage.getItem("sparky-demo-mode") === "true") {
-        setReady(true);
-        return;
-      }
-      if (!session) {
+      if (!session && !localStorage.getItem("sparky-demo-mode")) {
         navigate("/login");
       } else if (session?.user) {
         const blocked = await checkBanStatus(session);
@@ -123,11 +118,7 @@ const Index = () => {
     });
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (localStorage.getItem("sparky-demo-mode") === "true") {
-        setReady(true);
-        return;
-      }
-      if (!session) {
+      if (!session && !localStorage.getItem("sparky-demo-mode")) {
         navigate("/login");
       } else if (session?.user) {
         const blocked = await checkBanStatus(session);
