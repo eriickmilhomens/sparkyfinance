@@ -636,12 +636,13 @@ const ChatView = () => {
           </div>
         ))}
         {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-start">
             <div className="h-7 w-7 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
               <Bot size={12} className="text-primary" />
             </div>
-            <div className="bg-card border border-border rounded-2xl rounded-bl-md px-3.5 py-2.5">
-              <Loader2 size={14} className="animate-spin text-muted-foreground" />
+            <div className="bg-card border border-border rounded-2xl rounded-bl-md px-3.5 py-2.5 flex items-center gap-2">
+              <Loader2 size={14} className="animate-spin text-primary" />
+              <span className="text-[11px] text-muted-foreground animate-pulse">{STATUS_PHRASES[statusIndex]}</span>
             </div>
           </div>
         )}
