@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { PiggyBank, CalendarClock, Banknote, Info, X } from "lucide-react";
+import { PiggyBank, CalendarClock, Banknote, Info, X, CheckCircle } from "lucide-react";
 import { useFinancialData, fmt } from "@/hooks/useFinancialData";
 import APagarModal from "./APagarModal";
 import { cn } from "@/lib/utils";
