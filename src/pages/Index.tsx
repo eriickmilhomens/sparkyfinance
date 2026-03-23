@@ -140,7 +140,8 @@ const Index = () => {
         if (blocked) return;
         syncLocalDataOwner(session.user.id);
         markReady();
-        setIsAdmin(session.user.email === "admin@sparky.app");
+        const { data: profile } = await supabase.from("profiles").select("role").eq("user_id", session.user.id).single();
+        setIsAdmin(profile?.role === "admin");
       } else {
         setAuthChecked(true);
       }
