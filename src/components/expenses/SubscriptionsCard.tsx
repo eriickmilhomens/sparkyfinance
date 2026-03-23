@@ -66,6 +66,7 @@ const SubscriptionsCard = () => {
     setSubs(updated);
     saveSubs(updated);
     window.dispatchEvent(new Event("sparky-paid-bills-updated"));
+    window.dispatchEvent(new Event("sparky-subscriptions-updated"));
   };
 
   const getDaysLeft = (dueDay: number) => {

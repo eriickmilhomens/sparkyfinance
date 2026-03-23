@@ -64,12 +64,14 @@ const subscribe = (onStoreChange: () => void) => {
   window.addEventListener("storage", handler);
   window.addEventListener("sparky-paid-bills-updated", handler);
   window.addEventListener("sparky-cards-updated", handler);
+  window.addEventListener("sparky-subscriptions-updated", handler);
   window.addEventListener("sparky-data-cleared", handler);
 
   return () => {
     window.removeEventListener("storage", handler);
     window.removeEventListener("sparky-paid-bills-updated", handler);
     window.removeEventListener("sparky-cards-updated", handler);
+    window.removeEventListener("sparky-subscriptions-updated", handler);
     window.removeEventListener("sparky-data-cleared", handler);
   };
 };
