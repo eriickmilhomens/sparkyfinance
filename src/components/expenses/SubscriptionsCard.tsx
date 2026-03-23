@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { handleBRLChange, parseBRLInput } from "@/lib/brlInput";
 import { MoreVertical, Plus, X, CheckCircle2, Clock, Pencil, Trash2, CalendarDays, Undo2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -54,6 +54,13 @@ const SubscriptionsCard = () => {
   const { data, updateData } = useFinancialData();
   const { awardPoints, removePoints } = usePoints();
   useDockVisibility(showAdd);
+
+  // Re-read from localStorage when data changes (e.g. demo mode activation)
+  useEffect(() => {
+    const handler = () => setSubs(loadSubs());
+    window.addEventListener("sparky-data-cleared", handler);
+    return () => window.removeEventListener("sparky-data-cleared", handler);
+  }, []);
 
   const update = (updated: Subscription[]) => { setSubs(updated); saveSubs(updated); };
 
