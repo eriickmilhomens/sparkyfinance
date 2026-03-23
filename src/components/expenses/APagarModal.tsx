@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { X, CheckCircle2, Clock, Trash2, CalendarDays, Tag, DollarSign, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFinancialData, fmt, Transaction } from "@/hooks/useFinancialData";
