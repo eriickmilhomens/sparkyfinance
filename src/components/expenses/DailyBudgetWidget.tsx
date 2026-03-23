@@ -56,6 +56,11 @@ const DailyBudgetWidget = () => {
               <TrendingDown size={10} /> Acima do limite
             </span>
           )}
+          {!isOver && rolloverBonus > 0 && (
+            <span className="text-[10px] font-medium text-success">
+              +{fmt(rolloverBonus)} bônus
+            </span>
+          )}
         </div>
 
         {/* Daily progress bar */}
