@@ -230,13 +230,15 @@ const APagarModal = ({ open, onClose }: APagarModalProps) => {
                       {fmt(bill.amount)}
                     </p>
 
-                    {/* Delete */}
-                    <button
-                      onClick={() => deleteBill(bill.id)}
-                      className="text-muted-foreground hover:text-destructive transition-colors active:scale-90 p-1"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    {/* Delete — only for transaction-based bills */}
+                    {bill.source === "transaction" && (
+                      <button
+                        onClick={() => deleteBill(bill.id)}
+                        className="text-muted-foreground hover:text-destructive transition-colors active:scale-90 p-1"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
                   </div>
 
                   {/* Status badge */}
