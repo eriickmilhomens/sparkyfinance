@@ -55,11 +55,15 @@ const SubscriptionsCard = () => {
   const { awardPoints, removePoints } = usePoints();
   useDockVisibility(showAdd);
 
-  // Re-read from localStorage when data changes (e.g. demo mode activation)
+  // Re-read from localStorage when data changes externally (demo mode, APagarModal payments, etc.)
   useEffect(() => {
     const handler = () => setSubs(loadSubs());
     window.addEventListener("sparky-data-cleared", handler);
-    return () => window.removeEventListener("sparky-data-cleared", handler);
+    window.addEventListener("sparky-subscriptions-updated", handler);
+    return () => {
+      window.removeEventListener("sparky-data-cleared", handler);
+      window.removeEventListener("sparky-subscriptions-updated", handler);
+    };
   }, []);
 
   const update = (updated: Subscription[]) => {
