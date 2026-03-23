@@ -85,6 +85,7 @@ const CreditCardCarousel = () => {
   }, []);
 
   const { data, updateData } = useFinancialData();
+  const { awardPoints } = usePoints();
 
   useDockVisibility(expandedId !== null || showPayment);
 
