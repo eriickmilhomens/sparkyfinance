@@ -141,7 +141,7 @@ const StatusCards = () => {
               <button
                 key={s.label}
                 onClick={() => setAPagarOpen(true)}
-                className={`card-zelo fade-in-up stagger-${i + 1} !py-3 !px-2.5 text-left cursor-pointer hover:border-warning/40 active:scale-[0.97] transition-all`}
+                className={`card-zelo fade-in-up stagger-${i + 1} !py-3 !px-2.5 text-left cursor-pointer hover:border-warning/40 active:scale-[0.97] transition-all h-full flex flex-col`}
               >
                 {content}
               </button>
