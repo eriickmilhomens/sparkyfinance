@@ -358,10 +358,10 @@ const ChatView = () => {
     } catch { return null; }
   };
 
-  const send = async () => {
-    const text = input.trim();
+  const sendDirect = useCallback(async (directText?: string) => {
+    const text = (directText ?? input).trim();
     if ((!text && pendingAttachments.length === 0) || isLoading) return;
-    setInput("");
+    if (!directText) setInput("");
     const userMsg: Msg = {
       role: "user",
       content: text || (pendingAttachments.length > 0 ? `[${pendingAttachments.map(a => a.name).join(", ")}]` : ""),
@@ -444,7 +444,9 @@ const ChatView = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [input, pendingAttachments, isLoading, messages, getUserContext]);
+
+  const send = () => sendDirect();
 
   const NewChatConfirmPopup = () => (
     <div className="fixed inset-0 z-[70] flex items-center justify-center">
@@ -587,7 +589,7 @@ const ChatView = () => {
               {shuffledChips.map((chip) => (
                 <button
                   key={chip}
-                  onClick={() => { setInput(chip); }}
+                  onClick={() => sendDirect(chip)}
                   className="rounded-full bg-muted border border-border px-3 py-1.5 text-[11px] text-muted-foreground hover:text-foreground hover:border-primary/30 active:scale-95 transition-all"
                 >
                   {chip}
