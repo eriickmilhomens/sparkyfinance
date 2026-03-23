@@ -53,13 +53,13 @@ const Login = () => {
     if (tapTimer) clearTimeout(tapTimer);
 
     if (newCount >= 7) {
-      // Sign out any existing session first to prevent race condition
       await supabase.auth.signOut().catch(() => {});
       localStorage.setItem("sparky-demo-mode", "true");
       seedDemoData();
-      toast.success("🎮 Modo Demo ativado!");
       setTapCount(0);
-      navigate("/");
+      toast.success("Modo Demo ativado!");
+      // Hard reload to avoid stale auth listeners redirecting back
+      window.location.replace("/");
       return;
     }
 

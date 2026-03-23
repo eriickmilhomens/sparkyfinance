@@ -46,9 +46,9 @@ const Onboarding = () => {
       await supabase.auth.signOut().catch(() => {});
       localStorage.setItem("sparky-demo-mode", "true");
       seedDemoData();
-      toast.success("🎮 Modo Demo ativado!");
       setTapCount(0);
-      navigate("/", { replace: true });
+      toast.success("Modo Demo ativado!");
+      window.location.replace("/");
       return;
     }
 
