@@ -1,5 +1,6 @@
-import { useRef } from "react";
-import { Sun, Moon } from "lucide-react";
+import { useRef, useState, useCallback } from "react";
+import { Sun, Moon, RefreshCcw } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import ProfileSwitcher from "@/components/layout/ProfileSwitcher";
 import { useTheme } from "@/hooks/useTheme";
 import { useProfile } from "@/hooks/useProfile";
@@ -25,13 +26,44 @@ const EASTER_EGG_MESSAGES = [
   "🐱 Você é persistente! Aqui vai um biscoito virtual 🍪",
 ];
 
+const CACHE_KEYS_TO_CLEAR = [
+  "sparky-daily-snapshot",
+  "sparky-open-finance-cache",
+  "sparky-sync-data",
+  "sparky-sync-status",
+];
+
 const Header = () => {
   const { theme, toggleTheme } = useTheme();
   const { profile } = useProfile();
+  const queryClient = useQueryClient();
+  const [syncing, setSyncing] = useState(false);
   const catClickCount = useRef(0);
   const catClickTimer = useRef<NodeJS.Timeout | null>(null);
   const nameClickCount = useRef(0);
   const nameClickTimer = useRef<NodeJS.Timeout | null>(null);
+
+  const handleSync = useCallback(async () => {
+    if (syncing) return;
+    setSyncing(true);
+    try {
+      // Clear stale cache entries
+      CACHE_KEYS_TO_CLEAR.forEach((k) => localStorage.removeItem(k));
+
+      // Invalidate all React Query caches and refetch active queries
+      await queryClient.invalidateQueries();
+      await queryClient.refetchQueries({ type: "active" });
+
+      // Dispatch event so any non-RQ listeners also refresh
+      window.dispatchEvent(new Event("sparky-data-cleared"));
+
+      toast.success("Dados sincronizados!", { duration: 2000 });
+    } catch {
+      toast.error("Erro ao sincronizar", { duration: 2500 });
+    } finally {
+      setSyncing(false);
+    }
+  }, [syncing, queryClient]);
 
   const handleCatClick = () => {
     catClickCount.current += 1;
@@ -73,6 +105,14 @@ const Header = () => {
         </span>
       </div>
       <div className="flex items-center gap-3">
+        <button
+          onClick={handleSync}
+          disabled={syncing}
+          className="rounded-full p-2 text-muted-foreground transition-colors hover:text-foreground active:scale-95 disabled:opacity-50"
+          title="Sincronizar dados"
+        >
+          <RefreshCcw size={18} className={syncing ? "animate-spin" : ""} />
+        </button>
         <button
           onClick={toggleTheme}
           className="rounded-full p-2 text-muted-foreground transition-colors hover:text-foreground active:scale-95"
