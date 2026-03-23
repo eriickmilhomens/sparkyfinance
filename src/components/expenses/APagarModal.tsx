@@ -121,7 +121,7 @@ const APagarModal = ({ open, onClose }: APagarModalProps) => {
   };
 
   const deleteBill = (id: string) => {
-    const bill = bills.find(b => b.id === id);
+    const bill = allBills.find(b => b.id === id);
     if (!bill) return;
     const newTransactions = data.transactions.filter(t => t.id !== id);
     updateData({
