@@ -393,10 +393,17 @@ const PlanejamentoTab = () => {
                   <input
                     type="text"
                     inputMode="numeric"
-                    value={cat.budget}
+                    value={typeof cat.budget === "number" && !cat._editing ? (cat.budget > 0 ? cat.budget.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "R$ 0,00") : cat._budgetFormatted || "R$ 0,00"}
                     onChange={(e) => {
-                      const val = parseFloat(e.target.value) || 0;
-                      setEditingBudgets((prev: any) => prev.map((c: any, j: number) => j === i ? { ...c, budget: val } : c));
+                      const formatted = handleBRLChange(e.target.value);
+                      const numeric = parseBRLInput(formatted);
+                      setEditingBudgets((prev: any) => prev.map((c: any, j: number) => j === i ? { ...c, budget: numeric, _editing: true, _budgetFormatted: formatted } : c));
+                    }}
+                    onFocus={(e) => {
+                      if (!editingBudgets[i]._editing) {
+                        const formatted = editingBudgets[i].budget > 0 ? editingBudgets[i].budget.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "R$ 0,00";
+                        setEditingBudgets((prev: any) => prev.map((c: any, j: number) => j === i ? { ...c, _editing: true, _budgetFormatted: formatted } : c));
+                      }
                     }}
                     className="w-full rounded-xl border border-border bg-muted/50 px-4 py-2.5 text-sm outline-none tabular-nums focus:border-primary focus:ring-1 focus:ring-primary transition-all"
                   />
