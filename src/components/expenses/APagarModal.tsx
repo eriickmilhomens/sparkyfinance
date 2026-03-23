@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { X, CheckCircle2, Clock, Trash2, CalendarDays, Tag, DollarSign, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFinancialData, fmt, Transaction } from "@/hooks/useFinancialData";
@@ -28,6 +28,23 @@ const APagarModal = ({ open, onClose }: APagarModalProps) => {
   const [paidIds, setPaidIds] = useState<Set<string>>(() => {
     return new Set(readPaidBillIds());
   });
+  const [revision, setRevision] = useState(0);
+
+  // Re-sync when payments happen externally (subscriptions, cards)
+  useEffect(() => {
+    const handler = () => {
+      setPaidIds(new Set(readPaidBillIds()));
+      setRevision(r => r + 1);
+    };
+    window.addEventListener("sparky-paid-bills-updated", handler);
+    window.addEventListener("sparky-cards-updated", handler);
+    window.addEventListener("storage", handler);
+    return () => {
+      window.removeEventListener("sparky-paid-bills-updated", handler);
+      window.removeEventListener("sparky-cards-updated", handler);
+      window.removeEventListener("storage", handler);
+    };
+  }, []);
 
   const now = new Date();
 
@@ -95,7 +112,7 @@ const APagarModal = ({ open, onClose }: APagarModalProps) => {
       paidTotal: paid.reduce((s, b) => s + b.amount, 0),
       pendingTotal: pending.reduce((s, b) => s + b.amount, 0),
     };
-  }, [data.transactions, now, paidIds]);
+  }, [data.transactions, now, paidIds, revision]);
 
   const totalBills = paidTotal + pendingTotal;
 
