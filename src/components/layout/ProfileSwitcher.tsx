@@ -57,6 +57,8 @@ const ProfileSwitcher = () => {
   const [newEmail, setNewEmail] = useState("");
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const [showMediaPicker, setShowMediaPicker] = useState(false);
 
   const [allPrizes, setAllPrizes] = useState<Record<string, Prize[]>>({});
   const [showNewPrize, setShowNewPrize] = useState(false);
