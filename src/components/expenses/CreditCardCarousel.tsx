@@ -92,6 +92,7 @@ const CreditCardCarousel = () => {
   const saveCards = useCallback((updated: CreditCardData[]) => {
     setCards(updated);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    window.dispatchEvent(new Event("sparky-cards-updated"));
   }, []);
 
   const handleDeleteTx = (cardId: string, txId: string) => {

@@ -6,6 +6,8 @@ import {
   getGoalReservedTotal,
   getNormalizedMonthlyTotals,
   getPendingExpenseSummary,
+  getUnpaidCardInvoiceTotal,
+  getUnpaidSubscriptionTotal,
   readPaidBillIds,
 } from "@/lib/financialCalculations";
 
@@ -159,10 +161,12 @@ export const useFinancialQuery = () => {
     const handler = () => setBillingRevision((current) => current + 1);
     window.addEventListener("storage", handler);
     window.addEventListener("sparky-paid-bills-updated", handler);
+    window.addEventListener("sparky-cards-updated", handler);
 
     return () => {
       window.removeEventListener("storage", handler);
       window.removeEventListener("sparky-paid-bills-updated", handler);
+      window.removeEventListener("sparky-cards-updated", handler);
     };
   }, []);
 
@@ -182,14 +186,19 @@ export const useFinancialQuery = () => {
   const computed = useMemo(() => {
     const now = new Date();
     const paidBillIds = readPaidBillIds();
-    const { pendingTotal, pendingCount, allPaid } = getPendingExpenseSummary(data.transactions, {
-      now,
-      paidBillIds,
-    });
+    const txPending = getPendingExpenseSummary(data.transactions, { now, paidBillIds });
+
+    // Include credit card invoices + unpaid subscriptions not already in transactions
+    const cardInvoice = getUnpaidCardInvoiceTotal();
+    const subsPending = getUnpaidSubscriptionTotal();
+
+    const pendingTotal = txPending.pendingTotal + cardInvoice.total + subsPending.total;
+    const pendingCount = txPending.pendingCount + cardInvoice.count + subsPending.count;
+    const allPaid = pendingTotal === 0;
+
     const totalGoalReserved = getGoalReservedTotal(data.transactions);
     const available = data.balance - pendingTotal - totalGoalReserved;
 
-    // Reserve percentage from user settings
     let reservePct = 0.20;
     try { reservePct = parseInt(localStorage.getItem("sparky-reserve-pct") || "20") / 100; } catch {}
 

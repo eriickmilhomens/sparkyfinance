@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { X, CheckCircle2, Clock, Trash2, CalendarDays, Tag, DollarSign } from "lucide-react";
+import { X, CheckCircle2, Clock, Trash2, CalendarDays, Tag, DollarSign, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFinancialData, fmt, Transaction } from "@/hooks/useFinancialData";
 import { usePoints } from "@/hooks/usePoints";
@@ -12,6 +12,15 @@ interface APagarModalProps {
   onClose: () => void;
 }
 
+interface BillItem {
+  id: string;
+  description: string;
+  amount: number;
+  date: string;
+  category: string;
+  source: "transaction" | "card" | "subscription";
+}
+
 const APagarModal = ({ open, onClose }: APagarModalProps) => {
   const { data, updateData } = useFinancialData();
   const { awardPoints, removePoints } = usePoints();
@@ -21,26 +30,77 @@ const APagarModal = ({ open, onClose }: APagarModalProps) => {
   });
 
   const now = new Date();
-  const currentMonth = now.getMonth();
-  const currentYear = now.getFullYear();
 
-  const { bills, paidTotal, pendingTotal } = useMemo(() => {
+  const { allBills, paidTotal, pendingTotal } = useMemo(() => {
     const summary = getPendingExpenseSummary(data.transactions, {
       now,
       paidBillIds: [...paidIds],
     });
 
+    const items: BillItem[] = summary.bills.map(b => ({
+      id: b.id || crypto.randomUUID(),
+      description: b.description,
+      amount: b.amount,
+      date: b.date,
+      category: b.category,
+      source: "transaction" as const,
+    }));
+
+    // Add credit card invoices
+    try {
+      const cards = JSON.parse(localStorage.getItem("sparky-credit-cards") || "[]");
+      for (const card of cards) {
+        const invoice = Number(card.invoiceAmount) || 0;
+        if (invoice > 0) {
+          const dueDay = card.dueDay || 10;
+          const dueDate = new Date(now.getFullYear(), now.getMonth(), dueDay);
+          if (dueDate < now) dueDate.setMonth(dueDate.getMonth() + 1);
+          items.push({
+            id: `card-invoice-${card.id}`,
+            description: `Fatura: ${card.cardName || card.bankName}`,
+            amount: invoice,
+            date: dueDate.toISOString(),
+            category: "Fatura",
+            source: "card",
+          });
+        }
+      }
+    } catch {}
+
+    // Add unpaid subscriptions
+    try {
+      const subs = JSON.parse(localStorage.getItem("sparky-subscriptions") || "[]");
+      for (const sub of subs) {
+        if (!sub.paid && !paidIds.has(sub.id)) {
+          const dueDate = new Date(now.getFullYear(), now.getMonth(), sub.dueDay || 10);
+          if (dueDate < now) dueDate.setMonth(dueDate.getMonth() + 1);
+          items.push({
+            id: sub.id,
+            description: `Assinatura: ${sub.name}`,
+            amount: Number(sub.amount) || 0,
+            date: dueDate.toISOString(),
+            category: "Assinatura",
+            source: "subscription",
+          });
+        }
+      }
+    } catch {}
+
+    const sorted = items.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const paid = sorted.filter(b => paidIds.has(b.id));
+    const pending = sorted.filter(b => !paidIds.has(b.id));
+
     return {
-      bills: [...summary.bills].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
-      paidTotal: summary.paidTotal,
-      pendingTotal: summary.pendingTotal,
+      allBills: sorted,
+      paidTotal: paid.reduce((s, b) => s + b.amount, 0),
+      pendingTotal: pending.reduce((s, b) => s + b.amount, 0),
     };
   }, [data.transactions, now, paidIds]);
 
   const totalBills = paidTotal + pendingTotal;
 
   const togglePaid = async (id: string) => {
-    const bill = bills.find(b => b.id === id);
+    const bill = allBills.find(b => b.id === id);
     if (!bill) return;
 
     const newPaid = new Set(paidIds);
@@ -61,7 +121,7 @@ const APagarModal = ({ open, onClose }: APagarModalProps) => {
   };
 
   const deleteBill = (id: string) => {
-    const bill = bills.find(b => b.id === id);
+    const bill = allBills.find(b => b.id === id);
     if (!bill) return;
     const newTransactions = data.transactions.filter(t => t.id !== id);
     updateData({
@@ -121,10 +181,10 @@ const APagarModal = ({ open, onClose }: APagarModalProps) => {
 
         {/* Bills list */}
         <div className="flex-1 overflow-y-auto space-y-2 min-h-0">
-          {bills.length === 0 ? (
+          {allBills.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">Nenhuma conta planejada pendente este mês.</p>
           ) : (
-            bills.map((bill) => {
+            allBills.map((bill) => {
               const isPaid = paidIds.has(bill.id);
               return (
                 <div
@@ -170,13 +230,15 @@ const APagarModal = ({ open, onClose }: APagarModalProps) => {
                       {fmt(bill.amount)}
                     </p>
 
-                    {/* Delete */}
-                    <button
-                      onClick={() => deleteBill(bill.id)}
-                      className="text-muted-foreground hover:text-destructive transition-colors active:scale-90 p-1"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    {/* Delete — only for transaction-based bills */}
+                    {bill.source === "transaction" && (
+                      <button
+                        onClick={() => deleteBill(bill.id)}
+                        className="text-muted-foreground hover:text-destructive transition-colors active:scale-90 p-1"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
                   </div>
 
                   {/* Status badge */}

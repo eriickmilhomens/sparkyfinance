@@ -23,6 +23,44 @@ export const readPaidBillIds = (): string[] => {
   }
 };
 
+/** Read unpaid credit card invoice totals from localStorage */
+export const getUnpaidCardInvoiceTotal = (): { total: number; count: number } => {
+  try {
+    const cards = JSON.parse(localStorage.getItem("sparky-credit-cards") || "[]");
+    let total = 0;
+    let count = 0;
+    for (const card of cards) {
+      const invoice = Number(card.invoiceAmount) || 0;
+      if (invoice > 0) {
+        total += invoice;
+        count += 1;
+      }
+    }
+    return { total, count };
+  } catch {
+    return { total: 0, count: 0 };
+  }
+};
+
+/** Read unpaid subscription totals from localStorage */
+export const getUnpaidSubscriptionTotal = (): { total: number; count: number } => {
+  try {
+    const subs = JSON.parse(localStorage.getItem("sparky-subscriptions") || "[]");
+    const paidBills = new Set(readPaidBillIds());
+    let total = 0;
+    let count = 0;
+    for (const sub of subs) {
+      if (!sub.paid && !paidBills.has(sub.id)) {
+        total += Number(sub.amount) || 0;
+        count += 1;
+      }
+    }
+    return { total, count };
+  } catch {
+    return { total: 0, count: 0 };
+  }
+};
+
 export const isGoalDepositTransaction = (transaction: FinancialTransactionLike) =>
   transaction.type === GOAL_DEPOSIT_TYPE ||
   transaction.category === GOAL_CATEGORY ||
