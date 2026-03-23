@@ -395,6 +395,8 @@ export const useFinancialQuery = () => {
     available: computed.available,
     daysLeft: computed.daysLeft,
     dailyBudget: computed.dailyBudget,
+    baseDailyBudget: computed.baseDailyBudget,
+    rolloverBonus: computed.rolloverBonus,
     pendingTotal: computed.pendingTotal,
     pendingCount: computed.pendingCount,
     allPaid: computed.allPaid,
