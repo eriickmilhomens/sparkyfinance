@@ -587,7 +587,70 @@ const ChatView = () => {
               {shuffledChips.map((chip) => (
                 <button
                   key={chip}
-                  onClick={() => { setInput(chip); }}
+                  onClick={() => {
+                    setInput(chip);
+                    // Auto-send after a tick so state updates
+                    setTimeout(() => {
+                      const fakeEvent = chip;
+                      setInput("");
+                      const userMsg: Msg = { role: "user", content: fakeEvent };
+                      setMessages(prev => [...prev, userMsg]);
+                      // Trigger send logic directly
+                      (async () => {
+                        setIsLoading(true);
+                        let assistantSoFar = "";
+                        try {
+                          const apiMessages = [userMsg].map(msg => ({ role: msg.role, content: msg.content }));
+                          const resp = await fetch(CHAT_URL, {
+                            method: "POST",
+                            headers: {
+                              "Content-Type": "application/json",
+                              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+                            },
+                            body: JSON.stringify({ messages: apiMessages, userContext: getUserContext() }),
+                          });
+                          if (!resp.ok || !resp.body) throw new Error("Erro na resposta");
+                          const reader = resp.body.getReader();
+                          const decoder = new TextDecoder();
+                          let textBuffer = "";
+                          while (true) {
+                            const { done, value } = await reader.read();
+                            if (done) break;
+                            textBuffer += decoder.decode(value, { stream: true });
+                            let newlineIndex: number;
+                            while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+                              let line = textBuffer.slice(0, newlineIndex);
+                              textBuffer = textBuffer.slice(newlineIndex + 1);
+                              if (line.endsWith("\r")) line = line.slice(0, -1);
+                              if (line.startsWith(":") || line.trim() === "") continue;
+                              if (!line.startsWith("data: ")) continue;
+                              const jsonStr = line.slice(6).trim();
+                              if (jsonStr === "[DONE]") break;
+                              try {
+                                const parsed = JSON.parse(jsonStr);
+                                const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+                                if (content) {
+                                  assistantSoFar += content;
+                                  const snap = assistantSoFar;
+                                  setMessages(prev => {
+                                    const last = prev[prev.length - 1];
+                                    if (last?.role === "assistant") {
+                                      return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: snap } : m));
+                                    }
+                                    return [...prev, { role: "assistant", content: snap }];
+                                  });
+                                }
+                              } catch { textBuffer = line + "\n" + textBuffer; break; }
+                            }
+                          }
+                        } catch {
+                          setMessages(prev => [...prev, { role: "assistant", content: "Desculpe, ocorreu um erro. Tente novamente." }]);
+                        } finally {
+                          setIsLoading(false);
+                        }
+                      })();
+                    }, 0);
+                  }}
                   className="rounded-full bg-muted border border-border px-3 py-1.5 text-[11px] text-muted-foreground hover:text-foreground hover:border-primary/30 active:scale-95 transition-all"
                 >
                   {chip}

@@ -21,7 +21,16 @@ export const useGroupMembers = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (isDemo || !profile?.group_code) {
+    if (isDemo) {
+      // In demo mode, show current profile as the sole member
+      if (profile) {
+        setMembers([profile as GroupMember]);
+      }
+      setLoading(false);
+      return;
+    }
+
+    if (!profile?.group_code) {
       setLoading(false);
       return;
     }
@@ -39,10 +48,18 @@ export const useGroupMembers = () => {
 
     fetchMembers();
 
-    // Refresh every 30s
-    const interval = setInterval(fetchMembers, 30000);
-    return () => clearInterval(interval);
-  }, [profile?.group_code, isDemo]);
+    // Refresh every 15s for faster sync
+    const interval = setInterval(fetchMembers, 15000);
+
+    // Listen for points updates
+    const handlePointsUpdate = () => fetchMembers();
+    window.addEventListener("sparky-points-updated", handlePointsUpdate);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("sparky-points-updated", handlePointsUpdate);
+    };
+  }, [profile?.group_code, profile?.points, isDemo]);
 
   // The group creator is the one whose invite_code === group_code
   const leader = members.find(m => m.invite_code === m.group_code);
