@@ -43,9 +43,9 @@ const Onboarding = () => {
     if (tapTimer) clearTimeout(tapTimer);
 
     if (newCount >= 7) {
-      // Sign out any existing session first to prevent race condition
-      await supabase.auth.signOut().catch(() => {});
+      // Set demo flag BEFORE signOut to prevent redirect race condition
       localStorage.setItem("sparky-demo-mode", "true");
+      await supabase.auth.signOut().catch(() => {});
       seedDemoData();
       toast.success("Modo Demo ativado!");
       setTapCount(0);
