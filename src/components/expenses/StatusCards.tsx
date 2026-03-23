@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { PiggyBank, CalendarClock, Banknote, Info, X } from "lucide-react";
 import { useFinancialData, fmt } from "@/hooks/useFinancialData";
 import APagarModal from "./APagarModal";
@@ -23,27 +23,40 @@ const InfoPopup = ({ title, message, onClose }: { title: string; message: string
 );
 
 const StatusCards = () => {
-  const { data, available } = useFinancialData();
+  const { data } = useFinancialData();
   const [aPagarOpen, setAPagarOpen] = useState(false);
   const [infoPopup, setInfoPopup] = useState<string | null>(null);
 
-  // Calculate A Pagar from subscriptions + scheduled
-  const subs = (() => {
-    try { return JSON.parse(localStorage.getItem("sparky-subscriptions") || "[]"); } catch { return []; }
-  })();
-  const paidBills = (() => {
-    try { return JSON.parse(localStorage.getItem("sparky-paid-bills") || "[]"); } catch { return []; }
-  })();
-  const unpaidSubsTotal = subs
-    .filter((s: any) => !paidBills.includes(s.id))
-    .reduce((sum: number, s: any) => sum + (s.amount || 0), 0);
+  // SSOT: derive A Pagar from data.transactions — same source as APagarModal
+  const { pendingTotal, pendingCount, allPaid } = useMemo(() => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
 
-  const aPagar = data.scheduled > 0 ? data.scheduled : unpaidSubsTotal;
-  const saldoDisponivel = data.balance - aPagar;
+    let paidBillIds: string[] = [];
+    try {
+      paidBillIds = JSON.parse(localStorage.getItem("sparky-paid-bills") || "[]");
+    } catch {}
+    const paidSet = new Set(paidBillIds);
+
+    // Same filter as APagarModal: current month expenses
+    const bills = data.transactions.filter(t => {
+      const d = new Date(t.date);
+      return t.type === "expense" && d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    });
+
+    const unpaid = bills.filter(b => !paidSet.has(b.id));
+    const total = unpaid.reduce((s, t) => s + t.amount, 0);
+
+    return {
+      pendingTotal: total,
+      pendingCount: unpaid.length,
+      allPaid: unpaid.length === 0,
+    };
+  }, [data.transactions]);
+
+  const saldoDisponivel = data.balance - pendingTotal;
   const isNegative = saldoDisponivel < 0;
-
-  const pendingCount = subs.filter((s: any) => !paidBills.includes(s.id)).length;
-  const allPaid = aPagar === 0 || pendingCount === 0;
 
   const statuses = [
     {
@@ -58,7 +71,7 @@ const StatusCards = () => {
     },
     {
       label: "A Pagar",
-      value: allPaid ? "" : fmt(aPagar),
+      value: allPaid ? "" : fmt(pendingTotal),
       color: "text-warning",
       sub: allPaid ? "✅ Contas todas pagas" : `${pendingCount} pendente(s)`,
       icon: CalendarClock,
@@ -81,15 +94,15 @@ const StatusCards = () => {
   const infoTexts: Record<string, { title: string; message: string }> = {
     saldo: {
       title: "Saldo Real",
-      message: "O Saldo Real representa o valor total que você possui em conta neste momento. Ele é atualizado automaticamente conforme você registra receitas, despesas, pagamentos de faturas e ajustes manuais. É o valor bruto antes de descontar contas pendentes.",
+      message: "O Saldo Real representa o valor total que você possui em conta neste momento. Ele é atualizado automaticamente conforme você registra receitas, despesas, pagamentos de faturas e ajustes manuais.",
     },
     apagar: {
       title: "Contas a Pagar",
-      message: "O valor A Pagar representa o total de despesas agendadas ou registradas para o mês atual que ainda precisam ser quitadas. Inclui contas fixas, faturas de cartão e qualquer compromisso financeiro pendente. Ao marcar como pago, o valor é automaticamente descontado do saldo e você ganha pontos de recompensa.",
+      message: "O valor A Pagar representa o total de despesas registradas para o mês atual que ainda não foram marcadas como pagas. Inclui todas as categorias. Ao marcar como pago, você ganha pontos de recompensa.",
     },
     disponivel: {
       title: "Saldo Disponível",
-      message: "O Saldo Disponível é o valor que sobra após descontar todas as contas agendadas e pendentes do seu saldo real. Este é o valor que você realmente pode gastar sem comprometer suas obrigações financeiras do mês. Se estiver vermelho, significa que seu saldo é insuficiente para cobrir todas as contas.",
+      message: "O Saldo Disponível é o valor que sobra após descontar todas as contas pendentes do seu saldo real. Se estiver vermelho, significa que seu saldo é insuficiente para cobrir todas as contas.",
     },
   };
 
