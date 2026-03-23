@@ -127,7 +127,9 @@ const ChatView = () => {
   }, [messages]);
 
   useEffect(() => {
-    if (!activeId || messages.length === 0) return;
+    // Only persist conversations that have real user messages
+    const hasUserMessages = messages.some(m => m.role === "user");
+    if (!activeId || !hasUserMessages) return;
     setConversations(prev => {
       const exists = prev.find(c => c.id === activeId);
       let updated;

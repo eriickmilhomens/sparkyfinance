@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { PiggyBank, CalendarClock, Banknote, Info, X } from "lucide-react";
+import { PiggyBank, CalendarClock, Banknote, Info, X, CheckCircle } from "lucide-react";
 import { useFinancialData, fmt } from "@/hooks/useFinancialData";
 import APagarModal from "./APagarModal";
 import { cn } from "@/lib/utils";
@@ -73,7 +73,8 @@ const StatusCards = () => {
       label: "A Pagar",
       value: allPaid ? "" : fmt(pendingTotal),
       color: "text-warning",
-      sub: allPaid ? "✅ Contas todas pagas" : `${pendingCount} pendente(s)`,
+      sub: allPaid ? "Contas todas pagas" : `${pendingCount} pendente(s)`,
+      allPaid,
       icon: CalendarClock,
       iconColor: allPaid ? "text-success" : "text-warning",
       clickable: true,
@@ -128,7 +129,10 @@ const StatusCards = () => {
                 )}
               </div>
               {s.value ? <p className={cn("text-sm font-bold tabular-nums", s.color)}>{s.value}</p> : null}
-              <p className={cn("text-[9px] mt-0.5 leading-tight", isNegative && s.infoKey === "disponivel" ? "text-destructive/80" : "text-muted-foreground")}>{s.sub}</p>
+              <p className={cn("text-[9px] mt-0.5 leading-tight flex items-center gap-0.5", isNegative && s.infoKey === "disponivel" ? "text-destructive/80" : "text-muted-foreground")}>
+                {(s as any).allPaid && s.infoKey === "apagar" && <CheckCircle size={9} className="text-success shrink-0" />}
+                {s.sub}
+              </p>
             </>
           );
 

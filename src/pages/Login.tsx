@@ -68,10 +68,16 @@ const Login = () => {
     setTapTimer(timer);
   }, [tapCount, tapTimer, navigate]);
 
+  const isValidDomain = (e: string) => /^[a-zA-Z0-9._%+-]+@sparky\.app$/i.test(e);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
       toast.error("Preencha todos os campos");
+      return;
+    }
+    if (!isValidDomain(email)) {
+      toast.error("Utilize um e-mail com domínio @sparky.app");
       return;
     }
     setLoading(true);
