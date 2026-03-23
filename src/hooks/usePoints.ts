@@ -103,11 +103,21 @@ export const usePoints = () => {
 
     const freshPoints = profileRef.current?.points || 0;
     const newTotal = Math.max(0, freshPoints - rule.points);
-    await updateProfile({ points: newTotal });
+
+    if (isDemo) {
+      await updateProfile({ points: newTotal });
+    } else {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.rpc("update_user_points", { _user_id: user.id, _points: newTotal });
+        await updateProfile({ points: newTotal });
+      }
+    }
+    queryClient.invalidateQueries({ queryKey: ["profile"] });
     window.dispatchEvent(new Event("sparky-points-updated"));
 
     return rule.points;
-  }, [updateProfile]);
+  }, [updateProfile, isDemo, queryClient]);
 
   // Calculate monthly earnings
   const monthKey = new Date().toISOString().slice(0, 7);
