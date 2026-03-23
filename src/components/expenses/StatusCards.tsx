@@ -129,7 +129,10 @@ const StatusCards = () => {
                 )}
               </div>
               {s.value ? <p className={cn("text-sm font-bold tabular-nums", s.color)}>{s.value}</p> : null}
-              <p className={cn("text-[9px] mt-0.5 leading-tight", isNegative && s.infoKey === "disponivel" ? "text-destructive/80" : "text-muted-foreground")}>{s.sub}</p>
+              <p className={cn("text-[9px] mt-0.5 leading-tight flex items-center gap-0.5", isNegative && s.infoKey === "disponivel" ? "text-destructive/80" : "text-muted-foreground")}>
+                {(s as any).allPaid && s.infoKey === "apagar" && <CheckCircle size={9} className="text-success shrink-0" />}
+                {s.sub}
+              </p>
             </>
           );
 
