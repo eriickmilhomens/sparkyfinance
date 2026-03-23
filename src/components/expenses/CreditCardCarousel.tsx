@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { handleBRLChange } from "@/lib/brlInput";
 import { ChevronDown, Receipt, Calendar, DollarSign, ArrowLeft, Trash2, Pencil, X, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
