@@ -1378,7 +1378,11 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
               <button onClick={() => { setSelectedUser(null); setAdjustPoints(""); setShowTimeline(false); }} className="flex-1 rounded-xl border border-border py-2.5 text-sm font-medium text-muted-foreground active:scale-[0.98]">
                 Cancelar
               </button>
-              <button onClick={() => handleAdjustPoints(selectedUser.id, parseInt(adjustPoints) || 0)}
+              <button onClick={() => {
+                const pts = parseInt(adjustPoints) || 0;
+                const finalPts = Math.max(0, pts);
+                handleAdjustPoints(selectedUser.id, finalPts);
+              }}
                 className="flex-1 rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground active:scale-[0.98]">
                 Salvar Pontos
               </button>
