@@ -981,7 +981,18 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
                       setMaintenanceTimer(min * 60);
                       setMaintenanceTimerActive(true);
                       addAuditLog("SCHEDULE_MAINTENANCE", "Sistema", `Manutenção agendada em ${min} minutos`);
-                      toast.success(`Manutenção agendada em ${min} min`);
+                      // Send global notification to all users
+                      const notif = {
+                        id: Date.now().toString(),
+                        message: `O sistema entrará em manutenção em ${min} minutos. Salve seu trabalho!`,
+                        date: new Date().toISOString(),
+                        read: false,
+                        blocking: true,
+                        minDisplaySeconds: 5,
+                      };
+                      localStorage.setItem("sparky-active-notification", JSON.stringify(notif));
+                      window.dispatchEvent(new Event("sparky-notification-push"));
+                      toast.success(`Manutenção agendada em ${min} min — Notificação enviada!`);
                     }}
                     disabled={maintenanceTimerActive}
                     className="flex-1 rounded-lg border border-border py-2 text-[10px] font-medium text-muted-foreground hover:border-primary/50 active:scale-95 disabled:opacity-30"
@@ -1368,16 +1379,21 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
 
             {/* Adjust Points */}
             <div>
-              <label className="text-[10px] text-muted-foreground font-medium mb-1 block">Ajustar Pontos</label>
-              <input type="text" inputMode="numeric" value={adjustPoints} onChange={(e) => setAdjustPoints(e.target.value.replace(/\D/g, ""))}
-                className="w-full rounded-xl border border-border bg-muted/30 px-3 py-2.5 text-sm outline-none focus:border-primary" />
+              <label className="text-[10px] text-muted-foreground font-medium mb-1 block">Ajustar Pontos (positivo ou negativo)</label>
+              <input type="text" inputMode="numeric" value={adjustPoints} onChange={(e) => setAdjustPoints(e.target.value.replace(/[^\d-]/g, ""))}
+                className="w-full rounded-xl border border-border bg-muted/30 px-3 py-2.5 text-sm outline-none focus:border-primary"
+                placeholder="Ex: 50 ou -20" />
             </div>
 
             <div className="flex gap-2">
               <button onClick={() => { setSelectedUser(null); setAdjustPoints(""); setShowTimeline(false); }} className="flex-1 rounded-xl border border-border py-2.5 text-sm font-medium text-muted-foreground active:scale-[0.98]">
                 Cancelar
               </button>
-              <button onClick={() => handleAdjustPoints(selectedUser.id, parseInt(adjustPoints) || 0)}
+              <button onClick={() => {
+                const pts = parseInt(adjustPoints) || 0;
+                const finalPts = Math.max(0, pts);
+                handleAdjustPoints(selectedUser.id, finalPts);
+              }}
                 className="flex-1 rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground active:scale-[0.98]">
                 Salvar Pontos
               </button>
