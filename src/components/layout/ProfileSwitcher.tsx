@@ -1074,14 +1074,14 @@ const ProfileSwitcher = () => {
               <Trophy size={16} className="text-muted-foreground" />
               <span className="text-sm font-medium">Ranking</span>
             </button>
-            {hasActiveSupport && (
+            {current?.role === "admin" && hasActiveSupport && (
               <button onClick={() => openSubView("support")} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-primary/10 transition-colors active:scale-[0.97]">
                 <MessageSquare size={16} className="text-primary" />
                 <span className="text-sm font-medium text-primary">Suporte</span>
                 <span className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
               </button>
             )}
-            {!hasActiveSupport && (
+            {current?.role === "admin" && !hasActiveSupport && (
               <button onClick={startSupportTicket} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-muted/50 transition-colors active:scale-[0.97]">
                 <MessageSquare size={16} className="text-muted-foreground" />
                 <span className="text-sm font-medium">Suporte</span>
