@@ -69,6 +69,16 @@ const PlanejamentoTab = () => {
   const [investmentGoals, setInvestmentGoals] = useState<InvestmentGoal[]>(() => {
     try { return JSON.parse(localStorage.getItem(GOALS_KEY) || "[]"); } catch { return []; }
   });
+
+  // Re-read from localStorage when data changes (e.g. demo mode activation)
+  useEffect(() => {
+    const handler = () => {
+      try { setBudgetCategories(JSON.parse(localStorage.getItem(BUDGET_KEY) || "null") || defaultBudgets); } catch { setBudgetCategories(defaultBudgets); }
+      try { setInvestmentGoals(JSON.parse(localStorage.getItem(GOALS_KEY) || "[]")); } catch { setInvestmentGoals([]); }
+    };
+    window.addEventListener("sparky-data-cleared", handler);
+    return () => window.removeEventListener("sparky-data-cleared", handler);
+  }, []);
   const totalBudget = budgetCategories.reduce((s: number, c: any) => s + c.budget, 0);
   const totalSpent = budgetCategories.reduce((s: number, c: any) => s + c.spent, 0);
   const [activeTip, setActiveTip] = useState(0);

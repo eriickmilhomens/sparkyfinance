@@ -74,6 +74,15 @@ const CreditCardCarousel = () => {
   const [editDesc, setEditDesc] = useState("");
   const [editValue, setEditValue] = useState("");
 
+  // Re-read from localStorage when data changes (e.g. demo mode activation)
+  useEffect(() => {
+    const handler = () => {
+      try { setCards(JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]")); } catch { setCards([]); }
+    };
+    window.addEventListener("sparky-data-cleared", handler);
+    return () => window.removeEventListener("sparky-data-cleared", handler);
+  }, []);
+
   const { data, updateData } = useFinancialData();
 
   useDockVisibility(expandedId !== null || showPayment);

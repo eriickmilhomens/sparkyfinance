@@ -55,6 +55,13 @@ const SubscriptionsCard = () => {
   const { awardPoints, removePoints } = usePoints();
   useDockVisibility(showAdd);
 
+  // Re-read from localStorage when data changes (e.g. demo mode activation)
+  useEffect(() => {
+    const handler = () => setSubs(loadSubs());
+    window.addEventListener("sparky-data-cleared", handler);
+    return () => window.removeEventListener("sparky-data-cleared", handler);
+  }, []);
+
   const update = (updated: Subscription[]) => { setSubs(updated); saveSubs(updated); };
 
   const getDaysLeft = (dueDay: number) => {
