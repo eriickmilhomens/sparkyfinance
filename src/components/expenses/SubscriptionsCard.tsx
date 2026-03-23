@@ -62,7 +62,12 @@ const SubscriptionsCard = () => {
     return () => window.removeEventListener("sparky-data-cleared", handler);
   }, []);
 
-  const update = (updated: Subscription[]) => { setSubs(updated); saveSubs(updated); };
+  const update = (updated: Subscription[]) => {
+    setSubs(updated);
+    saveSubs(updated);
+    // Notify dashboard to re-compute pending totals
+    window.dispatchEvent(new Event("sparky-paid-bills-updated"));
+  };
 
   const getDaysLeft = (dueDay: number) => {
     const now = new Date();

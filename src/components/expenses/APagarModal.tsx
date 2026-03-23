@@ -28,6 +28,23 @@ const APagarModal = ({ open, onClose }: APagarModalProps) => {
   const [paidIds, setPaidIds] = useState<Set<string>>(() => {
     return new Set(readPaidBillIds());
   });
+  const [revision, setRevision] = useState(0);
+
+  // Re-sync when payments happen externally (subscriptions, cards)
+  useEffect(() => {
+    const handler = () => {
+      setPaidIds(new Set(readPaidBillIds()));
+      setRevision(r => r + 1);
+    };
+    window.addEventListener("sparky-paid-bills-updated", handler);
+    window.addEventListener("sparky-cards-updated", handler);
+    window.addEventListener("storage", handler);
+    return () => {
+      window.removeEventListener("sparky-paid-bills-updated", handler);
+      window.removeEventListener("sparky-cards-updated", handler);
+      window.removeEventListener("storage", handler);
+    };
+  }, []);
 
   const now = new Date();
 
