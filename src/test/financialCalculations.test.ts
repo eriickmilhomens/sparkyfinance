@@ -6,6 +6,7 @@ import {
   getNormalizedMonthlyTotals,
   getPendingExpenseSummary,
 } from "@/lib/financialCalculations";
+import { getBillingSummary } from "@/lib/billing";
 
 const march = "2026-03-10T12:00:00.000Z";
 const now = new Date("2026-03-20T12:00:00.000Z");

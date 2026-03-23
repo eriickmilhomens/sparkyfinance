@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { handleBRLChange } from "@/lib/brlInput";
 import { X, ArrowLeft, Plus, CreditCard, ChevronRight, Receipt, Calendar, DollarSign, Wallet, Building2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useDockVisibility } from "@/hooks/useDockVisibility";
-import { usePoints } from "@/hooks/usePoints";
+import { BILLING_SYNC_EVENT, loadCreditCards, saveCreditCards } from "@/lib/billing";
+import { useBillingActions } from "@/hooks/useBillingActions";
 
 const BANK_DATA: Record<string, { color: string; abbr: string }> = {
   "nubank": { color: "bg-purple-600", abbr: "NU" },
@@ -84,16 +85,13 @@ interface CreditCardData {
   futureInvoices: { month: string; amount: number }[];
 }
 
-const STORAGE_KEY = "sparky-credit-cards";
-const loadCards = (): CreditCardData[] => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; } };
-const saveCards = (cards: CreditCardData[]) => localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
 const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
 
 interface Props { open: boolean; onClose: () => void; }
 
 const CreditCardManager = ({ open, onClose }: Props) => {
-  const [cards, setCards] = useState<CreditCardData[]>(loadCards);
-  const { awardPoints } = usePoints();
+  const [cards, setCards] = useState<CreditCardData[]>(loadCreditCards);
+  const { payCardInvoice } = useBillingActions();
   useDockVisibility(open);
   const [showAdd, setShowAdd] = useState(false);
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
@@ -111,7 +109,17 @@ const CreditCardManager = ({ open, onClose }: Props) => {
   const [newType, setNewType] = useState("Crédito");
   const [newFlag, setNewFlag] = useState("");
 
-  const update = (updated: CreditCardData[]) => { setCards(updated); saveCards(updated); window.dispatchEvent(new Event("sparky-cards-updated")); };
+  const update = (updated: CreditCardData[]) => { setCards(updated); saveCreditCards(updated); };
+
+  useEffect(() => {
+    const handler = () => setCards(loadCreditCards());
+    window.addEventListener(BILLING_SYNC_EVENT, handler);
+    window.addEventListener("sparky-data-cleared", handler);
+    return () => {
+      window.removeEventListener(BILLING_SYNC_EVENT, handler);
+      window.removeEventListener("sparky-data-cleared", handler);
+    };
+  }, []);
 
   const handleAddCard = () => {
     const rawBankName = showCustomBank ? customBankName.trim() : newBank.trim();
@@ -146,31 +154,16 @@ const CreditCardManager = ({ open, onClose }: Props) => {
 
   const handlePayInvoice = async (cardId: string) => {
     const card = cards.find(c => c.id === cardId);
-    if (!card || card.invoiceAmount <= 0) {
-      toast.error("Não há fatura a pagar.");
+    const amount = payFull ? card?.invoiceAmount ?? 0 : parseFloat(payAmount.replace(/\D/g, "")) / 100;
+
+    try {
+      const result = await payCardInvoice(`card-invoice-${cardId}`, amount);
       setShowPayment(false);
-      return;
+      setPayAmount("");
+      toast.success(payFull ? "Fatura paga com sucesso! +3 pts" : `Pago ${fmt(result.amount)} - Restante: ${fmt(result.remaining)} +3 pts`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível pagar a fatura.");
     }
-    const amount = payFull ? card.invoiceAmount : parseFloat(payAmount.replace(/\D/g, "")) / 100;
-    if (!amount || amount <= 0) {
-      toast.error("Informe um valor válido.");
-      return;
-    }
-    if (amount > card.invoiceAmount) {
-      toast.error("Valor maior que a fatura.");
-      return;
-    }
-    const remaining = Math.max(0, card.invoiceAmount - amount);
-    update(cards.map(c => c.id === cardId ? {
-      ...c, invoiceAmount: remaining, usedAmount: Math.max(0, c.usedAmount - amount),
-      paidInvoices: [...c.paidInvoices, { month: new Date().toLocaleDateString("pt-BR", { month: "short", year: "numeric" }), amount, paidAt: new Date().toLocaleDateString("pt-BR") }],
-    } : c));
-    setShowPayment(false); setPayAmount("");
-
-    // Award points for invoice payment
-    await awardPoints("bill_paid", `Fatura: ${card.cardName}`);
-
-    toast.success(payFull ? "Fatura paga com sucesso! +3 pts" : `Pago ${fmt(amount)} - Restante: ${fmt(remaining)} +3 pts`);
   };
 
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);

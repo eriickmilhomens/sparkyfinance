@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { TrendingUp, TrendingDown, ArrowUpRight, Wallet, CreditCard, X, Info, Pencil } from "lucide-react";
+import { useState } from "react";
+import { TrendingUp, TrendingDown, ArrowUpRight, Wallet, CreditCard, X, Info } from "lucide-react";
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, CartesianGrid, BarChart, Bar, Tooltip } from "recharts";
 import { useFinancialData, fmt } from "@/hooks/useFinancialData";
 import PaceBar from "@/components/expenses/PaceBar";
@@ -44,24 +44,17 @@ const SpendingOverview = ({ hideValues = false }: SpendingOverviewProps) => {
   const [simOpen, setSimOpen] = useState(false);
   const [simValue, setSimValue] = useState(0);
   const [infoPopup, setInfoPopup] = useState<string | null>(null);
-  const [editingPercent, setEditingPercent] = useState(false);
-  const [spendPercent, setSpendPercent] = useState(() => {
-    const saved = localStorage.getItem("sparky-spend-percent");
-    return saved ? Number(saved) : 20;
-  });
-  const { data, available, daysLeft } = useFinancialData();
+  const { data, available, daysLeft, dailyBudget } = useFinancialData();
+  const reservePct = (() => {
+    try { return parseInt(localStorage.getItem("sparky-reserve-pct") || "20") / 100; } catch { return 0.20; }
+  })();
 
   useDockVisibility(simOpen || infoPopup !== null);
 
-  useEffect(() => {
-    localStorage.setItem("sparky-spend-percent", String(spendPercent));
-  }, [spendPercent]);
-
   const hasData = data.balance > 0 || data.income > 0 || data.expenses > 0;
-  const spendablePool = Math.max(0, available * (spendPercent / 100));
-  const dailyBudget = daysLeft > 0 ? spendablePool / daysLeft : 0;
-  const orcamentoDiarioNovo = Math.max(0, (spendablePool - simValue) / daysLeft);
-  const reducao = dailyBudget - orcamentoDiarioNovo;
+  const spendablePool = Math.max(0, available * (1 - reservePct));
+  const orcamentoDiarioNovo = Math.max(0, (spendablePool - simValue) / Math.max(daysLeft, 1));
+  const reducao = Math.max(0, dailyBudget - orcamentoDiarioNovo);
   const isHealthy = dailyBudget >= 50 || !hasData;
 
   const buildBalanceHistory = () => {
@@ -115,46 +108,14 @@ const SpendingOverview = ({ hideValues = false }: SpendingOverviewProps) => {
         )}
       </div>
 
-      {/* Subtitle with editable percent */}
       <div className="flex items-center gap-1.5 mb-3">
         <p className="text-[11px] text-muted-foreground">
           {hasData && !hideValues
-            ? <>Reserva de {spendPercent}% · {daysLeft} dia{daysLeft !== 1 ? "s" : ""} restantes</>
+            ? <>Teto estático do dia · {daysLeft} dia{daysLeft !== 1 ? "s" : ""} restantes</>
             : hideValues ? "Valores ocultos" : "Adicione sua renda e despesas"
           }
         </p>
-        {!hideValues && (
-          <button
-            onClick={() => setEditingPercent(!editingPercent)}
-            className="flex h-5 w-5 items-center justify-center rounded-md bg-muted/60 text-muted-foreground hover:text-foreground active:scale-90 transition-all"
-          >
-            <Pencil size={10} />
-          </button>
-        )}
       </div>
-
-      {/* Inline percent editor */}
-      {editingPercent && (
-        <div className="mb-3 rounded-xl bg-muted/40 border border-border p-3 space-y-2 animate-in fade-in-0 slide-in-from-top-2 duration-200">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] text-muted-foreground font-medium">Percentual de gasto</span>
-            <span className="text-xs font-bold text-primary tabular-nums">{spendPercent}%</span>
-          </div>
-          <input
-            type="range"
-            min={5}
-            max={50}
-            step={5}
-            value={spendPercent}
-            onChange={(e) => setSpendPercent(Number(e.target.value))}
-            className="w-full accent-primary h-1.5"
-          />
-          <div className="flex justify-between text-[9px] text-muted-foreground">
-            <span>5% (conservador)</span>
-            <span>50% (agressivo)</span>
-          </div>
-        </div>
-      )}
 
       {/* Actions row */}
       {!hideValues && (
@@ -198,7 +159,7 @@ const SpendingOverview = ({ hideValues = false }: SpendingOverviewProps) => {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-lg font-bold">Simulador de Impacto</h2>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Veja como uma compra afeta seu orçamento diário (base: {spendPercent}% do saldo)</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Veja como uma compra manual afeta seu teto diário atual</p>
               </div>
               <button onClick={() => setSimOpen(false)} className="rounded-full p-1.5 text-muted-foreground hover:text-foreground active:scale-95 transition-all"><X size={20} /></button>
             </div>
@@ -273,7 +234,7 @@ const SpendingOverview = ({ hideValues = false }: SpendingOverviewProps) => {
               ? "A Receita Mensal representa o total de entradas financeiras registradas no mês atual. Inclui salários, freelances, rendimentos e qualquer outra fonte de renda que você tenha adicionado. Esse valor é atualizado automaticamente a cada novo lançamento de receita."
               : infoPopup === "gasto"
               ? "O Gasto Mensal representa o total de despesas registradas no mês atual. Inclui contas fixas, compras, assinaturas e qualquer saída de dinheiro que você tenha lançado. Acompanhe esse valor para manter o controle do seu orçamento."
-              : `O 'Pode Gastar Hoje' calcula quanto você pode gastar de forma segura hoje. Ele pega ${spendPercent}% do seu saldo disponível (uma reserva de segurança) e divide pelos dias restantes do mês. Dessa forma, você evita gastar demais nos primeiros dias e garante que seu dinheiro dure até o fim do mês. Você pode ajustar o percentual tocando no ícone de lápis. Quanto mais verde, mais saudável está seu orçamento diário.`
+              : "O 'Pode Gastar Hoje' é um teto diário estático. Ele nasce do saldo disponível com 20% de reserva de segurança e só cai quando você lança gastos manuais. Ao virar o dia, apenas 15% do que sobrou volta como bônus para amanhã."
           }
           onClose={() => setInfoPopup(null)}
         />

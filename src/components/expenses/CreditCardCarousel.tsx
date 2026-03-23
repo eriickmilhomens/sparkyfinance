@@ -3,9 +3,10 @@ import { handleBRLChange } from "@/lib/brlInput";
 import { ChevronDown, Receipt, Calendar, DollarSign, ArrowLeft, Trash2, Pencil, X, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFinancialData } from "@/hooks/useFinancialData";
-import { usePoints } from "@/hooks/usePoints";
 import { toast } from "sonner";
 import { useDockVisibility } from "@/hooks/useDockVisibility";
+import { BILLING_SYNC_EVENT } from "@/lib/billing";
+import { useBillingActions } from "@/hooks/useBillingActions";
 
 interface CardTransaction {
   id: string;
@@ -81,11 +82,15 @@ const CreditCardCarousel = () => {
       try { setCards(JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]")); } catch { setCards([]); }
     };
     window.addEventListener("sparky-data-cleared", handler);
-    return () => window.removeEventListener("sparky-data-cleared", handler);
+    window.addEventListener(BILLING_SYNC_EVENT, handler);
+    return () => {
+      window.removeEventListener("sparky-data-cleared", handler);
+      window.removeEventListener(BILLING_SYNC_EVENT, handler);
+    };
   }, []);
 
   const { data, updateData } = useFinancialData();
-  const { awardPoints } = usePoints();
+  const { payCardInvoice } = useBillingActions();
 
   useDockVisibility(expandedId !== null || showPayment);
 
@@ -250,77 +255,34 @@ const CreditCardCarousel = () => {
                 )}
                 <div className="flex gap-2">
                   <button onClick={() => setShowPayment(false)} className="flex-1 rounded-lg border border-border py-2 text-xs text-muted-foreground">Cancelar</button>
-                  <button onClick={() => {
+                  <button onClick={async () => {
                     const invoiceAmt = expandedCard.invoiceAmount;
-                    if (invoiceAmt <= 0) {
-                      toast.error("Não há fatura a pagar.");
-                      setShowPayment(false);
-                      return;
-                    }
                     const payAmt = payFull ? invoiceAmt : parseFloat(payAmount.replace(/\D/g, "")) / 100;
-                    if (!payAmt || payAmt <= 0) {
-                      toast.error("Informe um valor válido.");
-                      return;
-                    }
-                    if (payAmt > invoiceAmt) {
-                      toast.error("O valor não pode ser maior que a fatura.");
-                      return;
-                    }
-                    // Check balance
-                    const balanceAvailable = data.balance;
-                    if (balanceAvailable < payAmt) {
-                      toast.error("Saldo insuficiente para pagar a fatura.");
-                      return;
-                    }
-                    // Process payment
-                    const now = new Date();
-                    const dateStr = now.toLocaleDateString("pt-BR");
-                    const monthStr = now.toLocaleDateString("pt-BR", { month: "short", year: "numeric" });
-                    const remaining = Math.max(0, invoiceAmt - payAmt);
-                    const updated = cards.map(c => c.id === expandedCard.id ? {
-                      ...c,
-                      invoiceAmount: remaining,
-                      usedAmount: Math.max(0, c.usedAmount - payAmt),
-                      paidInvoices: [...c.paidInvoices, { month: monthStr, amount: payAmt, paidAt: dateStr }],
-                      transactions: remaining === 0 ? [] : c.transactions,
-                    } : c);
-                    saveCards(updated);
-                    // Update global financial data — use "Fatura" category so it's excluded from daily budget
-                    const newTx = {
-                      id: crypto.randomUUID(),
-                      date: now.toISOString(),
-                      description: `Fatura: ${expandedCard.cardName}`,
-                      amount: payAmt,
-                      type: "expense" as const,
-                      category: "Fatura",
-                    };
-                    updateData({
-                      expenses: Math.max(0, data.expenses + payAmt),
-                      balance: data.balance - payAmt,
-                      transactions: [newTx, ...data.transactions],
-                    });
-                    // Award points for invoice payment
-                    awardPoints("bill_paid", `Fatura: ${expandedCard.cardName}`);
-                    setShowPayment(false);
-                    setPayAmount("");
-                    // Show success popup
-                    toast.custom((t) => (
-                      <div className="rounded-2xl border border-border bg-card p-5 shadow-xl max-w-sm mx-auto text-center space-y-2 relative">
-                        <button
-                          onClick={() => toast.dismiss(t)}
-                          className="absolute top-2 right-2 rounded-full bg-destructive p-1.5 text-white hover:bg-destructive/90 active:scale-90 transition-all"
-                        >
-                          <X size={14} />
-                        </button>
-                        <div className="h-12 w-12 rounded-full bg-success/15 flex items-center justify-center mx-auto">
-                          <DollarSign size={20} className="text-success" />
+
+                    try {
+                      const result = await payCardInvoice(`card-invoice-${expandedCard.id}`, payAmt);
+                      setShowPayment(false);
+                      setPayAmount("");
+                      toast.custom((t) => (
+                        <div className="rounded-2xl border border-border bg-card p-5 shadow-xl max-w-sm mx-auto text-center space-y-2 relative">
+                          <button
+                            onClick={() => toast.dismiss(t)}
+                            className="absolute top-2 right-2 rounded-full bg-destructive p-1.5 text-white hover:bg-destructive/90 active:scale-90 transition-all"
+                          >
+                            <X size={14} />
+                          </button>
+                          <div className="h-12 w-12 rounded-full bg-success/15 flex items-center justify-center mx-auto">
+                            <DollarSign size={20} className="text-success" />
+                          </div>
+                          <p className="text-sm font-bold">Fatura paga com sucesso! +3 pts</p>
+                          <p className="text-[10px] text-muted-foreground">
+                            {payFull ? "Fatura paga integralmente!" : `Pago: ${fmt(result.amount)} — Restante: ${fmt(result.remaining)}`}
+                          </p>
                         </div>
-                        <p className="text-sm font-bold">Fatura paga com sucesso! +3 pts</p>
-                        <p className="text-[10px] text-muted-foreground">
-                          {payFull ? "Fatura paga integralmente!" : `Pago: ${fmt(payAmt)} — Restante: ${fmt(remaining)}`}
-                        </p>
-                      </div>
-                    ), { duration: 6000 });
+                      ), { duration: 6000 });
+                    } catch (error) {
+                      toast.error(error instanceof Error ? error.message : "Não foi possível pagar a fatura.");
+                    }
                   }} className="flex-1 rounded-lg bg-success py-2 text-xs font-semibold text-white">Confirmar</button>
                 </div>
               </div>

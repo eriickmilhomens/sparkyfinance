@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { isDiscretionaryExpenseTransaction } from "@/lib/financialCalculations";
 
 const DailyBudgetWidget = () => {
-  const { data, dailyBudget, daysLeft, pendingTotal, baseDailyBudget, rolloverBonus } = useFinancialData();
+  const { data, dailyBudget, daysLeft, available, baseDailyBudget, rolloverBonus, totalGoalReserved } = useFinancialData();
   const [showPopup, setShowPopup] = useState(false);
 
   const reservePct = (() => {
@@ -25,8 +25,8 @@ const DailyBudgetWidget = () => {
   const isOver = todayExpenses > dailyBudget;
 
   // For popup display
-  const reserve = Math.max(0, data.balance * reservePct);
-  const afterObligations = Math.max(0, data.balance - reserve - pendingTotal);
+  const reserve = Math.max(0, Math.max(available, 0) * reservePct);
+  const afterObligations = Math.max(0, available - reserve);
 
   return (
     <>
@@ -132,19 +132,19 @@ const DailyBudgetWidget = () => {
                 <p className="text-xs font-semibold mb-1">📈 Seus Números Hoje</p>
                 <div className="space-y-1.5 mt-2">
                   <div className="flex justify-between text-[10px]">
-                    <span className="text-muted-foreground">Saldo Real</span>
-                    <span className="font-medium">{fmt(data.balance)}</span>
+                    <span className="text-muted-foreground">Saldo Disponível</span>
+                    <span className="font-medium">{fmt(available)}</span>
                   </div>
                   <div className="flex justify-between text-[10px]">
                     <span className="text-muted-foreground">Reserva ({Math.round(reservePct * 100)}%)</span>
                     <span className="font-medium text-warning">-{fmt(reserve)}</span>
                   </div>
                   <div className="flex justify-between text-[10px]">
-                    <span className="text-muted-foreground">Contas pendentes</span>
-                    <span className="font-medium text-destructive">-{fmt(pendingTotal)}</span>
+                    <span className="text-muted-foreground">Reservado em metas</span>
+                    <span className="font-medium text-destructive">-{fmt(totalGoalReserved)}</span>
                   </div>
                   <div className="flex justify-between text-[10px] pt-1 border-t border-border">
-                    <span className="text-muted-foreground font-semibold">Disponível para gastar</span>
+                    <span className="text-muted-foreground font-semibold">Base segura do dia</span>
                     <span className="font-bold text-primary">{fmt(afterObligations)}</span>
                   </div>
                   <div className="flex justify-between text-[10px]">

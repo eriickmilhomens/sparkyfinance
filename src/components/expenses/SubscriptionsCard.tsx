@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { handleBRLChange, parseBRLInput } from "@/lib/brlInput";
 import { MoreVertical, Plus, X, CheckCircle2, Clock, Pencil, Trash2, CalendarDays, Undo2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useFinancialData, fmt } from "@/hooks/useFinancialData";
-import { usePoints } from "@/hooks/usePoints";
+import { fmt } from "@/hooks/useFinancialData";
 import { toast } from "sonner";
 import { useDockVisibility } from "@/hooks/useDockVisibility";
+import { BILLING_SYNC_EVENT, loadSubscriptions, saveSubscriptions } from "@/lib/billing";
+import { useBillingActions } from "@/hooks/useBillingActions";
 
 interface Subscription {
   id: string;
@@ -33,10 +34,8 @@ const PRESET_SUBS = [
   { name: "PlayStation Plus", logo: "PS", color: "bg-blue-600" },
 ];
 
-const loadSubs = (): Subscription[] => {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; }
-};
-const saveSubs = (subs: Subscription[]) => localStorage.setItem(STORAGE_KEY, JSON.stringify(subs));
+const loadSubs = (): Subscription[] => loadSubscriptions();
+const saveSubs = (subs: Subscription[]) => saveSubscriptions(subs);
 
 const SubscriptionsCard = () => {
   const [subs, setSubs] = useState<Subscription[]>(loadSubs);
@@ -51,22 +50,24 @@ const SubscriptionsCard = () => {
   const [newLogo, setNewLogo] = useState("");
   const [newColor, setNewColor] = useState("bg-primary");
   const [showCustomInput, setShowCustomInput] = useState(false);
-  const { data, updateData } = useFinancialData();
-  const { awardPoints, removePoints } = usePoints();
+  const [processingId, setProcessingId] = useState<string | null>(null);
+  const { paySubscription, unpaySubscription } = useBillingActions();
   useDockVisibility(showAdd);
 
   // Re-read from localStorage when data changes (e.g. demo mode activation)
   useEffect(() => {
     const handler = () => setSubs(loadSubs());
     window.addEventListener("sparky-data-cleared", handler);
-    return () => window.removeEventListener("sparky-data-cleared", handler);
+    window.addEventListener(BILLING_SYNC_EVENT, handler);
+    return () => {
+      window.removeEventListener("sparky-data-cleared", handler);
+      window.removeEventListener(BILLING_SYNC_EVENT, handler);
+    };
   }, []);
 
   const update = (updated: Subscription[]) => {
     setSubs(updated);
     saveSubs(updated);
-    // Notify dashboard to re-compute pending totals
-    window.dispatchEvent(new Event("sparky-paid-bills-updated"));
   };
 
   const getDaysLeft = (dueDay: number) => {
@@ -99,53 +100,45 @@ const SubscriptionsCard = () => {
     resetForm();
   };
 
-  const handleMarkPaid = (id: string) => {
+  const handleMarkPaid = async (id: string) => {
     const sub = subs.find(s => s.id === id);
     if (!sub || sub.paid) return;
-    update(subs.map(s => s.id === id ? { ...s, paid: true } : s));
-    const newTx = {
-      id: crypto.randomUUID(),
-      date: new Date().toISOString(),
-      description: `Assinatura: ${sub.name}`,
-      amount: sub.amount,
-      type: "expense" as const,
-      category: "Assinatura",
-    };
-    updateData({
-      expenses: data.expenses + sub.amount,
-      balance: data.balance - sub.amount,
-      transactions: [newTx, ...data.transactions],
-    });
-    awardPoints("bill_paid", `Pagou assinatura: ${sub.name}`);
-    toast.success(`${sub.name} marcada como paga! +3 pts`);
+    setProcessingId(id);
+
+    try {
+      await paySubscription(id);
+      toast.success(`${sub.name} marcada como paga! +3 pts`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível pagar a assinatura.");
+    } finally {
+      setProcessingId(null);
+    }
   };
 
   const handleUnmarkPaid = async (id: string) => {
     const sub = subs.find(s => s.id === id);
     if (!sub || !sub.paid) return;
-    update(subs.map(s => s.id === id ? { ...s, paid: false } : s));
-    // Refund: remove from expenses, add back to balance
-    const updatedTx = data.transactions.filter(t => t.description !== `Assinatura: ${sub.name}`);
-    updateData({
-      expenses: Math.max(0, data.expenses - sub.amount),
-      balance: data.balance + sub.amount,
-      transactions: updatedTx,
-    });
-    await removePoints("bill_paid", `Pagou assinatura: ${sub.name}`);
-    toast.success(`${sub.name} desmarcada — estorno e pontos removidos`);
+    setProcessingId(id);
+
+    try {
+      await unpaySubscription(id);
+      toast.success(`${sub.name} desmarcada — estorno e pontos removidos`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível estornar a assinatura.");
+    } finally {
+      setProcessingId(null);
+    }
   };
 
   const handleDelete = async (id: string) => {
     const sub = subs.find(s => s.id === id);
-    // If sub was paid, refund the financial data and remove points
     if (sub && sub.paid) {
-      const updatedTx = data.transactions.filter(t => t.description !== `Assinatura: ${sub.name}`);
-      updateData({
-        expenses: Math.max(0, data.expenses - sub.amount),
-        balance: data.balance + sub.amount,
-        transactions: updatedTx,
-      });
-      await removePoints("bill_paid", `Pagou assinatura: ${sub.name}`);
+      try {
+        await unpaySubscription(id);
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Não foi possível excluir a assinatura paga.");
+        return;
+      }
     }
     update(subs.filter(s => s.id !== id));
     setMenuId(null);
@@ -214,6 +207,7 @@ const SubscriptionsCard = () => {
           {subs.map(sub => {
             const daysLeft = getDaysLeft(sub.dueDay);
             const isUrgent = !sub.paid && daysLeft <= 3;
+            const isProcessing = processingId === sub.id;
             return (
               <div key={sub.id} className={cn(
                 "card-zelo !p-0 overflow-hidden transition-all",
@@ -240,12 +234,12 @@ const SubscriptionsCard = () => {
                       {/* Actions */}
                       <div className="flex items-center gap-1">
                         {sub.paid ? (
-                          <button onClick={() => handleUnmarkPaid(sub.id)} className="flex items-center gap-1 rounded-xl bg-muted/50 px-2.5 py-1.5 text-[9px] font-semibold text-muted-foreground active:scale-95 transition-all" title="Desfazer pagamento">
+                          <button onClick={() => handleUnmarkPaid(sub.id)} disabled={isProcessing} className="flex items-center gap-1 rounded-xl bg-muted/50 px-2.5 py-1.5 text-[9px] font-semibold text-muted-foreground active:scale-95 transition-all disabled:pointer-events-none disabled:opacity-60" title="Desfazer pagamento">
                             <Undo2 size={10} /> Estornar
                           </button>
                         ) : (
-                          <button onClick={() => handleMarkPaid(sub.id)} className="flex items-center gap-1 rounded-xl bg-success/15 px-2.5 py-1.5 text-[9px] font-semibold text-success active:scale-95 transition-all">
-                            <CheckCircle2 size={10} /> Pagar
+                          <button onClick={() => handleMarkPaid(sub.id)} disabled={isProcessing} className="flex items-center gap-1 rounded-xl bg-success/15 px-2.5 py-1.5 text-[9px] font-semibold text-success active:scale-95 transition-all disabled:pointer-events-none disabled:opacity-60">
+                            <CheckCircle2 size={10} /> {isProcessing ? "..." : "Pagar"}
                           </button>
                         )}
                         <div className="relative">
