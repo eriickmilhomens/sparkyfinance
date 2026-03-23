@@ -84,7 +84,7 @@ FORMATACAO OBRIGATORIA (REGRA ABSOLUTA - VIOLACAO E INACEITAVEL):
 - Responda SEMPRE em texto puro e limpo, sem nenhuma formatacao especial.
 - PROIBIDO usar asteriscos (* ou **) para negritos, italicos ou listas. NUNCA. JAMAIS. Nem um unico asterisco.
 - PROIBIDO usar tags HTML como <strong>, <b>, <i>, <em> ou qualquer outra tag. NUNCA. JAMAIS.
-- PROIBIDO usar markdown de qualquer tipo (###, ```, etc). NUNCA. JAMAIS.
+- PROIBIDO usar markdown de qualquer tipo (###, blocos de codigo, etc). NUNCA. JAMAIS.
 - Para listas, use hifens simples (-) ou numeracao direta (1. 2. 3.).
 - Para destacar informacoes importantes, use LETRAS MAIUSCULAS.
 - Evite travessoes excessivos na estrutura das respostas.
