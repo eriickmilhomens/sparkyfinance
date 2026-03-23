@@ -7,7 +7,7 @@ export interface Transaction {
   date: string;
   description: string;
   amount: number;
-  type: "income" | "expense";
+  type: "income" | "expense" | "goal_deposit";
   category: string;
   cardId?: string;
 }
@@ -62,7 +62,7 @@ async function fetchFinancialData(): Promise<FinancialData> {
     date: t.date,
     description: t.description,
     amount: Number(t.amount),
-    type: t.type as "income" | "expense",
+    type: t.type as "income" | "expense" | "goal_deposit",
     category: t.category,
     cardId: t.card_id || undefined,
   }));
@@ -77,7 +77,8 @@ async function fetchFinancialData(): Promise<FinancialData> {
     const d = new Date(t.date);
     if (d.getMonth() === month && d.getFullYear() === year) {
       if (t.type === "income") income += t.amount;
-      else expenses += t.amount;
+      else if (t.type === "expense") expenses += t.amount;
+      // goal_deposit is NOT counted as expense
     }
   });
 
@@ -158,19 +159,30 @@ export const useFinancialQuery = () => {
     } catch {}
 
     const aPagar = data.scheduled > 0 ? data.scheduled : unpaidSubsTotal;
-    const available = data.balance - aPagar;
 
+    // Total reserved in goals (goal_deposit transactions this month)
     const now = new Date();
     const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
     const today = now.getDate();
     const daysLeft = Math.max(1, daysInMonth - today);
+
+    const totalGoalReserved = data.transactions
+      .filter(t => {
+        if (t.type !== "goal_deposit") return false;
+        const d = new Date(t.date);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      })
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    // Available = Balance - A Pagar - Goal Reserves
+    const available = data.balance - aPagar - totalGoalReserved;
 
     // Reserve percentage from user settings
     let reservePct = 0.20;
     try { reservePct = parseInt(localStorage.getItem("sparky-reserve-pct") || "20") / 100; } catch {}
 
     const reserve = Math.max(0, data.balance * reservePct);
-    const spendablePool = Math.max(0, data.balance - reserve - aPagar);
+    const spendablePool = Math.max(0, data.balance - reserve - aPagar - totalGoalReserved);
 
     // Filter out bill/subscription/invoice payments from discretionary spending
     const SCHEDULED_CATEGORIES = ["Assinatura", "Fatura", "Conta"];
