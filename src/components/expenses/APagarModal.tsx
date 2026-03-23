@@ -112,7 +112,7 @@ const APagarModal = ({ open, onClose }: APagarModalProps) => {
       paidTotal: paid.reduce((s, b) => s + b.amount, 0),
       pendingTotal: pending.reduce((s, b) => s + b.amount, 0),
     };
-  }, [data.transactions, now, paidIds]);
+  }, [data.transactions, now, paidIds, revision]);
 
   const totalBills = paidTotal + pendingTotal;
 
