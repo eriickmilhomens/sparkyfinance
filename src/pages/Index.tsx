@@ -16,6 +16,7 @@ const ChatView = lazy(() => import("@/components/views/ChatView"));
 const Index = () => {
   const [activeTab, setActiveTab] = useState("home");
   const [ready, setReady] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
   const [, setTick] = useState(0);
   const navigate = useNavigate();
 
@@ -87,49 +88,69 @@ const Index = () => {
     const isDemo = localStorage.getItem("sparky-demo-mode") === "true";
     if (isDemo) {
       setReady(true);
+      setAuthChecked(true);
       return;
     }
 
     const checkBanStatus = async (session: any) => {
       if (!session?.user) return false;
-      // Re-fetch user to get latest metadata
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return false;
-      const isBanned = user.user_metadata?.banned === true;
-      const isSuspended = user.user_metadata?.suspended === true;
-      if (isBanned || isSuspended) {
-        await supabase.auth.signOut();
-        navigate("/login");
-        return true;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return false;
+        const isBanned = user.user_metadata?.banned === true;
+        const isSuspended = user.user_metadata?.suspended === true;
+        if (isBanned || isSuspended) {
+          await supabase.auth.signOut();
+          navigate("/login");
+          return true;
+        }
+      } catch {
+        // ignore errors during ban check
       }
       return false;
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!session && !localStorage.getItem("sparky-demo-mode")) {
+        setAuthChecked(true);
         navigate("/login");
       } else if (session?.user) {
         const blocked = await checkBanStatus(session);
         if (blocked) return;
         syncLocalDataOwner(session.user.id);
         setReady(true);
+        setAuthChecked(true);
         setIsAdmin(session.user.email === "admin@sparky.app");
       }
     });
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session && !localStorage.getItem("sparky-demo-mode")) {
+        setAuthChecked(true);
         navigate("/login");
       } else if (session?.user) {
         const blocked = await checkBanStatus(session);
         if (blocked) return;
         syncLocalDataOwner(session.user.id);
         setReady(true);
+        setAuthChecked(true);
         setIsAdmin(session.user.email === "admin@sparky.app");
+      } else {
+        // Fallback: no session and no demo mode detected after check
+        setAuthChecked(true);
       }
     });
 
-    return () => subscription.unsubscribe();
+    // Safety timeout: if auth check takes too long, redirect to login
+    const safetyTimer = setTimeout(() => {
+      setAuthChecked(true);
+      if (!ready) navigate("/login");
+    }, 5000);
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(safetyTimer);
+    };
   }, [navigate]);
 
   const handleTabChange = (tab: string) => {
@@ -151,7 +172,18 @@ const Index = () => {
     return () => { delete (window as any).__sparkyGoHome; };
   }, []);
 
-  if (!ready) return null;
+  if (!ready) {
+    return (
+      <div className="bg-background flex items-center justify-center" style={{ height: '100dvh' }}>
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          {authChecked && (
+            <p className="text-xs text-muted-foreground">Redirecionando...</p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   // Maintenance blocking screen — only for non-admins
   if (maintenanceActive && !isAdmin) {
