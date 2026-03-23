@@ -44,10 +44,20 @@ describe("financialCalculations", () => {
   });
 
   it("calcula o pode gastar hoje sem descontar metas", () => {
-    const { dailyBudget, daysLeft, reserve } = getDailyBudget(4200, 700, 0.2, now);
+    const { dailyBudget, daysLeft, reserve, baseDailyBudget, rolloverBonus } = getDailyBudget(4200, 700, 0.2, now);
 
     expect(daysLeft).toBe(11);
     expect(reserve).toBe(840);
-    expect(dailyBudget).toBeCloseTo((4200 - 700 - 840) / 11, 5);
+    expect(baseDailyBudget).toBeCloseTo((4200 - 700 - 840) / 11, 5);
+    expect(rolloverBonus).toBe(0);
+    expect(dailyBudget).toBe(baseDailyBudget);
+  });
+
+  it("aplica bônus de 15% do saldo não gasto de ontem", () => {
+    const yesterdayUnspent = 50;
+    const { dailyBudget, baseDailyBudget, rolloverBonus } = getDailyBudget(4200, 700, 0.2, now, yesterdayUnspent);
+
+    expect(rolloverBonus).toBeCloseTo(50 * 0.15, 5);
+    expect(dailyBudget).toBeCloseTo(baseDailyBudget + 7.5, 5);
   });
 });

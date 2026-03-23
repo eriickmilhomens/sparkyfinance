@@ -149,6 +149,16 @@ const DailyBudgetWidget = () => {
                   </div>
                   <div className="flex justify-between text-[10px]">
                     <span className="text-muted-foreground">÷ {daysLeft} dias restantes</span>
+                    <span className="font-bold">{fmt(baseDailyBudget ?? dailyBudget)}/dia</span>
+                  </div>
+                  {rolloverBonus > 0 && (
+                    <div className="flex justify-between text-[10px]">
+                      <span className="text-muted-foreground">+ Bônus (15% não gasto ontem)</span>
+                      <span className="font-bold text-success">+{fmt(rolloverBonus)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-[10px] pt-1 border-t border-border">
+                    <span className="text-muted-foreground font-semibold">Limite final do dia</span>
                     <span className="font-bold text-primary">{fmt(dailyBudget)}/dia</span>
                   </div>
                 </div>
