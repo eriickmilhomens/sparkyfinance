@@ -43,12 +43,12 @@ const Onboarding = () => {
     if (tapTimer) clearTimeout(tapTimer);
 
     if (newCount >= 7) {
-      await supabase.auth.signOut().catch(() => {});
       localStorage.setItem("sparky-demo-mode", "true");
       seedDemoData();
+      await supabase.auth.signOut().catch(() => {});
       setTapCount(0);
       toast.success("Modo Demo ativado!");
-      window.location.replace("/");
+      setTimeout(() => { window.location.href = "/"; }, 100);
       return;
     }
 

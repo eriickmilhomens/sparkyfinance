@@ -53,13 +53,14 @@ const Login = () => {
     if (tapTimer) clearTimeout(tapTimer);
 
     if (newCount >= 7) {
-      await supabase.auth.signOut().catch(() => {});
+      // Set demo flag BEFORE signOut so auth listeners see it and bail
       localStorage.setItem("sparky-demo-mode", "true");
       seedDemoData();
+      await supabase.auth.signOut().catch(() => {});
       setTapCount(0);
       toast.success("Modo Demo ativado!");
-      // Hard reload to avoid stale auth listeners redirecting back
-      window.location.replace("/");
+      // Small delay to ensure localStorage is flushed, then hard reload
+      setTimeout(() => { window.location.href = "/"; }, 100);
       return;
     }
 
