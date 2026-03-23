@@ -52,7 +52,7 @@ const APagarModal = ({ open, onClose }: APagarModalProps) => {
       // Mark as paid — award points
       newPaid.add(id);
       await awardPoints("bill_paid", `Pagou: ${bill.description}`);
-      toast.success("Conta marcada como paga! +3 pts 💳");
+      toast.success("Conta marcada como paga! +3 pts");
     }
     setPaidIds(newPaid);
     localStorage.setItem("sparky-paid-bills", JSON.stringify([...newPaid]));
