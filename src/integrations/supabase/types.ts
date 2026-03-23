@@ -98,6 +98,10 @@ export type Database = {
     }
     Functions: {
       get_user_group_code: { Args: { _user_id: string }; Returns: string }
+      update_user_points: {
+        Args: { _points: number; _user_id: string }
+        Returns: undefined
+      }
       validate_invite_code: { Args: { _code: string }; Returns: Json }
     }
     Enums: {

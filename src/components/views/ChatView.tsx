@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect, useCallback } from "react";
-import { Send, Bot, User, Loader2, Plus, Trash2, ChevronLeft, MoreVertical, Paperclip, Image, FileText, X } from "lucide-react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { Send, Bot, User, Loader2, Plus, Trash2, ChevronLeft, MoreVertical, Paperclip, Image, FileText, X, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useFinancialQuery, fmt } from "@/hooks/useFinancialQuery";
@@ -18,7 +18,7 @@ type Conversation = { id: string; title: string; summary: string; messages: Msg[
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sparky-chat`;
 const BASE_STORAGE_KEY = "sparky-chat-history";
 const TWELVE_HOURS = 12 * 60 * 60 * 1000;
-const IDLE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+const IDLE_TIMEOUT = 3 * 60 * 1000; // 3 minutes
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 const getStorageKey = (): string => {
@@ -93,6 +93,27 @@ const DOC_TYPES = ["application/pdf", "text/plain", "text/csv", "text/xml", "app
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   "application/json"];
 
+const SUGGESTION_CHIPS = [
+  "Top gastos do mês",
+  "Oportunidade de economia",
+  "Gastos recorrentes",
+  "Cartão e faturas",
+  "Quanto posso gastar hoje?",
+  "Resumo financeiro",
+  "Contas a vencer",
+  "Dicas de investimento",
+  "Como economizar mais?",
+  "Análise de categorias",
+];
+
+const STATUS_PHRASES = [
+  "Analisando seus dados...",
+  "Consultando orçamentos...",
+  "Formulando resposta...",
+  "Processando informações...",
+  "Verificando transações...",
+];
+
 const ChatView = () => {
   const { data: financialData, available, daysLeft, dailyBudget } = useFinancialQuery();
   const [conversations, setConversations] = useState<Conversation[]>(loadConversations);
@@ -105,11 +126,28 @@ const ChatView = () => {
   const [showNewChatConfirm, setShowNewChatConfirm] = useState(false);
   const [pendingAttachments, setPendingAttachments] = useState<Attachment[]>([]);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
+  const [statusIndex, setStatusIndex] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
+  // Randomized suggestion chips per chat session
+  const shuffledChips = useMemo(() => {
+    const shuffled = [...SUGGESTION_CHIPS].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 4);
+  }, [activeId]);
+
   // Set current user ID for scoped chat storage
+  // Rotate status phrases while loading
+  useEffect(() => {
+    if (!isLoading) return;
+    setStatusIndex(0);
+    const interval = setInterval(() => {
+      setStatusIndex(prev => (prev + 1) % STATUS_PHRASES.length);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, [isLoading]);
+
   useEffect(() => {
     const isDemo = localStorage.getItem("sparky-demo-mode") === "true";
     if (isDemo) return;
@@ -541,10 +579,21 @@ const ChatView = () => {
             <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
               <Bot size={28} className="text-primary" />
             </div>
-            <p className="text-sm font-semibold mb-1">Olá! Sou o Sparky 🐈‍⬛</p>
-            <p className="text-xs text-muted-foreground max-w-[260px]">
+            <p className="text-sm font-semibold mb-1">Olá! Sou o Sparky</p>
+            <p className="text-xs text-muted-foreground max-w-[260px] mb-4">
               Pergunte sobre finanças, envie imagens de extratos ou documentos para análise!
             </p>
+            <div className="flex flex-wrap justify-center gap-2 max-w-[300px]">
+              {shuffledChips.map((chip) => (
+                <button
+                  key={chip}
+                  onClick={() => { setInput(chip); }}
+                  className="rounded-full bg-muted border border-border px-3 py-1.5 text-[11px] text-muted-foreground hover:text-foreground hover:border-primary/30 active:scale-95 transition-all"
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
           </div>
         )}
         {messages.map((msg, i) => (
@@ -587,12 +636,13 @@ const ChatView = () => {
           </div>
         ))}
         {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-start">
             <div className="h-7 w-7 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
               <Bot size={12} className="text-primary" />
             </div>
-            <div className="bg-card border border-border rounded-2xl rounded-bl-md px-3.5 py-2.5">
-              <Loader2 size={14} className="animate-spin text-muted-foreground" />
+            <div className="bg-card border border-border rounded-2xl rounded-bl-md px-3.5 py-2.5 flex items-center gap-2">
+              <Loader2 size={14} className="animate-spin text-primary" />
+              <span className="text-[11px] text-muted-foreground animate-pulse">{STATUS_PHRASES[statusIndex]}</span>
             </div>
           </div>
         )}
