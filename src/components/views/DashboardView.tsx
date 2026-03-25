@@ -4,6 +4,7 @@ import BalanceCard from "@/components/dashboard/BalanceCard";
 import SpendingOverview from "@/components/dashboard/SpendingOverview";
 import SuggestionsCard from "@/components/dashboard/SuggestionsCard";
 import BiggestExpenseCard from "@/components/dashboard/BiggestExpenseCard";
+import PayoffGoalCard from "@/components/dashboard/PayoffGoalCard";
 import { useFinancialData } from "@/hooks/useFinancialData";
 
 const SkeletonCard = () => (
@@ -50,6 +51,7 @@ const DashboardView = () => {
       </div>
       <BalanceCard onVisibilityChange={handleVisibilityChange} />
       <SpendingOverview hideValues={hideValues} />
+      <PayoffGoalCard hideValues={hideValues} />
       <BiggestExpenseCard hideValues={hideValues} />
       <SuggestionsCard />
     </div>
