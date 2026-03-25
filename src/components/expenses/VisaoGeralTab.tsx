@@ -52,7 +52,7 @@ const VisaoGeralTab = ({ onNavigateToMetas }: VisaoGeralTabProps) => {
       <BudgetAlert />
       <StatusCards />
       <DailyBudgetWidget />
-      <CreditCardCarousel />
+      <BillsAccordion />
       <SubscriptionsCard />
       <TrendChart title="Histórico de Saldo" data={balanceHistory} color="hsl(var(--primary))" gradientId="balGrad" />
       <TrendChart title="Projeção de Saldo" data={projectionData} color="hsl(var(--success))" gradientId="projGrad" legend="Estimativa do saldo nas próximas semanas com base nos seus gastos e receitas recorrentes." />
