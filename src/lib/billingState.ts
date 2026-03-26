@@ -255,7 +255,7 @@ export const buildBillingOverview = (
       amount: Number(card.invoiceAmount) || 0,
       date: normalizeDueDate(card.dueDay, date),
       category: "Fatura",
-      source: "card",
+      source: "card" as const,
       paid: false,
     }));
 
@@ -271,7 +271,7 @@ export const buildBillingOverview = (
       amount: getCardPaidAmount(card, date),
       date: normalizeDueDate(card.dueDay, date),
       category: "Fatura",
-      source: "card",
+      source: "card" as const,
       paid: true,
     }))
     .filter((card) => card.amount > 0);

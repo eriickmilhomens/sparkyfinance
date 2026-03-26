@@ -49,6 +49,7 @@ const APagarModal = ({ open, onClose }: APagarModalProps) => {
   }, [data.transactions, now, billingSnapshot]);
 
   const totalBills = pendingTotal + paidTotal;
+  type ModalBillItem = (typeof pendingBills)[number];
 
   // --- Payment handlers for each source ---
 
@@ -210,13 +211,13 @@ const APagarModal = ({ open, onClose }: APagarModalProps) => {
   };
 
   // Unified handlers
-  const handlePay = async (bill: BillItem) => {
+  const handlePay = async (bill: ModalBillItem) => {
     if (bill.source === "transaction") return handlePayTransaction(bill);
     if (bill.source === "subscription") return handlePaySubscription(bill);
     if (bill.source === "card") return handlePayCard(bill);
   };
 
-  const handleReverse = async (bill: BillItem) => {
+  const handleReverse = async (bill: ModalBillItem) => {
     if (bill.source === "transaction") return handleReverseTransaction(bill);
     if (bill.source === "subscription") return handleReverseSubscription(bill);
     if (bill.source === "card") return handleReverseCard(bill);
@@ -242,7 +243,7 @@ const APagarModal = ({ open, onClose }: APagarModalProps) => {
 
   if (!open) return null;
 
-  const renderBillCard = (bill: BillItem) => (
+  const renderBillCard = (bill: ModalBillItem) => (
     <div
       key={bill.id}
       className={cn(
