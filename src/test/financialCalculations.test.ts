@@ -6,6 +6,7 @@ import {
   getNormalizedMonthlyTotals,
   getPendingExpenseSummary,
 } from "@/lib/financialCalculations";
+import { buildBillingOverview, getSettledTransactionIds } from "@/lib/billingState";
 
 const march = "2026-03-10T12:00:00.000Z";
 const now = new Date("2026-03-20T12:00:00.000Z");
@@ -59,5 +60,26 @@ describe("financialCalculations", () => {
 
     expect(rolloverBonus).toBeCloseTo(50 * 0.15, 5);
     expect(dailyBudget).toBeCloseTo(baseDailyBudget + 7.5, 5);
+  });
+
+  it("trata transação de assinatura paga como liquidada no cálculo global", () => {
+    const transactions = [
+      { id: "income-1", date: march, description: "Salário", amount: 4000, type: "income", category: "Receita" },
+      { id: "sub-tx-1", date: march, description: "Assinatura: Netflix", amount: 39.9, type: "expense", category: "Assinatura" },
+    ];
+    const snapshot = {
+      paidBillIds: [],
+      subscriptions: [{ id: "sub-1", name: "Netflix", amount: 39.9, dueDay: 10, paid: true }],
+      cards: [],
+    };
+
+    const settledIds = getSettledTransactionIds(transactions, snapshot, now);
+    const totals = getNormalizedMonthlyTotals(transactions, { now, paidBillIds: settledIds });
+    const overview = buildBillingOverview(transactions, snapshot, now);
+
+    expect(settledIds).toContain("sub-tx-1");
+    expect(totals.balance).toBeCloseTo(3960.1, 5);
+    expect(overview.pendingCount).toBe(0);
+    expect(overview.allPaid).toBe(true);
   });
 });

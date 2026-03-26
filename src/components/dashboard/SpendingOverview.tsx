@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { TrendingUp, TrendingDown, ArrowUpRight, Wallet, CreditCard, X, Info, Pencil } from "lucide-react";
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, CartesianGrid, BarChart, Bar, Tooltip } from "recharts";
 import { useFinancialData, fmt } from "@/hooks/useFinancialData";
+import PayoffGoalCard from "@/components/dashboard/PayoffGoalCard";
 import PaceBar from "@/components/expenses/PaceBar";
 import { useDockVisibility } from "@/hooks/useDockVisibility";
 
@@ -189,6 +190,7 @@ const SpendingOverview = ({ hideValues = false }: SpendingOverviewProps) => {
   return (
     <div className="space-y-3">
       {renderPodeGastarCard()}
+      <PayoffGoalCard hideValues={hideValues} />
 
       {/* Simulator Modal */}
       {simOpen && (

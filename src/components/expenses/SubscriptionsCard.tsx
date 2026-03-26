@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { handleBRLChange, parseBRLInput } from "@/lib/brlInput";
 import { MoreVertical, Plus, X, CheckCircle2, Clock, Pencil, Trash2, CalendarDays, Undo2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -6,6 +6,15 @@ import { useFinancialData, fmt } from "@/hooks/useFinancialData";
 import { usePoints } from "@/hooks/usePoints";
 import { toast } from "sonner";
 import { useDockVisibility } from "@/hooks/useDockVisibility";
+import { useBillingSnapshot } from "@/hooks/useBillingSnapshot";
+import {
+  addPaidBillIds,
+  getSubscriptionPaymentId,
+  isSubscriptionPaid,
+  readStoredSubscriptions,
+  removePaidBillIds,
+  writeStoredSubscriptions,
+} from "@/lib/billingState";
 
 interface Subscription {
   id: string;
@@ -16,8 +25,6 @@ interface Subscription {
   paid: boolean;
   color: string;
 }
-
-const STORAGE_KEY = "sparky-subscriptions";
 
 const PRESET_SUBS = [
   { name: "Netflix", logo: "N", color: "bg-red-600" },
@@ -33,13 +40,7 @@ const PRESET_SUBS = [
   { name: "PlayStation Plus", logo: "PS", color: "bg-blue-600" },
 ];
 
-const loadSubs = (): Subscription[] => {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; }
-};
-const saveSubs = (subs: Subscription[]) => localStorage.setItem(STORAGE_KEY, JSON.stringify(subs));
-
 const SubscriptionsCard = () => {
-  const [subs, setSubs] = useState<Subscription[]>(loadSubs);
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [menuId, setMenuId] = useState<string | null>(null);
@@ -53,24 +54,29 @@ const SubscriptionsCard = () => {
   const [showCustomInput, setShowCustomInput] = useState(false);
   const { data, addTransaction, deleteTransaction } = useFinancialData();
   const { awardPoints, removePoints } = usePoints();
+  const billingSnapshot = useBillingSnapshot();
   useDockVisibility(showAdd);
 
-  // Re-read from localStorage when data changes externally (demo mode, APagarModal payments, etc.)
-  useEffect(() => {
-    const handler = () => setSubs(loadSubs());
-    window.addEventListener("sparky-data-cleared", handler);
-    window.addEventListener("sparky-subscriptions-updated", handler);
-    return () => {
-      window.removeEventListener("sparky-data-cleared", handler);
-      window.removeEventListener("sparky-subscriptions-updated", handler);
-    };
-  }, []);
+  const billingDate = useMemo(() => new Date(), []);
+  const subs = useMemo<Subscription[]>(() => {
+    const paidSet = new Set(billingSnapshot.paidBillIds);
 
-  const update = (updated: Subscription[]) => {
-    setSubs(updated);
-    saveSubs(updated);
-    window.dispatchEvent(new Event("sparky-paid-bills-updated"));
-    window.dispatchEvent(new Event("sparky-subscriptions-updated"));
+    return billingSnapshot.subscriptions.map((subscription) => {
+      const storedSubscription = subscription as Subscription;
+
+      return {
+        ...storedSubscription,
+        logo: storedSubscription.logo || subscription.name.slice(0, 2).toUpperCase(),
+        color: storedSubscription.color || "bg-primary",
+        paid: isSubscriptionPaid(subscription, paidSet, billingDate),
+      };
+    });
+  }, [billingSnapshot.paidBillIds, billingSnapshot.subscriptions, billingDate]);
+
+  const update = (updater: (current: Subscription[]) => Subscription[]) => {
+    const nextSubscriptions = updater(readStoredSubscriptions() as Subscription[]);
+    writeStoredSubscriptions(nextSubscriptions);
+    return nextSubscriptions;
   };
 
   const getDaysLeft = (dueDay: number) => {
@@ -90,14 +96,14 @@ const SubscriptionsCard = () => {
       logo: preset?.logo || newLogo || newName.slice(0, 2).toUpperCase(),
       amount,
       dueDay: parseInt(newDueDay) || 10,
-      paid: false,
+      paid: subs.find((item) => item.id === editingId)?.paid ?? false,
       color: preset?.color || newColor,
     };
     if (editingId) {
-      update(subs.map(s => s.id === editingId ? sub : s));
+      update((current) => current.map((item) => item.id === editingId ? sub : item));
       toast.success("Assinatura atualizada");
     } else {
-      update([...subs, sub]);
+      update((current) => [...current, sub]);
       toast.success("Assinatura adicionada");
     }
     resetForm();
@@ -107,31 +113,49 @@ const SubscriptionsCard = () => {
     const sub = subs.find(s => s.id === id);
     if (!sub || sub.paid) return;
 
-    update(subs.map(s => s.id === id ? { ...s, paid: true } : s));
-    await addTransaction({
-      date: new Date().toISOString(),
-      description: `Assinatura: ${sub.name}`,
-      amount: sub.amount,
-      type: "expense",
-      category: "Assinatura",
-    });
-    await awardPoints("bill_paid", `Pagou assinatura: ${sub.name}`);
-    toast.success(`${sub.name} marcada como paga! +3 pts`);
+    const previousSubscriptions = readStoredSubscriptions() as Subscription[];
+    update((current) => current.map((item) => item.id === id ? { ...item, paid: true } : item));
+
+    try {
+      const transactionId = await addTransaction({
+        date: new Date().toISOString(),
+        description: `Assinatura: ${sub.name}`,
+        amount: sub.amount,
+        type: "expense",
+        category: "Assinatura",
+      });
+
+      addPaidBillIds([getSubscriptionPaymentId(id, billingDate), transactionId]);
+      await awardPoints("bill_paid", `Pagou assinatura: ${sub.name}`);
+      toast.success(`${sub.name} marcada como paga! +3 pts`);
+    } catch {
+      writeStoredSubscriptions(previousSubscriptions);
+      toast.error("Não foi possível marcar a assinatura como paga.");
+    }
   };
 
   const handleUnmarkPaid = async (id: string) => {
     const sub = subs.find(s => s.id === id);
     if (!sub || !sub.paid) return;
 
-    update(subs.map(s => s.id === id ? { ...s, paid: false } : s));
+    const previousSubscriptions = readStoredSubscriptions() as Subscription[];
+    update((current) => current.map((item) => item.id === id ? { ...item, paid: false } : item));
     const existingTransaction = data.transactions.find(
       t => t.description === `Assinatura: ${sub.name}` && t.category === "Assinatura",
     );
-    if (existingTransaction) {
-      await deleteTransaction(existingTransaction.id);
+
+    try {
+      if (existingTransaction) {
+        await deleteTransaction(existingTransaction.id);
+      }
+
+      removePaidBillIds([getSubscriptionPaymentId(id, billingDate), id, existingTransaction?.id ?? ""]);
+      await removePoints("bill_paid", `Pagou assinatura: ${sub.name}`);
+      toast.success(`${sub.name} desmarcada — estorno e pontos removidos`);
+    } catch {
+      writeStoredSubscriptions(previousSubscriptions);
+      toast.error("Não foi possível estornar a assinatura.");
     }
-    await removePoints("bill_paid", `Pagou assinatura: ${sub.name}`);
-    toast.success(`${sub.name} desmarcada — estorno e pontos removidos`);
   };
 
   const handleDelete = async (id: string) => {
@@ -143,9 +167,10 @@ const SubscriptionsCard = () => {
       if (existingTransaction) {
         await deleteTransaction(existingTransaction.id);
       }
+      removePaidBillIds([getSubscriptionPaymentId(id, billingDate), id, existingTransaction?.id ?? ""]);
       await removePoints("bill_paid", `Pagou assinatura: ${sub.name}`);
     }
-    update(subs.filter(s => s.id !== id));
+    update((current) => current.filter((item) => item.id !== id));
     setMenuId(null);
     toast.success("Assinatura removida");
   };

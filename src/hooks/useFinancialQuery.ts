@@ -5,10 +5,10 @@ import {
   getDailyBudget,
   getGoalReservedTotal,
   getNormalizedMonthlyTotals,
-  getPendingExpenseSummary,
   isDiscretionaryExpenseTransaction,
 } from "@/lib/financialCalculations";
 import { useBillingSnapshot } from "@/hooks/useBillingSnapshot";
+import { buildBillingOverview, getSettledTransactionIds } from "@/lib/billingState";
 
 export interface Transaction {
   id: string;
@@ -112,12 +112,16 @@ export const useFinancialQuery = () => {
     return now;
   }, [todayKey]);
 
+  const settledTransactionIds = useMemo(
+    () => getSettledTransactionIds(queryResult.data?.transactions ?? defaultData.transactions, billingSnapshot, stableNow),
+    [queryResult.data?.transactions, billingSnapshot, stableNow],
+  );
+
   const data = useMemo(() => {
     const baseData = queryResult.data ?? defaultData;
-    const paidBillIds = billingSnapshot.paidBillIds;
     const { income, expenses, balance } = getNormalizedMonthlyTotals(baseData.transactions, {
       now: stableNow,
-      paidBillIds,
+      paidBillIds: settledTransactionIds,
     });
 
     return {
@@ -126,7 +130,7 @@ export const useFinancialQuery = () => {
       expenses,
       balance,
     };
-  }, [queryResult.data, billingSnapshot.paidBillIds, stableNow]);
+  }, [queryResult.data, settledTransactionIds, stableNow]);
 
   const loading = queryResult.isLoading;
 
@@ -172,38 +176,10 @@ export const useFinancialQuery = () => {
   }, [queryClient]);
 
   const computed = useMemo(() => {
-    const txPending = getPendingExpenseSummary(data.transactions, {
-      now: stableNow,
-      paidBillIds: billingSnapshot.paidBillIds,
-    });
-
-    const cardInvoice = billingSnapshot.cards.reduce(
-      (acc, card) => {
-        const amount = Number(card.invoiceAmount) || 0;
-        if (amount > 0) {
-          acc.total += amount;
-          acc.count += 1;
-        }
-        return acc;
-      },
-      { total: 0, count: 0 },
-    );
-
-    const subsPending = billingSnapshot.subscriptions.reduce(
-      (acc, subscription) => {
-        const amount = Number(subscription.amount) || 0;
-        if (!subscription.paid && amount > 0) {
-          acc.total += amount;
-          acc.count += 1;
-        }
-        return acc;
-      },
-      { total: 0, count: 0 },
-    );
-
-    const pendingTotal = txPending.pendingTotal + cardInvoice.total + subsPending.total;
-    const pendingCount = txPending.pendingCount + cardInvoice.count + subsPending.count;
-    const allPaid = pendingTotal === 0;
+    const billingOverview = buildBillingOverview(data.transactions, billingSnapshot, stableNow);
+    const pendingTotal = billingOverview.pendingTotal;
+    const pendingCount = billingOverview.pendingCount;
+    const allPaid = billingOverview.allPaid;
     const totalGoalReserved = getGoalReservedTotal(data.transactions);
     const available = data.balance - pendingTotal - totalGoalReserved;
 

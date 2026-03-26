@@ -5,22 +5,22 @@ import { useFinancialData, fmt } from "@/hooks/useFinancialData";
 import { usePoints } from "@/hooks/usePoints";
 import { useDockVisibility } from "@/hooks/useDockVisibility";
 import { toast } from "sonner";
-import { getPendingExpenseSummary } from "@/lib/financialCalculations";
 import { useBillingSnapshot } from "@/hooks/useBillingSnapshot";
+import {
+  addPaidBillIds,
+  buildBillingOverview,
+  getCardInvoicePaymentId,
+  getSubscriptionPaymentId,
+  readStoredCards,
+  readStoredSubscriptions,
+  removePaidBillIds,
+  writeStoredCards,
+  writeStoredSubscriptions,
+} from "@/lib/billingState";
 
 interface APagarModalProps {
   open: boolean;
   onClose: () => void;
-}
-
-interface BillItem {
-  id: string;
-  description: string;
-  amount: number;
-  date: string;
-  category: string;
-  source: "transaction" | "card" | "subscription";
-  paid: boolean;
 }
 
 const APagarModal = ({ open, onClose }: APagarModalProps) => {
@@ -37,261 +37,176 @@ const APagarModal = ({ open, onClose }: APagarModalProps) => {
     return date;
   }, [todayKey]);
 
-  const paidIds = useMemo(() => new Set(billingSnapshot.paidBillIds), [billingSnapshot.paidBillIds]);
-
   const { pendingBills, paidBills, paidTotal, pendingTotal } = useMemo(() => {
-    const summary = getPendingExpenseSummary(data.transactions, {
-      now,
-      paidBillIds: billingSnapshot.paidBillIds,
-    });
-
-    // Transaction-based bills (pending)
-    const txPending: BillItem[] = summary.pendingBills.map((bill) => ({
-      id: bill.id || crypto.randomUUID(),
-      description: bill.description,
-      amount: bill.amount,
-      date: bill.date,
-      category: bill.category,
-      source: "transaction",
-      paid: false,
-    }));
-
-    // Transaction-based bills (paid)
-    const txPaid: BillItem[] = summary.paidBills.map((bill) => ({
-      id: bill.id || crypto.randomUUID(),
-      description: bill.description,
-      amount: bill.amount,
-      date: bill.date,
-      category: bill.category,
-      source: "transaction",
-      paid: true,
-    }));
-
-    // Card invoices - pending (invoiceAmount > 0 and not in paidIds)
-    const cardPending: BillItem[] = billingSnapshot.cards
-      .filter((card) => {
-        const amount = Number(card.invoiceAmount) || 0;
-        const invoiceId = `card-invoice-${card.id}`;
-        return amount > 0 && !paidIds.has(invoiceId);
-      })
-      .map((card) => {
-        const dueDate = new Date(now.getFullYear(), now.getMonth(), card.dueDay || 10);
-        if (dueDate < now) dueDate.setMonth(dueDate.getMonth() + 1);
-        return {
-          id: `card-invoice-${card.id}`,
-          description: `Fatura: ${card.cardName || card.bankName}`,
-          amount: Number(card.invoiceAmount) || 0,
-          date: dueDate.toISOString(),
-          category: "Fatura",
-          source: "card" as const,
-          paid: false,
-        };
-      });
-
-    // Card invoices - paid (in paidIds)
-    const cardPaid: BillItem[] = billingSnapshot.cards
-      .filter((card) => {
-        const invoiceId = `card-invoice-${card.id}`;
-        return paidIds.has(invoiceId);
-      })
-      .map((card) => {
-        const dueDate = new Date(now.getFullYear(), now.getMonth(), card.dueDay || 10);
-        if (dueDate < now) dueDate.setMonth(dueDate.getMonth() + 1);
-        return {
-          id: `card-invoice-${card.id}`,
-          description: `Fatura: ${card.cardName || card.bankName}`,
-          amount: Number(card.invoiceAmount) || 0,
-          date: dueDate.toISOString(),
-          category: "Fatura",
-          source: "card" as const,
-          paid: true,
-        };
-      });
-
-    // Subscriptions - pending
-    const subPending: BillItem[] = billingSnapshot.subscriptions
-      .filter((sub) => !sub.paid)
-      .map((sub) => {
-        const dueDate = new Date(now.getFullYear(), now.getMonth(), sub.dueDay || 10);
-        if (dueDate < now) dueDate.setMonth(dueDate.getMonth() + 1);
-        return {
-          id: sub.id,
-          description: `Assinatura: ${sub.name}`,
-          amount: Number(sub.amount) || 0,
-          date: dueDate.toISOString(),
-          category: "Assinatura",
-          source: "subscription" as const,
-          paid: false,
-        };
-      });
-
-    // Subscriptions - paid
-    const subPaid: BillItem[] = billingSnapshot.subscriptions
-      .filter((sub) => sub.paid)
-      .map((sub) => {
-        const dueDate = new Date(now.getFullYear(), now.getMonth(), sub.dueDay || 10);
-        if (dueDate < now) dueDate.setMonth(dueDate.getMonth() + 1);
-        return {
-          id: sub.id,
-          description: `Assinatura: ${sub.name}`,
-          amount: Number(sub.amount) || 0,
-          date: dueDate.toISOString(),
-          category: "Assinatura",
-          source: "subscription" as const,
-          paid: true,
-        };
-      });
-
-    const allPending = [...txPending, ...cardPending, ...subPending].sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
-    );
-    const allPaid = [...txPaid, ...cardPaid, ...subPaid].sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-    );
+    const overview = buildBillingOverview(data.transactions, billingSnapshot, now);
 
     return {
-      pendingBills: allPending,
-      paidBills: allPaid,
-      paidTotal: allPaid.reduce((sum, bill) => sum + bill.amount, 0),
-      pendingTotal: allPending.reduce((sum, bill) => sum + bill.amount, 0),
+      pendingBills: overview.pendingBills,
+      paidBills: overview.paidBills,
+      paidTotal: overview.paidTotal,
+      pendingTotal: overview.pendingTotal,
     };
-  }, [data.transactions, now, billingSnapshot, paidIds]);
+  }, [data.transactions, now, billingSnapshot]);
 
   const totalBills = pendingTotal + paidTotal;
 
   // --- Payment handlers for each source ---
 
-  const handlePayTransaction = async (bill: BillItem) => {
-    const newPaid = new Set(paidIds);
-    newPaid.add(bill.id);
-    localStorage.setItem("sparky-paid-bills", JSON.stringify([...newPaid]));
-    window.dispatchEvent(new Event("sparky-paid-bills-updated"));
+  const handlePayTransaction = async (bill: (typeof pendingBills)[number]) => {
+    addPaidBillIds([bill.id]);
     await awardPoints("bill_paid", `Pagou: ${bill.description}`);
     toast.success("Conta marcada como paga! +3 pts");
   };
 
-  const handleReverseTransaction = async (bill: BillItem) => {
-    const newPaid = new Set(paidIds);
-    newPaid.delete(bill.id);
-    localStorage.setItem("sparky-paid-bills", JSON.stringify([...newPaid]));
-    window.dispatchEvent(new Event("sparky-paid-bills-updated"));
+  const handleReverseTransaction = async (bill: (typeof paidBills)[number]) => {
+    removePaidBillIds([bill.id]);
     await removePoints("bill_paid", `Pagou: ${bill.description}`);
     toast.info("Conta desmarcada e pontos removidos");
   };
 
-  const handlePaySubscription = async (bill: BillItem) => {
-    const subs = JSON.parse(localStorage.getItem("sparky-subscriptions") || "[]");
-    const updated = subs.map((s: any) => s.id === bill.id ? { ...s, paid: true } : s);
-    localStorage.setItem("sparky-subscriptions", JSON.stringify(updated));
-    window.dispatchEvent(new Event("sparky-subscriptions-updated"));
-    window.dispatchEvent(new Event("sparky-paid-bills-updated"));
-
-    await addTransaction({
-      date: new Date().toISOString(),
-      description: bill.description,
-      amount: bill.amount,
-      type: "expense",
-      category: "Assinatura",
-    });
-    await awardPoints("bill_paid", `Pagou: ${bill.description}`);
-    toast.success("Assinatura paga! +3 pts");
-  };
-
-  const handleReverseSubscription = async (bill: BillItem) => {
-    const subs = JSON.parse(localStorage.getItem("sparky-subscriptions") || "[]");
-    const updated = subs.map((s: any) => s.id === bill.id ? { ...s, paid: false } : s);
-    localStorage.setItem("sparky-subscriptions", JSON.stringify(updated));
-    window.dispatchEvent(new Event("sparky-subscriptions-updated"));
-    window.dispatchEvent(new Event("sparky-paid-bills-updated"));
-
-    const existingTx = data.transactions.find(
-      (t) => t.description === bill.description && t.category === "Assinatura",
+  const handlePaySubscription = async (bill: (typeof pendingBills)[number]) => {
+    const previousSubscriptions = readStoredSubscriptions();
+    const nextSubscriptions = previousSubscriptions.map((subscription) =>
+      subscription.id === bill.id ? { ...subscription, paid: true } : subscription,
     );
-    if (existingTx) await deleteTransaction(existingTx.id);
-    await removePoints("bill_paid", `Pagou: ${bill.description}`);
-    toast.info("Assinatura estornada e pontos removidos");
+
+    writeStoredSubscriptions(nextSubscriptions);
+
+    try {
+      const transactionId = await addTransaction({
+        date: new Date().toISOString(),
+        description: bill.description,
+        amount: bill.amount,
+        type: "expense",
+        category: "Assinatura",
+      });
+
+      addPaidBillIds([getSubscriptionPaymentId(bill.id, now), transactionId]);
+      await awardPoints("bill_paid", `Pagou: ${bill.description}`);
+      toast.success("Assinatura paga! +3 pts");
+    } catch {
+      writeStoredSubscriptions(previousSubscriptions);
+      toast.error("Não foi possível pagar a assinatura agora.");
+    }
   };
 
-  const handlePayCard = async (bill: BillItem) => {
+  const handleReverseSubscription = async (bill: (typeof paidBills)[number]) => {
+    const previousSubscriptions = readStoredSubscriptions();
+    const nextSubscriptions = previousSubscriptions.map((subscription) =>
+      subscription.id === bill.id ? { ...subscription, paid: false } : subscription,
+    );
+    const existingTransaction = data.transactions.find(
+      (transaction) => transaction.description === bill.description && transaction.category === "Assinatura",
+    );
+
+    writeStoredSubscriptions(nextSubscriptions);
+
+    try {
+      if (existingTransaction) {
+        await deleteTransaction(existingTransaction.id);
+      }
+
+      removePaidBillIds([
+        getSubscriptionPaymentId(bill.id, now),
+        bill.id,
+        existingTransaction?.id ?? "",
+      ]);
+      await removePoints("bill_paid", `Pagou: ${bill.description}`);
+      toast.info("Assinatura estornada e pontos removidos");
+    } catch {
+      writeStoredSubscriptions(previousSubscriptions);
+      toast.error("Não foi possível estornar a assinatura agora.");
+    }
+  };
+
+  const handlePayCard = async (bill: (typeof pendingBills)[number]) => {
     const cardId = bill.id.replace("card-invoice-", "");
-    const cards = JSON.parse(localStorage.getItem("sparky-credit-cards") || "[]");
-    const card = cards.find((c: any) => c.id === cardId);
+    const previousCards = readStoredCards();
+    const card = previousCards.find((currentCard) => currentCard.id === cardId);
     if (!card) return;
 
-    // Mark as paid in paidBillIds
-    const newPaid = new Set(paidIds);
-    newPaid.add(bill.id);
-    localStorage.setItem("sparky-paid-bills", JSON.stringify([...newPaid]));
-    window.dispatchEvent(new Event("sparky-paid-bills-updated"));
-
-    // Update card data
-    const updatedCards = cards.map((c: any) =>
-      c.id === cardId
+    const nextCards = previousCards.map((currentCard) =>
+      currentCard.id === cardId
         ? {
-            ...c,
+            ...currentCard,
             invoiceAmount: 0,
-            usedAmount: Math.max(0, c.usedAmount - bill.amount),
+            usedAmount: Math.max(0, currentCard.usedAmount - bill.amount),
             paidInvoices: [
-              ...(c.paidInvoices || []),
+              ...(currentCard.paidInvoices || []),
               {
+                cycleKey: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`,
                 month: new Date().toLocaleDateString("pt-BR", { month: "short", year: "numeric" }),
                 amount: bill.amount,
                 paidAt: new Date().toLocaleDateString("pt-BR"),
               },
             ],
           }
-        : c,
+        : currentCard,
     );
-    localStorage.setItem("sparky-credit-cards", JSON.stringify(updatedCards));
-    window.dispatchEvent(new Event("sparky-cards-updated"));
 
-    await addTransaction({
-      date: new Date().toISOString(),
-      description: `Fatura: ${card.cardName}`,
-      amount: bill.amount,
-      type: "expense",
-      category: "Fatura",
-    });
-    await awardPoints("bill_paid", `Fatura: ${card.cardName}`);
-    toast.success("Fatura paga com sucesso! +3 pts");
+    writeStoredCards(nextCards);
+
+    try {
+      const transactionId = await addTransaction({
+        date: new Date().toISOString(),
+        description: `Fatura: ${card.cardName || card.bankName}`,
+        amount: bill.amount,
+        type: "expense",
+        category: "Fatura",
+        cardId,
+      });
+
+      addPaidBillIds([getCardInvoicePaymentId(cardId, now), `card-invoice-${cardId}`, transactionId]);
+      await awardPoints("bill_paid", `Fatura: ${card.cardName || card.bankName}`);
+      toast.success("Fatura paga com sucesso! +3 pts");
+    } catch {
+      writeStoredCards(previousCards);
+      toast.error("Não foi possível pagar a fatura agora.");
+    }
   };
 
-  const handleReverseCard = async (bill: BillItem) => {
+  const handleReverseCard = async (bill: (typeof paidBills)[number]) => {
     const cardId = bill.id.replace("card-invoice-", "");
 
-    // Remove from paidBillIds
-    const newPaid = new Set(paidIds);
-    newPaid.delete(bill.id);
-    localStorage.setItem("sparky-paid-bills", JSON.stringify([...newPaid]));
-    window.dispatchEvent(new Event("sparky-paid-bills-updated"));
-
-    // Reverse the card data
-    const cards = JSON.parse(localStorage.getItem("sparky-credit-cards") || "[]");
-    const card = cards.find((c: any) => c.id === cardId);
-    if (card) {
-      const lastPaid = card.paidInvoices?.[card.paidInvoices.length - 1];
-      const restoreAmount = lastPaid?.amount || bill.amount;
-      const updatedCards = cards.map((c: any) =>
-        c.id === cardId
-          ? {
-              ...c,
-              invoiceAmount: c.invoiceAmount + restoreAmount,
-              usedAmount: c.usedAmount + restoreAmount,
-              paidInvoices: (c.paidInvoices || []).slice(0, -1),
-            }
-          : c,
-      );
-      localStorage.setItem("sparky-credit-cards", JSON.stringify(updatedCards));
-      window.dispatchEvent(new Event("sparky-cards-updated"));
-    }
-
-    // Remove the expense transaction
-    const existingTx = data.transactions.find(
-      (t) => t.description.startsWith("Fatura:") && t.category === "Fatura",
+    const previousCards = readStoredCards();
+    const card = previousCards.find((currentCard) => currentCard.id === cardId);
+    const existingTransaction = data.transactions.find(
+      (transaction) => transaction.cardId === cardId || (transaction.description.startsWith("Fatura:") && transaction.category === "Fatura"),
     );
-    if (existingTx) await deleteTransaction(existingTx.id);
-    await removePoints("bill_paid", `Fatura estornada`);
-    toast.info("Fatura estornada e pontos removidos");
+
+    if (!card) return;
+
+    const lastPaid = card.paidInvoices?.[card.paidInvoices.length - 1];
+    const restoreAmount = Number(lastPaid?.amount) || bill.amount;
+    const nextCards = previousCards.map((currentCard) =>
+      currentCard.id === cardId
+          ? {
+              ...currentCard,
+              invoiceAmount: currentCard.invoiceAmount + restoreAmount,
+              usedAmount: currentCard.usedAmount + restoreAmount,
+              paidInvoices: (currentCard.paidInvoices || []).slice(0, -1),
+            }
+          : currentCard,
+    );
+
+    writeStoredCards(nextCards);
+
+    try {
+      if (existingTransaction) {
+        await deleteTransaction(existingTransaction.id);
+      }
+
+      removePaidBillIds([
+        getCardInvoicePaymentId(cardId, now),
+        `card-invoice-${cardId}`,
+        existingTransaction?.id ?? "",
+      ]);
+      await removePoints("bill_paid", "Fatura estornada");
+      toast.info("Fatura estornada e pontos removidos");
+    } catch {
+      writeStoredCards(previousCards);
+      toast.error("Não foi possível estornar a fatura agora.");
+    }
   };
 
   // Unified handlers
@@ -310,9 +225,7 @@ const APagarModal = ({ open, onClose }: APagarModalProps) => {
   const deleteBill = (id: string) => {
     const newTransactions = data.transactions.filter((t) => t.id !== id);
     updateData({ transactions: newTransactions });
-    const newPaid = billingSnapshot.paidBillIds.filter((paidId) => paidId !== id);
-    localStorage.setItem("sparky-paid-bills", JSON.stringify(newPaid));
-    window.dispatchEvent(new Event("sparky-paid-bills-updated"));
+    removePaidBillIds([id]);
     toast.success("Conta removida com sucesso");
   };
 
