@@ -67,17 +67,17 @@ const TabBar = ({ activeTab, onTabChange }: TabBarProps) => {
         <div className="fixed inset-0 z-[59] bg-background/60 backdrop-blur-sm flex flex-col items-center justify-end pb-40">
           <div className="w-[85%] max-w-sm rounded-2xl border border-border bg-card p-5 space-y-5 shadow-xl">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-foreground">Posição da Dock</h3>
+              <h3 className="text-sm font-display font-semibold text-foreground">Posição da Dock</h3>
               <div className="flex gap-2">
                 <button
                   onClick={handleCancel}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive/15 text-destructive active:scale-90 transition-transform"
+                  className="flex h-8 w-8 items-center justify-center rounded-xl bg-destructive/15 text-destructive active:scale-90 transition-transform"
                 >
                   <X size={16} />
                 </button>
                 <button
                   onClick={handleSave}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/15 text-primary active:scale-90 transition-transform"
+                  className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/15 text-primary active:scale-90 transition-transform"
                 >
                   <Check size={16} />
                 </button>
@@ -101,12 +101,12 @@ const TabBar = ({ activeTab, onTabChange }: TabBarProps) => {
       {/* Dock */}
       <nav
         className={cn(
-          "pointer-events-none fixed inset-x-0 z-[60] flex justify-center px-3 transition-all duration-300",
+          "pointer-events-none fixed inset-x-0 z-[60] flex justify-center px-4 transition-all duration-300",
           hidden && !adjusting && "translate-y-[200%] opacity-0"
         )}
         style={{ bottom: `calc(${currentBottom}px + env(safe-area-inset-bottom, 0px))` }}
       >
-        <div className="liquid-dock pointer-events-auto mx-auto flex w-full max-w-lg items-center justify-around rounded-full px-2 py-2">
+        <div className="liquid-dock pointer-events-auto mx-auto flex w-full max-w-lg items-center justify-around rounded-2xl px-1.5 py-1.5">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -115,14 +115,14 @@ const TabBar = ({ activeTab, onTabChange }: TabBarProps) => {
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
                 className={cn(
-                  "flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-full px-3 py-2 transition-all duration-200",
+                  "flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl px-2 py-2 transition-all duration-200",
                   isActive
-                    ? "bg-primary/15 text-primary"
-                    : "text-muted-foreground active:scale-95"
+                    ? "bg-primary/15 text-primary shadow-sm shadow-primary/10"
+                    : "text-muted-foreground active:scale-95 hover:text-foreground"
                 )}
               >
-                <Icon size={20} strokeWidth={isActive ? 2.5 : 1.5} />
-                <span className={cn("text-[10px]", isActive ? "font-semibold" : "font-normal")}>
+                <Icon size={18} strokeWidth={isActive ? 2.5 : 1.5} />
+                <span className={cn("text-[9px] font-display", isActive ? "font-bold" : "font-medium")}>
                   {tab.label}
                 </span>
               </button>
