@@ -35,25 +35,25 @@ const BiggestExpenseCard = ({ hideValues = false }: BiggestExpenseCardProps) => 
 
   return (
     <div className="card-zelo fade-in-up">
-      <div className="flex items-center gap-2.5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/8 border border-primary/15">
           <VaultIcon />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
             <p className="text-label">MAIOR DESPESA</p>
           </div>
-          <p className="text-base font-bold truncate mt-0.5">
+          <p className="text-sm font-display font-bold truncate mt-0.5">
             {hideValues ? "••••••" : biggest.description}
           </p>
           <div className="flex items-center gap-2 mt-0.5">
             <span className="text-[10px] text-muted-foreground">{biggest.category}</span>
-            <span className="text-[10px] text-muted-foreground">•</span>
+            <span className="text-[10px] text-muted-foreground/40">•</span>
             <span className="text-[10px] text-muted-foreground">{dateStr}</span>
           </div>
         </div>
         <div className="text-right shrink-0">
-          <p className="text-lg font-extrabold tabular-nums text-destructive">
+          <p className="text-lg font-display font-extrabold tabular-nums text-destructive">
             {hideValues ? "••••••" : fmt(biggest.amount)}
           </p>
         </div>

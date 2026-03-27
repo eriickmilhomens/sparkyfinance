@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { PiggyBank, CalendarClock, Banknote, Info, CheckCircle } from "lucide-react";
+import { useState } from "react";
 import { useFinancialData, fmt } from "@/hooks/useFinancialData";
 import APagarModal from "./APagarModal";
 import { cn } from "@/lib/utils";
@@ -34,7 +34,7 @@ const StatusCards = () => {
       infoKey: "apagar",
     },
     {
-      label: "Saldo Disponível",
+      label: "Disponível",
       value: fmt(saldoDisponivel),
       color: isNegative ? "text-destructive" : "text-success",
       sub: isNegative ? "saldo insuficiente!" : "livre após contas",
@@ -70,10 +70,15 @@ const StatusCards = () => {
 
           const content = (
             <>
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-1.5">
-                  <Icon size={15} className={s.iconColor} />
-                  <p className="text-[11px] font-medium text-muted-foreground">{s.label}</p>
+                  <div className={cn("flex h-6 w-6 items-center justify-center rounded-lg", 
+                    s.infoKey === "saldo" ? "bg-primary/10" : 
+                    s.infoKey === "apagar" ? (s.allPaid ? "bg-success/10" : "bg-warning/10") :
+                    isNegative ? "bg-destructive/10" : "bg-success/10"
+                  )}>
+                    <Icon size={13} className={s.iconColor} />
+                  </div>
                 </div>
                 {s.infoKey && (
                   <button
@@ -83,14 +88,15 @@ const StatusCards = () => {
                     }}
                     className={cn(
                       "p-0.5 rounded active:scale-90 transition-all",
-                      isExpanded ? "text-primary" : "text-muted-foreground/50 hover:text-muted-foreground"
+                      isExpanded ? "text-primary" : "text-muted-foreground/40 hover:text-muted-foreground"
                     )}
                   >
-                    <Info size={11} />
+                    <Info size={10} />
                   </button>
                 )}
               </div>
-              {s.value ? <p className={cn("text-sm font-bold tabular-nums", s.color)}>{s.value}</p> : null}
+              <p className="text-[10px] font-display font-medium text-muted-foreground mb-0.5">{s.label}</p>
+              {s.value ? <p className={cn("text-sm font-display font-bold tabular-nums", s.color)}>{s.value}</p> : null}
               <p className={cn("text-[9px] mt-0.5 leading-tight flex items-center gap-0.5", isNegative && s.infoKey === "disponivel" ? "text-destructive/80" : "text-muted-foreground")}>
                 {(s as any).allPaid && s.infoKey === "apagar" && <CheckCircle size={9} className="text-success shrink-0" />}
                 {s.sub}
@@ -104,7 +110,7 @@ const StatusCards = () => {
                 }}
               >
                 {infoData && (
-                  <p className="text-[8px] text-muted-foreground leading-relaxed mt-1.5 pt-1.5 border-t border-border/50">
+                  <p className="text-[8px] text-muted-foreground leading-relaxed mt-1.5 pt-1.5 border-t border-border/30">
                     {infoData.message}
                   </p>
                 )}
@@ -117,7 +123,7 @@ const StatusCards = () => {
               <button
                 key={s.label}
                 onClick={() => setAPagarOpen(true)}
-                className={`card-zelo fade-in-up stagger-${i + 1} !py-3 !px-2.5 text-left cursor-pointer hover:border-warning/40 active:scale-[0.97] transition-all flex flex-col`}
+                className={`card-zelo fade-in-up stagger-${i + 1} !py-3 !px-2.5 text-left cursor-pointer hover:border-warning/30 active:scale-[0.97] transition-all flex flex-col`}
               >
                 {content}
               </button>

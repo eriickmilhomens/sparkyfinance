@@ -35,33 +35,33 @@ const ExpensesView = () => {
     <>
       <div className="px-4 pb-24 space-y-4">
         <div className="flex items-center justify-between pt-3">
-          <h1 className="text-xl font-bold">Despesas</h1>
-          <div className="flex items-center gap-1">
+          <h1 className="text-xl font-display font-bold">Despesas</h1>
+          <div className="flex items-center gap-0.5">
             <button
               onClick={() => setSettingsOpen(true)}
-              className="rounded-lg p-2 text-muted-foreground hover:text-foreground active:scale-95 transition-all"
+              className="rounded-xl p-2.5 text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95 transition-all"
             >
-              <Settings size={18} />
+              <Settings size={17} />
             </button>
             <button
               onClick={() => setCardsOpen(true)}
-              className="rounded-lg p-2 text-muted-foreground hover:text-foreground active:scale-95 transition-all"
+              className="rounded-xl p-2.5 text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95 transition-all"
             >
-              <CreditCard size={18} />
+              <CreditCard size={17} />
             </button>
           </div>
         </div>
 
-        <div className="flex gap-1 rounded-xl bg-muted/50 p-1">
+        <div className="flex gap-1 rounded-2xl bg-muted/40 p-1 border border-border/50">
           {tabs.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={cn(
-                "flex-1 rounded-lg py-2 text-xs font-medium transition-all active:scale-[0.97]",
+                "flex-1 rounded-xl py-2.5 text-xs font-display font-medium transition-all active:scale-[0.97]",
                 activeTab === tab
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground"
+                  ? "bg-card text-foreground shadow-sm border border-border/50"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               {tab}
@@ -74,10 +74,10 @@ const ExpensesView = () => {
 
       <button
         onClick={() => setModalOpen(true)}
-        className="fixed right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg shadow-primary/30 text-primary-foreground transition-all active:scale-90 pulse-glow"
+        className="fixed right-5 z-50 flex h-13 w-13 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/25 text-primary-foreground transition-all active:scale-90 pulse-glow"
         style={{ bottom: 'calc(112px + env(safe-area-inset-bottom, 0px))' }}
       >
-        <Plus size={24} strokeWidth={2.5} />
+        <Plus size={22} strokeWidth={2.5} />
       </button>
 
       <AddExpenseModal open={modalOpen} onClose={() => setModalOpen(false)} type="expense" />

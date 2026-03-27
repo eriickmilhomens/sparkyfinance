@@ -18,11 +18,11 @@ const CatIcon = () => (
 );
 
 const EASTER_EGG_MESSAGES = [
-  "🐱 Miau! Você me encontrou!",
-  "🐱 Psst... eu sou o Sparky, o gato financeiro!",
-  "🐱 Dica secreta: economize 30% do salário todo mês!",
-  "🐱 Estou de olho nas suas finanças... 👀",
-  "🐱 Você é persistente! Aqui vai um biscoito virtual 🍪",
+  "Miau! Você me encontrou!",
+  "Psst... eu sou o Sparky, o gato financeiro!",
+  "Dica secreta: economize 30% do salário todo mês!",
+  "Estou de olho nas suas finanças...",
+  "Você é persistente! Aqui vai um biscoito virtual",
 ];
 
 const CACHE_KEYS_TO_CLEAR = [
@@ -45,21 +45,16 @@ const Header = () => {
     if (syncing) return;
     setSyncing(true);
     try {
-      // Clear stale cache entries
       CACHE_KEYS_TO_CLEAR.forEach((k) => localStorage.removeItem(k));
-
       window.dispatchEvent(new Event("sparky-profile-refresh"));
-
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["financial-data"] }),
         queryClient.invalidateQueries({ queryKey: ["profile"] }),
         queryClient.invalidateQueries({ queryKey: ["group-members"] }),
         queryClient.refetchQueries({ type: "active" }),
       ]);
-
       window.dispatchEvent(new Event("sparky-data-cleared"));
       window.dispatchEvent(new Event("sparky-points-updated"));
-
       toast.success("Dados sincronizados com sucesso! Seu saldo e ranking estão em dia.", { duration: 2500 });
     } catch {
       toast.error("Erro ao sincronizar", { duration: 2000 });
@@ -72,7 +67,6 @@ const Header = () => {
     catClickCount.current += 1;
     if (catClickTimer.current) clearTimeout(catClickTimer.current);
     catClickTimer.current = setTimeout(() => { catClickCount.current = 0; }, 2000);
-
     if (catClickCount.current >= 7) {
       catClickCount.current = 0;
       const msg = EASTER_EGG_MESSAGES[Math.floor(Math.random() * EASTER_EGG_MESSAGES.length)];
@@ -84,7 +78,6 @@ const Header = () => {
     nameClickCount.current += 1;
     if (nameClickTimer.current) clearTimeout(nameClickTimer.current);
     nameClickTimer.current = setTimeout(() => { nameClickCount.current = 0; }, 1500);
-
     if (nameClickCount.current >= 3) {
       nameClickCount.current = 0;
       window.dispatchEvent(new Event("sparky-dock-adjust"));
@@ -92,35 +85,35 @@ const Header = () => {
   };
 
   return (
-    <header className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-background/95 backdrop-blur-md">
-      <div className="flex items-center gap-2">
+    <header className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-background/80 backdrop-blur-xl">
+      <div className="flex items-center gap-2.5">
         <button
           onClick={handleCatClick}
-          className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 active:scale-90 transition-transform"
+          className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 border border-primary/20 active:scale-90 transition-transform"
         >
           <CatIcon />
         </button>
         <span
           onClick={handleNameClick}
-          className="text-lg font-bold tracking-tight select-none cursor-default active:scale-95 transition-transform"
+          className="text-lg font-display font-bold tracking-tight select-none cursor-default active:scale-95 transition-transform bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text"
         >
           SPARKY
         </span>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1">
         <button
           onClick={handleSync}
           disabled={syncing}
-          className="rounded-full p-2 text-muted-foreground transition-colors hover:text-foreground active:scale-95 disabled:opacity-50"
+          className="rounded-xl p-2.5 text-muted-foreground transition-all hover:text-foreground hover:bg-muted/50 active:scale-95 disabled:opacity-50"
           title="Sincronizar dados"
         >
-          <RefreshCcw size={18} className={syncing ? "animate-spin" : ""} />
+          <RefreshCcw size={16} className={syncing ? "animate-spin" : ""} />
         </button>
         <button
           onClick={toggleTheme}
-          className="rounded-full p-2 text-muted-foreground transition-colors hover:text-foreground active:scale-95"
+          className="rounded-xl p-2.5 text-muted-foreground transition-all hover:text-foreground hover:bg-muted/50 active:scale-95"
         >
-          {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+          {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
         </button>
         <ProfileSwitcher />
       </div>

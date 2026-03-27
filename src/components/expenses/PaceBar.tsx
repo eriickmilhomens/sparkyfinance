@@ -7,7 +7,6 @@ const PaceBar = () => {
   const dailySpend = data.expenses > 0 ? data.expenses / Math.max(1, new Date().getDate()) : 0;
   const cashDays = dailySpend > 0 ? Math.floor(available / dailySpend) : 0;
 
-  // Cap display to a reasonable range (max = days left in month * 2)
   const maxDays = daysLeft * 2;
   const displayCashDays = Math.min(cashDays, maxDays);
   const progress = hasData && (displayCashDays + daysLeft) > 0
@@ -15,7 +14,6 @@ const PaceBar = () => {
     : 0;
   const accelerated = hasData && cashDays > 0 && cashDays < daysLeft;
 
-  // Descriptive label instead of raw number
   const getLabel = () => {
     if (!hasData) return "Sem dados";
     if (cashDays === 0) return "Sem reserva";
@@ -25,19 +23,21 @@ const PaceBar = () => {
 
   return (
     <div className="card-zelo fade-in-up">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-1.5">
-          <Gauge size={12} className="text-muted-foreground" />
-          <p className="text-xs font-semibold text-muted-foreground">Ritmo & Autonomia</p>
+      <div className="flex items-center justify-between mb-2.5">
+        <div className="flex items-center gap-2">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-muted/80">
+            <Gauge size={13} className="text-muted-foreground" />
+          </div>
+          <p className="text-xs font-display font-semibold text-muted-foreground">Ritmo & Autonomia</p>
         </div>
         {hasData && (
-          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${accelerated ? "bg-destructive/15 text-destructive" : "bg-success/15 text-success"}`}>
+          <span className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-semibold border ${accelerated ? "bg-destructive/8 text-destructive border-destructive/20" : "bg-success/8 text-success border-success/20"}`}>
             {accelerated ? <AlertTriangle size={10} /> : <CheckCircle2 size={10} />}
-            {accelerated ? "Ritmo Acelerado" : "Ritmo Saudável"}
+            {accelerated ? "Acelerado" : "Saudável"}
           </span>
         )}
       </div>
-      <div className="h-2.5 w-full rounded-full bg-muted overflow-hidden">
+      <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
         <div
           className={`h-full rounded-full transition-all duration-700 ${accelerated ? "bg-gradient-to-r from-destructive to-warning" : "bg-gradient-to-r from-success to-primary"}`}
           style={{ width: `${progress}%` }}
@@ -45,7 +45,7 @@ const PaceBar = () => {
       </div>
       <div className="flex justify-between mt-2">
         <span className="text-[10px] text-muted-foreground">{getLabel()}</span>
-        <span className="text-[10px] text-muted-foreground">Faltam {daysLeft} dias no mês</span>
+        <span className="text-[10px] text-muted-foreground">Faltam {daysLeft} dias</span>
       </div>
     </div>
   );

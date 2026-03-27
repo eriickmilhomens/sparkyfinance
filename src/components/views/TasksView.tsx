@@ -34,7 +34,6 @@ const TasksView = () => {
     isLeader: isLeader(member),
   })), [groupMembers, isLeader, profile?.user_id]);
 
-  // Dynamic achievements based on real data
   const hasTransactions = data.transactions.length > 0;
   const totalExpenses = data.expenses;
   const consecutiveDays = hasTransactions ? Math.min(7, data.transactions.length) : 0;
@@ -45,8 +44,8 @@ const TasksView = () => {
       label: "Sequência de registros",
       desc: "Registre gastos por 7 dias seguidos",
       pts: 20,
-      color: "text-orange-400",
-      bg: "bg-orange-400/15",
+      color: "text-warning",
+      bg: "bg-warning/12",
       progress: consecutiveDays,
       total: 7,
     },
@@ -56,7 +55,7 @@ const TasksView = () => {
       desc: "Gaste menos que o orçamento mensal",
       pts: 50,
       color: "text-success",
-      bg: "bg-success/15",
+      bg: "bg-success/12",
       progress: totalExpenses > 0 && data.income > 0 ? Math.min(100, Math.round((1 - totalExpenses / data.income) * 100)) : 0,
       total: 100,
     },
@@ -66,7 +65,7 @@ const TasksView = () => {
       desc: "Não toque na reserva de emergência",
       pts: 30,
       color: "text-primary",
-      bg: "bg-primary/15",
+      bg: "bg-primary/12",
       progress: 0,
       total: 1,
     },
@@ -75,32 +74,32 @@ const TasksView = () => {
       label: "Economia rápida",
       desc: "Economize R$ 100,00 em uma semana",
       pts: 15,
-      color: "text-warning",
-      bg: "bg-warning/15",
+      color: "text-info",
+      bg: "bg-info/12",
       progress: data.income > data.expenses ? Math.min(100, Math.round(((data.income - data.expenses) / 100) * 100)) : 0,
       total: 100,
     },
   ];
 
   const gradients = [
-    "from-primary/40 to-primary/10",
-    "from-success/40 to-success/10",
-    "from-destructive/40 to-destructive/10",
-    "from-warning/40 to-warning/10",
+    "from-primary/30 to-primary/5",
+    "from-success/30 to-success/5",
+    "from-destructive/30 to-destructive/5",
+    "from-warning/30 to-warning/5",
   ];
 
   return (
     <div className="px-4 pb-24 space-y-4">
       <div className="pt-3">
-        <h1 className="text-xl font-bold">Ranking & Pontos</h1>
+        <h1 className="text-xl font-display font-bold">Ranking & Pontos</h1>
         <p className="text-xs text-muted-foreground mt-1">Compita com seu grupo e ganhe pontos por bons hábitos financeiros</p>
       </div>
 
       <div>
-        <p className="text-label mb-2 px-1">RANKING DO GRUPO</p>
+        <p className="text-label mb-2.5 px-1">RANKING DO GRUPO</p>
         <div className="space-y-2">
           {members.length === 0 ? (
-            <div className="card-zelo text-center py-6 fade-in-up">
+            <div className="card-zelo text-center py-8 fade-in-up">
               <Crown size={24} className="text-warning mx-auto mb-2" />
               <p className="text-sm text-muted-foreground">Nenhum participante disponível ainda</p>
             </div>
@@ -113,22 +112,22 @@ const TasksView = () => {
                   `stagger-${i + 1}`
                 )}
               >
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
-                  {i + 1}º
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-muted text-xs font-display font-bold text-muted-foreground">
+                  {i + 1}
                 </div>
                 <div className="relative">
-                  <div className={cn("flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br text-sm font-bold", gradients[i % gradients.length])}>
+                  <div className={cn("flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br text-sm font-display font-bold", gradients[i % gradients.length])}>
                     {member.avatar}
                   </div>
-                  {i === 0 && <Crown size={12} className="absolute -top-1 -right-1 text-warning" />}
+                  {i === 0 && <Crown size={11} className="absolute -top-1 -right-1 text-warning" />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold">{member.name}</p>
                   <p className="text-[10px] text-muted-foreground">{member.isLeader ? "Líder" : member.isCurrentUser ? "Você" : "Membro"}</p>
                 </div>
-                <div className="flex items-center gap-1.5 rounded-full bg-warning/15 px-2.5 py-1">
-                  {i === 0 ? <Trophy size={12} className="text-warning" /> : <Star size={12} className="text-warning" />}
-                  <span className="text-xs font-bold text-warning tabular-nums">{member.points} pts</span>
+                <div className="flex items-center gap-1.5 rounded-xl bg-warning/10 border border-warning/20 px-2.5 py-1">
+                  {i === 0 ? <Trophy size={11} className="text-warning" /> : <Star size={11} className="text-warning" />}
+                  <span className="text-[11px] font-display font-bold text-warning tabular-nums">{member.points}</span>
                 </div>
               </div>
             ))
@@ -137,10 +136,7 @@ const TasksView = () => {
       </div>
 
       <div>
-        <p className="text-label mb-2 px-1">CONQUISTAS & INCENTIVOS</p>
-        <p className="text-[10px] text-muted-foreground mb-3 px-1">
-          Complete desafios financeiros para ganhar pontos e subir no ranking do grupo.
-        </p>
+        <p className="text-label mb-2.5 px-1">CONQUISTAS</p>
         <div className="space-y-2">
           {achievements.map((a, i) => {
             const Icon = a.icon;
@@ -150,17 +146,17 @@ const TasksView = () => {
               <div key={a.label} className={cn("card-zelo fade-in-up", `stagger-${i + 1}`)}>
                 <div className="flex items-center gap-3">
                   <div className={cn("flex h-10 w-10 items-center justify-center rounded-xl", a.bg)}>
-                    <Icon size={18} className={a.color} />
+                    <Icon size={17} className={a.color} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-semibold">{a.label}</p>
-                      <span className="text-[10px] font-bold text-warning">+{a.pts} pts</span>
+                      <span className="text-[10px] font-display font-bold text-warning">+{a.pts} pts</span>
                     </div>
                     <p className="text-[10px] text-muted-foreground mt-0.5">{a.desc}</p>
                     <div className="mt-2 h-1.5 w-full rounded-full bg-muted overflow-hidden">
                       <div
-                        className={cn("h-full rounded-full transition-all", isDone ? "bg-success" : "bg-primary")}
+                        className={cn("h-full rounded-full transition-all duration-700", isDone ? "bg-success" : "bg-primary")}
                         style={{ width: `${Math.max(0, pctDone)}%` }}
                       />
                     </div>
