@@ -19,7 +19,6 @@ const BalanceCard = ({ onVisibilityChange }: BalanceCardProps) => {
     onVisibilityChange?.(visible);
   }, [visible, onVisibilityChange]);
 
-
   const handleAdjust = async () => {
     const raw = adjustValue.replace(/\./g, "").replace(",", ".");
     const val = parseFloat(raw);
@@ -46,52 +45,58 @@ const BalanceCard = ({ onVisibilityChange }: BalanceCardProps) => {
 
   return (
     <div className="card-zelo fade-in-up relative overflow-hidden">
-      {/* Accent glow */}
-      <div className="absolute -top-8 -right-8 h-24 w-24 rounded-full bg-primary/8 blur-2xl pointer-events-none" />
+      {/* Gradient accent orb */}
+      <div className="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-gradient-to-br from-primary/12 to-primary/4 blur-2xl pointer-events-none" />
+      <div className="absolute -bottom-8 -left-8 h-20 w-20 rounded-full bg-primary/6 blur-2xl pointer-events-none" />
 
-      <div className="flex items-center justify-between mb-1.5">
+      <div className="flex items-center justify-between mb-2 relative z-10">
         <span className="text-label">Saldo Disponível</span>
         <div className="flex items-center gap-1.5">
-          <button onClick={() => setEditing(!editing)} className="rounded-lg p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95 transition-all" title="Ajustar saldo">
+          <button onClick={() => setEditing(!editing)} className="rounded-xl p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95 transition-all duration-300" title="Ajustar saldo">
             <Pencil size={13} />
           </button>
-          <button onClick={() => setVisible(!visible)} className="rounded-lg p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95 transition-all">
+          <button onClick={() => setVisible(!visible)} className="rounded-xl p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95 transition-all duration-300">
             {visible ? <Eye size={15} /> : <EyeOff size={15} />}
           </button>
         </div>
       </div>
-      <p className="text-3xl font-display font-extrabold tracking-tight tabular-nums">
+      <p className="text-3xl font-display font-extrabold tracking-tight tabular-nums relative z-10">
         {visible ? fmt(available) : "••••••"}
       </p>
-      <div className="mt-2.5">
-        <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-          <span>Receitas: <span className="text-success font-medium">{visible ? fmt(data.income) : "••••••"}</span></span>
-          <span className="text-border/60">•</span>
-          <span>Despesas: <span className="text-destructive font-medium">{visible ? fmt(data.expenses) : "••••••"}</span></span>
+      <div className="mt-3 relative z-10">
+        <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <span className="h-1.5 w-1.5 rounded-full bg-success" />
+            Receitas: <span className="text-success font-semibold tabular-nums">{visible ? fmt(data.income) : "••••••"}</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="h-1.5 w-1.5 rounded-full bg-destructive" />
+            Despesas: <span className="text-destructive font-semibold tabular-nums">{visible ? fmt(data.expenses) : "••••••"}</span>
+          </span>
         </div>
       </div>
 
       {editing && (
-        <div className="mt-3 pt-3 border-t border-border/50 space-y-2.5 fade-in-up">
-          <div className="flex gap-1.5">
+        <div className="mt-4 pt-4 border-t border-border/40 space-y-3 fade-in-up relative z-10">
+          <div className="flex gap-2">
             <button onClick={() => setAdjustType("add")}
-              className={`flex-1 flex items-center justify-center gap-1 rounded-xl py-2 text-xs font-medium transition-all ${adjustType === "add" ? "bg-success/12 text-success border border-success/20" : "bg-muted text-muted-foreground"}`}>
-              <Plus size={12} /> Adicionar
+              className={`flex-1 flex items-center justify-center gap-1.5 rounded-2xl py-2.5 text-xs font-semibold transition-all duration-300 ${adjustType === "add" ? "bg-success/12 text-success border border-success/25" : "bg-muted/50 text-muted-foreground border border-transparent"}`}>
+              <Plus size={13} /> Adicionar
             </button>
             <button onClick={() => setAdjustType("sub")}
-              className={`flex-1 flex items-center justify-center gap-1 rounded-xl py-2 text-xs font-medium transition-all ${adjustType === "sub" ? "bg-destructive/12 text-destructive border border-destructive/20" : "bg-muted text-muted-foreground"}`}>
-              <Minus size={12} /> Subtrair
+              className={`flex-1 flex items-center justify-center gap-1.5 rounded-2xl py-2.5 text-xs font-semibold transition-all duration-300 ${adjustType === "sub" ? "bg-destructive/12 text-destructive border border-destructive/25" : "bg-muted/50 text-muted-foreground border border-transparent"}`}>
+              <Minus size={13} /> Subtrair
             </button>
           </div>
           <input type="text" inputMode="decimal" placeholder="Digite o valor" value={adjustValue}
             onChange={(e) => setAdjustValue(e.target.value)}
-            className="w-full rounded-xl border border-border bg-muted/30 px-3 py-2.5 text-sm outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" />
+            className="w-full rounded-2xl border border-border bg-muted/30 px-4 py-3 text-sm outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300 tabular-nums" />
           <input type="text" placeholder="Descrição (opcional)" value={adjustDesc}
             onChange={(e) => setAdjustDesc(e.target.value)}
-            className="w-full rounded-xl border border-border bg-muted/30 px-3 py-2.5 text-sm outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" />
+            className="w-full rounded-2xl border border-border bg-muted/30 px-4 py-3 text-sm outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300" />
           <div className="flex gap-2">
-            <button onClick={() => setEditing(false)} className="flex-1 rounded-xl border border-border py-2.5 text-xs font-medium text-muted-foreground hover:bg-muted/30 transition-all">Cancelar</button>
-            <button onClick={handleAdjust} className="flex-1 rounded-xl bg-primary py-2.5 text-xs font-display font-bold text-primary-foreground shadow-sm shadow-primary/15">Salvar Ajuste</button>
+            <button onClick={() => setEditing(false)} className="flex-1 rounded-2xl border border-border py-3 text-xs font-medium text-muted-foreground hover:bg-muted/30 transition-all duration-300">Cancelar</button>
+            <button onClick={handleAdjust} className="flex-1 rounded-2xl bg-primary py-3 text-xs font-display font-bold text-primary-foreground shadow-lg shadow-primary/20 transition-all duration-300 active:scale-[0.98]">Salvar Ajuste</button>
           </div>
         </div>
       )}

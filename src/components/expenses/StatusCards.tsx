@@ -19,6 +19,7 @@ const StatusCards = () => {
       sub: "em conta agora",
       icon: PiggyBank,
       iconColor: "text-primary",
+      iconBg: "bg-primary/10",
       clickable: false,
       infoKey: "saldo",
     },
@@ -30,6 +31,7 @@ const StatusCards = () => {
       allPaid,
       icon: CalendarClock,
       iconColor: allPaid ? "text-success" : "text-warning",
+      iconBg: allPaid ? "bg-success/10" : "bg-warning/10",
       clickable: true,
       infoKey: "apagar",
     },
@@ -40,6 +42,7 @@ const StatusCards = () => {
       sub: isNegative ? "saldo insuficiente!" : "livre após contas",
       icon: Banknote,
       iconColor: isNegative ? "text-destructive" : "text-success",
+      iconBg: isNegative ? "bg-destructive/10" : "bg-success/10",
       clickable: false,
       infoKey: "disponivel",
     },
@@ -70,15 +73,9 @@ const StatusCards = () => {
 
           const content = (
             <>
-              <div className="flex items-center justify-between mb-1.5">
-                <div className="flex items-center gap-1.5">
-                  <div className={cn("flex h-6 w-6 items-center justify-center rounded-lg", 
-                    s.infoKey === "saldo" ? "bg-primary/10" : 
-                    s.infoKey === "apagar" ? (s.allPaid ? "bg-success/10" : "bg-warning/10") :
-                    isNegative ? "bg-destructive/10" : "bg-success/10"
-                  )}>
-                    <Icon size={13} className={s.iconColor} />
-                  </div>
+              <div className="flex items-center justify-between mb-2">
+                <div className={cn("flex h-7 w-7 items-center justify-center rounded-xl", s.iconBg)}>
+                  <Icon size={14} className={s.iconColor} />
                 </div>
                 {s.infoKey && (
                   <button
@@ -87,11 +84,11 @@ const StatusCards = () => {
                       setExpandedInfo(isExpanded ? null : s.infoKey!);
                     }}
                     className={cn(
-                      "p-0.5 rounded active:scale-90 transition-all",
+                      "p-0.5 rounded-lg active:scale-90 transition-all duration-300",
                       isExpanded ? "text-primary" : "text-muted-foreground/40 hover:text-muted-foreground"
                     )}
                   >
-                    <Info size={10} />
+                    <Info size={11} />
                   </button>
                 )}
               </div>
@@ -101,16 +98,12 @@ const StatusCards = () => {
                 {(s as any).allPaid && s.infoKey === "apagar" && <CheckCircle size={9} className="text-success shrink-0" />}
                 {s.sub}
               </p>
-              {/* Inline collapsible info */}
               <div
                 className="overflow-hidden transition-all duration-300 ease-in-out"
-                style={{
-                  maxHeight: isExpanded ? "120px" : "0px",
-                  opacity: isExpanded ? 1 : 0,
-                }}
+                style={{ maxHeight: isExpanded ? "120px" : "0px", opacity: isExpanded ? 1 : 0 }}
               >
                 {infoData && (
-                  <p className="text-[8px] text-muted-foreground leading-relaxed mt-1.5 pt-1.5 border-t border-border/30">
+                  <p className="text-[8px] text-muted-foreground leading-relaxed mt-2 pt-2 border-t border-border/30">
                     {infoData.message}
                   </p>
                 )}
@@ -123,7 +116,7 @@ const StatusCards = () => {
               <button
                 key={s.label}
                 onClick={() => setAPagarOpen(true)}
-                className={`card-zelo fade-in-up stagger-${i + 1} !py-3 !px-2.5 text-left cursor-pointer hover:border-warning/30 active:scale-[0.97] transition-all flex flex-col`}
+                className={`card-zelo fade-in-up stagger-${i + 1} !py-3 !px-2.5 text-left cursor-pointer hover:border-warning/30 active:scale-[0.97] transition-all duration-300 flex flex-col`}
               >
                 {content}
               </button>
