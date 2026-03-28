@@ -6,7 +6,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { toast } from "sonner";
 
 const CatIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M4 6l2 6" />
     <path d="M20 6l-2 6" />
     <circle cx="12" cy="14" r="7" />
@@ -85,17 +85,17 @@ const Header = () => {
   };
 
   return (
-    <header className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-background/80 backdrop-blur-xl">
-      <div className="flex items-center gap-2.5">
+    <header className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-background/70 backdrop-blur-2xl">
+      <div className="flex items-center gap-3">
         <button
           onClick={handleCatClick}
-          className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 border border-primary/20 active:scale-90 transition-transform"
+          className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 glow-ring active:scale-90 transition-all duration-300"
         >
           <CatIcon />
         </button>
         <span
           onClick={handleNameClick}
-          className="text-lg font-display font-bold tracking-tight select-none cursor-default active:scale-95 transition-transform bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text"
+          className="text-lg font-display font-bold tracking-tight select-none cursor-default active:scale-95 transition-all duration-300 bg-gradient-to-r from-foreground to-foreground/60 bg-clip-text"
         >
           SPARKY
         </span>
@@ -104,14 +104,14 @@ const Header = () => {
         <button
           onClick={handleSync}
           disabled={syncing}
-          className="rounded-xl p-2.5 text-muted-foreground transition-all hover:text-foreground hover:bg-muted/50 active:scale-95 disabled:opacity-50"
+          className="rounded-2xl p-2.5 text-muted-foreground transition-all duration-300 hover:text-foreground hover:bg-muted/50 active:scale-95 disabled:opacity-50"
           title="Sincronizar dados"
         >
           <RefreshCcw size={16} className={syncing ? "animate-spin" : ""} />
         </button>
         <button
           onClick={toggleTheme}
-          className="rounded-xl p-2.5 text-muted-foreground transition-all hover:text-foreground hover:bg-muted/50 active:scale-95"
+          className="rounded-2xl p-2.5 text-muted-foreground transition-all duration-300 hover:text-foreground hover:bg-muted/50 active:scale-95"
         >
           {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
         </button>

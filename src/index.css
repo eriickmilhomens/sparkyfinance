@@ -6,35 +6,35 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 220 25% 10%;
+    --background: 220 18% 97%;
+    --foreground: 224 28% 12%;
 
-    --card: 210 25% 97%;
-    --card-foreground: 220 25% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 28% 12%;
 
-    --popover: 210 25% 97%;
-    --popover-foreground: 220 25% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 28% 12%;
 
     --primary: 172 66% 50%;
-    --primary-foreground: 220 25% 6%;
+    --primary-foreground: 224 28% 6%;
 
-    --secondary: 210 15% 92%;
-    --secondary-foreground: 220 20% 20%;
+    --secondary: 220 14% 94%;
+    --secondary-foreground: 224 20% 20%;
 
-    --muted: 210 15% 92%;
-    --muted-foreground: 220 10% 46%;
+    --muted: 220 14% 94%;
+    --muted-foreground: 224 10% 46%;
 
-    --accent: 210 15% 92%;
-    --accent-foreground: 220 20% 20%;
+    --accent: 220 14% 94%;
+    --accent-foreground: 224 20% 20%;
 
     --destructive: 0 72% 58%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 15% 88%;
-    --input: 210 15% 88%;
+    --border: 220 14% 90%;
+    --input: 220 14% 90%;
     --ring: 172 66% 50%;
 
-    --radius: 1rem;
+    --radius: 1.25rem;
 
     --success: 160 65% 42%;
     --warning: 36 90% 52%;
@@ -42,46 +42,46 @@
 
     --glow-primary: 172 66% 50%;
 
-    --sidebar-background: 210 20% 95%;
-    --sidebar-foreground: 220 25% 10%;
+    --sidebar-background: 220 18% 95%;
+    --sidebar-foreground: 224 28% 12%;
     --sidebar-primary: 172 66% 50%;
-    --sidebar-primary-foreground: 220 25% 6%;
-    --sidebar-accent: 210 15% 92%;
-    --sidebar-accent-foreground: 220 20% 20%;
-    --sidebar-border: 210 15% 88%;
+    --sidebar-primary-foreground: 224 28% 6%;
+    --sidebar-accent: 220 14% 94%;
+    --sidebar-accent-foreground: 224 20% 20%;
+    --sidebar-border: 220 14% 90%;
     --sidebar-ring: 172 66% 50%;
   }
 
   .dark {
-    --background: 222 25% 7%;
-    --foreground: 210 20% 94%;
+    --background: 228 22% 6%;
+    --foreground: 210 20% 95%;
 
-    --card: 222 22% 10%;
-    --card-foreground: 210 20% 94%;
+    --card: 228 20% 9%;
+    --card-foreground: 210 20% 95%;
 
-    --popover: 222 22% 10%;
-    --popover-foreground: 210 20% 94%;
+    --popover: 228 20% 9%;
+    --popover-foreground: 210 20% 95%;
 
     --primary: 172 66% 50%;
-    --primary-foreground: 222 25% 4%;
+    --primary-foreground: 228 22% 4%;
 
-    --secondary: 222 18% 14%;
+    --secondary: 228 16% 13%;
     --secondary-foreground: 210 15% 85%;
 
-    --muted: 222 18% 14%;
-    --muted-foreground: 220 10% 50%;
+    --muted: 228 16% 13%;
+    --muted-foreground: 224 10% 50%;
 
-    --accent: 222 18% 14%;
+    --accent: 228 16% 13%;
     --accent-foreground: 210 15% 85%;
 
     --destructive: 0 72% 58%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 222 15% 16%;
-    --input: 222 15% 16%;
+    --border: 228 14% 15%;
+    --input: 228 14% 15%;
     --ring: 172 66% 50%;
 
-    --radius: 1rem;
+    --radius: 1.25rem;
 
     --success: 160 65% 42%;
     --warning: 36 90% 52%;
@@ -89,13 +89,13 @@
 
     --glow-primary: 172 66% 50%;
 
-    --sidebar-background: 222 25% 5%;
-    --sidebar-foreground: 210 20% 94%;
+    --sidebar-background: 228 22% 5%;
+    --sidebar-foreground: 210 20% 95%;
     --sidebar-primary: 172 66% 50%;
-    --sidebar-primary-foreground: 222 25% 4%;
-    --sidebar-accent: 222 18% 14%;
+    --sidebar-primary-foreground: 228 22% 4%;
+    --sidebar-accent: 228 16% 13%;
     --sidebar-accent-foreground: 210 15% 85%;
-    --sidebar-border: 222 15% 16%;
+    --sidebar-border: 228 14% 15%;
     --sidebar-ring: 172 66% 50%;
   }
 }
@@ -155,36 +155,56 @@
     text-wrap: balance;
   }
 
+  /* ── Premium Glass Card ── */
   .card-zelo {
-    @apply bg-card rounded-2xl p-4;
-    border: 1px solid hsl(var(--border) / 0.6);
+    @apply bg-card/80 rounded-3xl p-4;
+    border: 1px solid hsl(var(--border) / 0.5);
     box-shadow:
-      0 1px 3px hsl(var(--foreground) / 0.04),
-      0 4px 12px hsl(var(--foreground) / 0.03),
-      inset 0 1px 0 hsl(var(--foreground) / 0.02);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+      0 2px 8px hsl(var(--foreground) / 0.03),
+      0 8px 32px hsl(var(--foreground) / 0.04),
+      inset 0 1px 0 hsl(var(--foreground) / 0.04);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card-zelo:hover {
+    box-shadow:
+      0 2px 8px hsl(var(--foreground) / 0.04),
+      0 12px 40px hsl(var(--foreground) / 0.06),
+      inset 0 1px 0 hsl(var(--foreground) / 0.04);
   }
 
   .dark .card-zelo {
-    background: hsl(var(--card) / 0.7);
-    border: 1px solid hsl(var(--border) / 0.4);
+    background: hsl(var(--card) / 0.6);
+    border: 1px solid hsl(var(--border) / 0.35);
     box-shadow:
-      0 1px 3px hsl(0 0% 0% / 0.2),
-      0 8px 24px hsl(0 0% 0% / 0.15),
-      inset 0 1px 0 hsl(var(--foreground) / 0.03);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+      0 2px 8px hsl(0 0% 0% / 0.2),
+      0 12px 40px hsl(0 0% 0% / 0.2),
+      inset 0 1px 0 hsl(var(--foreground) / 0.04),
+      0 0 0 0.5px hsl(var(--primary) / 0.08);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+  }
+
+  .dark .card-zelo:hover {
+    border-color: hsl(var(--primary) / 0.15);
+    box-shadow:
+      0 2px 8px hsl(0 0% 0% / 0.25),
+      0 16px 48px hsl(0 0% 0% / 0.25),
+      inset 0 1px 0 hsl(var(--foreground) / 0.05),
+      0 0 0 0.5px hsl(var(--primary) / 0.12);
   }
 
   .text-value {
-    @apply text-2xl tracking-tight tabular-nums;
+    @apply text-2xl tracking-tight tabular-nums font-sans;
     font-family: 'Space Grotesk', system-ui, sans-serif;
     font-weight: 700;
+    font-variant-numeric: tabular-nums;
   }
 
   .text-label {
-    @apply text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground;
+    @apply text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground;
     font-family: 'Space Grotesk', system-ui, sans-serif;
   }
 
@@ -192,24 +212,25 @@
     animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
+  /* ── Liquid Dock ── */
   .liquid-dock {
-    background: hsl(var(--card) / 0.65);
-    border: 1px solid hsl(var(--border) / 0.5);
+    background: hsl(var(--card) / 0.7);
+    border: 1px solid hsl(var(--border) / 0.4);
     box-shadow:
-      0 20px 40px -20px hsl(var(--foreground) / 0.35),
-      0 8px 20px -12px hsl(var(--foreground) / 0.2),
-      inset 0 1px 0 hsl(var(--foreground) / 0.05),
+      0 24px 48px -16px hsl(var(--foreground) / 0.3),
+      0 8px 20px -12px hsl(var(--foreground) / 0.15),
+      inset 0 1px 0 hsl(var(--foreground) / 0.06),
       0 0 0 0.5px hsl(var(--primary) / 0.1);
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(32px) saturate(200%);
+    -webkit-backdrop-filter: blur(32px) saturate(200%);
   }
 
   .dark .liquid-dock {
-    background: hsl(var(--card) / 0.55);
+    background: hsl(var(--card) / 0.5);
     box-shadow:
-      0 20px 40px -20px hsl(0 0% 0% / 0.6),
+      0 24px 48px -16px hsl(0 0% 0% / 0.6),
       0 8px 20px -12px hsl(0 0% 0% / 0.4),
-      inset 0 1px 0 hsl(var(--foreground) / 0.04),
+      inset 0 1px 0 hsl(var(--foreground) / 0.05),
       0 0 0 0.5px hsl(var(--primary) / 0.15);
   }
 
@@ -218,6 +239,14 @@
   .stagger-3 { animation-delay: 180ms; }
   .stagger-4 { animation-delay: 240ms; }
   .stagger-5 { animation-delay: 300ms; }
+
+  /* Glow effect for mascot */
+  .glow-ring {
+    box-shadow:
+      0 0 12px 2px hsl(var(--primary) / 0.25),
+      0 0 24px 4px hsl(var(--primary) / 0.12),
+      inset 0 0 8px hsl(var(--primary) / 0.08);
+  }
 }
 
 @keyframes fadeInUp {
@@ -255,11 +284,11 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.3);
+  background: hsl(var(--muted-foreground) / 0.2);
   border-radius: 2px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.5);
+  background: hsl(var(--muted-foreground) / 0.4);
 }
 
 .no-scrollbar::-webkit-scrollbar { display: none; }

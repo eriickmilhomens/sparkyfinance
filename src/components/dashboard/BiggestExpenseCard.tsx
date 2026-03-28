@@ -34,9 +34,10 @@ const BiggestExpenseCard = ({ hideValues = false }: BiggestExpenseCardProps) => 
   const dateStr = biggestDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
 
   return (
-    <div className="card-zelo fade-in-up">
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/8 border border-primary/15">
+    <div className="card-zelo fade-in-up relative overflow-hidden">
+      <div className="absolute -top-6 -right-6 h-16 w-16 rounded-full bg-destructive/6 blur-2xl pointer-events-none" />
+      <div className="flex items-center gap-3 relative z-10">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/8 border border-primary/12">
           <VaultIcon />
         </div>
         <div className="flex-1 min-w-0">
@@ -48,7 +49,7 @@ const BiggestExpenseCard = ({ hideValues = false }: BiggestExpenseCardProps) => 
           </p>
           <div className="flex items-center gap-2 mt-0.5">
             <span className="text-[10px] text-muted-foreground">{biggest.category}</span>
-            <span className="text-[10px] text-muted-foreground/40">•</span>
+            <span className="text-[10px] text-muted-foreground/30">•</span>
             <span className="text-[10px] text-muted-foreground">{dateStr}</span>
           </div>
         </div>

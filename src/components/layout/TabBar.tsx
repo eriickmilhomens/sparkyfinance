@@ -30,10 +30,7 @@ const TabBar = ({ activeTab, onTabChange }: TabBarProps) => {
   const [tempOffset, setTempOffset] = useState(offset);
 
   useEffect(() => {
-    const handler = () => {
-      setTempOffset(offset);
-      setAdjusting(true);
-    };
+    const handler = () => { setTempOffset(offset); setAdjusting(true); };
     const showHandler = () => setHidden(false);
     const hideHandler = () => setHidden(true);
     window.addEventListener("sparky-dock-adjust", handler);
@@ -62,43 +59,22 @@ const TabBar = ({ activeTab, onTabChange }: TabBarProps) => {
 
   return (
     <>
-      {/* Adjust overlay */}
       {adjusting && (
         <div className="fixed inset-0 z-[59] bg-background/60 backdrop-blur-sm flex flex-col items-center justify-end pb-40">
-          <div className="w-[85%] max-w-sm rounded-2xl border border-border bg-card p-5 space-y-5 shadow-xl">
+          <div className="w-[85%] max-w-sm rounded-3xl border border-border bg-card/80 backdrop-blur-xl p-5 space-y-5 shadow-2xl">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-display font-semibold text-foreground">Posição da Dock</h3>
               <div className="flex gap-2">
-                <button
-                  onClick={handleCancel}
-                  className="flex h-8 w-8 items-center justify-center rounded-xl bg-destructive/15 text-destructive active:scale-90 transition-transform"
-                >
-                  <X size={16} />
-                </button>
-                <button
-                  onClick={handleSave}
-                  className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/15 text-primary active:scale-90 transition-transform"
-                >
-                  <Check size={16} />
-                </button>
+                <button onClick={handleCancel} className="flex h-8 w-8 items-center justify-center rounded-xl bg-destructive/15 text-destructive active:scale-90 transition-all duration-300"><X size={16} /></button>
+                <button onClick={handleSave} className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/15 text-primary active:scale-90 transition-all duration-300"><Check size={16} /></button>
               </div>
             </div>
-            <input
-              type="range"
-              min={-40}
-              max={80}
-              value={tempOffset}
-              onChange={(e) => setTempOffset(parseInt(e.target.value, 10))}
-              className="w-full accent-primary"
-            />
-            <p className="text-xs text-muted-foreground text-center">
-              Arraste para ajustar • {tempOffset}px do fundo
-            </p>
+            <input type="range" min={-40} max={80} value={tempOffset} onChange={(e) => setTempOffset(parseInt(e.target.value, 10))} className="w-full accent-primary" />
+            <p className="text-xs text-muted-foreground text-center">Arraste para ajustar • {tempOffset}px do fundo</p>
           </div>
         </div>
       )}
 
-      {/* Dock */}
       <nav
         className={cn(
           "pointer-events-none fixed inset-x-0 z-[60] flex justify-center px-4 transition-all duration-300",
@@ -106,7 +82,7 @@ const TabBar = ({ activeTab, onTabChange }: TabBarProps) => {
         )}
         style={{ bottom: `calc(${currentBottom}px + env(safe-area-inset-bottom, 0px))` }}
       >
-        <div className="liquid-dock pointer-events-auto mx-auto flex w-full max-w-lg items-center justify-around rounded-2xl px-1.5 py-1.5">
+        <div className="liquid-dock pointer-events-auto mx-auto flex w-full max-w-lg items-center justify-around rounded-3xl px-2 py-2">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -115,14 +91,14 @@ const TabBar = ({ activeTab, onTabChange }: TabBarProps) => {
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
                 className={cn(
-                  "flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl px-2 py-2 transition-all duration-200",
+                  "flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-2xl px-2 py-2 transition-all duration-300",
                   isActive
                     ? "bg-primary/15 text-primary shadow-sm shadow-primary/10"
                     : "text-muted-foreground active:scale-95 hover:text-foreground"
                 )}
               >
                 <Icon size={18} strokeWidth={isActive ? 2.5 : 1.5} />
-                <span className={cn("text-[9px] font-display", isActive ? "font-bold" : "font-medium")}>
+                <span className={cn("text-[9px] font-display tabular-nums", isActive ? "font-bold" : "font-medium")}>
                   {tab.label}
                 </span>
               </button>
