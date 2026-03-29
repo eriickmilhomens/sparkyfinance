@@ -24,9 +24,9 @@ export default defineConfig(({ mode }) => ({
         globPatterns: ["**/*.{js,css,html,ico,png,svg,webp,jpg,jpeg}"],
       },
       manifest: {
-        name: "Sparky - Controle Financeiro",
-        short_name: "Sparky",
-        description: "Seu controle financeiro inteligente",
+        name: "Spark Finance - Controle Financeiro",
+        short_name: "Spark",
+        description: "Seu controle financeiro inteligente com IA",
         theme_color: "#0a0a0a",
         background_color: "#0a0a0a",
         display: "standalone",
