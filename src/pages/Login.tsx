@@ -52,6 +52,11 @@ const Login = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  // Keep-alive automático
+  useEffect(() => {
+    keepAliveCheck();
+  }, []);
+
   const handleLogoTap = useCallback(async () => {
     const newCount = tapCount + 1;
     if (tapTimer) clearTimeout(tapTimer);
