@@ -106,6 +106,8 @@ const Onboarding = () => {
           toast.error(error.message);
         }
       } else if (data.session && data.user) {
+        localStorage.removeItem("sparky-demo-mode");
+        localStorage.removeItem("sparky-demo-profile");
         syncLocalDataOwner(data.user.id);
         toast.success("Conta criada com sucesso!");
         setStep("welcome");
