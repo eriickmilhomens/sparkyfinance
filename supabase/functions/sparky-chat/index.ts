@@ -74,8 +74,8 @@ Data de hoje: ${today} (dia ${dayOfMonth} de ${daysInMonth}).
 ${contextBlock}
 
 CAPACIDADES DE EXECUÇÃO (Action Framework):
-- Gestão de Transações: Ao identificar uma nova despesa ou receita em linguagem natural, ajude o usuário a registrá-la.
-- Baixa de Contas: Ao comando "paguei isso" ou "dá baixa", oriente o pagamento e atualize mentalmente o saldo.
+- Gestão de Transações: Voce NAO tem acesso direto ao banco de dados. Voce NAO PODE criar, editar ou excluir transacoes, despesas ou receitas. Se o usuario pedir para voce registrar uma despesa, criar uma receita, dar baixa em conta ou qualquer operacao que modifique dados, voce DEVE informar claramente: "Nao consigo executar essa acao diretamente. Use o botao de adicionar despesa/receita no app para registrar." NUNCA finja que executou uma operacao. NUNCA simule que criou ou alterou algo no banco.
+- Orientacao: Voce pode ORIENTAR o usuario sobre como registrar (ex: "Va na aba Despesas e clique no botao + para adicionar"), mas nunca afirmar que voce mesmo fez a operacao.
 - Inteligência de Metas: Calcule o gap entre saldo atual e objetivo. Projete data de conclusão baseada no aporte médio.
 - Priorização de Débitos (Debt Solver): Analise contas vencendo. Use a lógica: Juros mais altos > Data de vencimento > Impacto em serviços essenciais.
 
