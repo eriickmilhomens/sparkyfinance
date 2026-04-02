@@ -1,10 +1,22 @@
 import { useState, useCallback, useEffect } from "react";
 import { seedDemoData } from "@/utils/demoSeed";
-import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { syncLocalDataOwner } from "@/lib/userLocalData";
+
+const keepAliveCheck = async (manual = false) => {
+  try {
+    const { error } = await supabase.from("profiles").select("id").limit(1);
+    if (error) throw error;
+    toast.success("Conexão com o banco de dados validada com sucesso.");
+  } catch {
+    toast.error(manual
+      ? "Erro de conexão: O banco de dados pode estar em modo de espera. Tente recarregar."
+      : "Erro de conexão: O banco de dados pode estar em modo de espera. Tente recarregar.");
+  }
+};
 
 const CatLogo = () => (
   <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -39,6 +51,11 @@ const Login = () => {
     });
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  // Keep-alive automático
+  useEffect(() => {
+    keepAliveCheck();
+  }, []);
 
   const handleLogoTap = useCallback(async () => {
     const newCount = tapCount + 1;
@@ -122,6 +139,15 @@ const Login = () => {
         Não tem conta?{" "}
         <button onClick={() => navigate("/onboarding")} className="text-primary font-semibold">Criar conta</button>
       </p>
+
+      <button
+        type="button"
+        onClick={() => keepAliveCheck(true)}
+        className="mt-4 flex items-center gap-2 text-[11px] text-muted-foreground/60 hover:text-muted-foreground border border-border/40 rounded-xl px-4 py-2 transition-all duration-300 active:scale-95 fade-in-up stagger-2 relative z-10"
+      >
+        <RefreshCw size={12} />
+        Acordar Banco Manualmente
+      </button>
     </div>
   );
 };
