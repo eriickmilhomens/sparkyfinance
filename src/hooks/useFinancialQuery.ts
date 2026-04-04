@@ -50,9 +50,10 @@ async function fetchFinancialData(): Promise<FinancialData> {
   }
 
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ...defaultData };
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session?.user) return { ...defaultData };
+  const user = session.user;
 
   const { data: txs, error } = await supabase
     .from("transactions")
@@ -99,10 +100,6 @@ export const useFinancialQuery = () => {
   const queryResult = useQuery({
     queryKey: QUERY_KEY,
     queryFn: fetchFinancialData,
-    staleTime: 10_000,
-    gcTime: 5 * 60_000,
-    refetchOnWindowFocus: true,
-    refetchInterval: 30_000,
     placeholderData: defaultData,
   });
 
@@ -144,15 +141,8 @@ export const useFinancialQuery = () => {
       })
       .subscribe();
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(() => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-    });
-
     return () => {
       supabase.removeChannel(channel);
-      subscription.unsubscribe();
     };
   }, [queryClient]);
 
@@ -246,15 +236,15 @@ export const useFinancialQuery = () => {
         return newTx.id;
       }
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session?.user) throw new Error("Not authenticated");
 
       const { data: inserted, error } = await supabase
         .from("transactions")
         .insert({
-          user_id: user.id,
+          user_id: session.user.id,
           date: tx.date,
           description: tx.description,
           amount: tx.amount,
@@ -388,13 +378,13 @@ export const useFinancialQuery = () => {
       const toDelete = data.transactions.filter((transaction) => !newIds.has(transaction.id));
 
       const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.user) return;
 
       for (const transaction of toInsert) {
         await supabase.from("transactions").insert({
-          user_id: user.id,
+          user_id: session.user.id,
           date: transaction.date,
           description: transaction.description,
           amount: transaction.amount,
@@ -443,11 +433,11 @@ export const useFinancialQuery = () => {
     }
 
     const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return;
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session?.user) return;
 
-    await supabase.from("transactions").delete().eq("user_id", user.id);
+    await supabase.from("transactions").delete().eq("user_id", session.user.id);
     queryClient.invalidateQueries({ queryKey: QUERY_KEY });
   }, [queryClient]);
 

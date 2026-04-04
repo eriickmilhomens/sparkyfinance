@@ -56,9 +56,8 @@ export const useGroupMembers = () => {
         ? fetchedMembers
         : [profile as GroupMember, ...fetchedMembers];
     },
-    staleTime: 10_000,
-    gcTime: 5 * 60_000,
-    refetchOnWindowFocus: true,
+    staleTime: 2 * 60_000,
+    gcTime: 10 * 60_000,
   });
 
   useEffect(() => {

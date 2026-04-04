@@ -66,8 +66,9 @@ export const useProfile = () => {
         return loadDemoProfile();
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return null;
+      const user = session.user;
 
       const { data, error } = await supabase
         .from("profiles")
@@ -82,9 +83,8 @@ export const useProfile = () => {
 
       return data as Profile;
     },
-    staleTime: 10_000,
-    gcTime: 5 * 60_000,
-    refetchOnWindowFocus: true,
+    staleTime: 2 * 60_000,
+    gcTime: 10 * 60_000,
   });
 
   useEffect(() => {
@@ -97,16 +97,11 @@ export const useProfile = () => {
     window.addEventListener("sparky-profile-refresh", invalidateProfile);
     window.addEventListener("storage", invalidateProfile);
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      invalidateProfile();
-    });
-
     return () => {
       window.removeEventListener("sparky-points-updated", invalidateProfile);
       window.removeEventListener("sparky-data-cleared", invalidateProfile);
       window.removeEventListener("sparky-profile-refresh", invalidateProfile);
       window.removeEventListener("storage", invalidateProfile);
-      subscription.unsubscribe();
     };
   }, [queryClient]);
 
