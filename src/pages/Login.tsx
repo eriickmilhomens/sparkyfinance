@@ -10,11 +10,9 @@ const keepAliveCheck = async (manual = false) => {
   try {
     const { error } = await supabase.from("profiles").select("id").limit(1);
     if (error) throw error;
-    toast.success("Conexão com o banco de dados validada com sucesso.");
+    if (manual) toast.success("Conexão validada com sucesso.");
   } catch {
-    toast.error(manual
-      ? "Erro de conexão: O banco de dados pode estar em modo de espera. Tente recarregar."
-      : "Erro de conexão: O banco de dados pode estar em modo de espera. Tente recarregar.");
+    if (manual) toast.error("Erro de conexão. O banco pode estar em espera.");
   }
 };
 

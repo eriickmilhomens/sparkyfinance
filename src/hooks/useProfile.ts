@@ -97,16 +97,11 @@ export const useProfile = () => {
     window.addEventListener("sparky-profile-refresh", invalidateProfile);
     window.addEventListener("storage", invalidateProfile);
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      invalidateProfile();
-    });
-
     return () => {
       window.removeEventListener("sparky-points-updated", invalidateProfile);
       window.removeEventListener("sparky-data-cleared", invalidateProfile);
       window.removeEventListener("sparky-profile-refresh", invalidateProfile);
       window.removeEventListener("storage", invalidateProfile);
-      subscription.unsubscribe();
     };
   }, [queryClient]);
 

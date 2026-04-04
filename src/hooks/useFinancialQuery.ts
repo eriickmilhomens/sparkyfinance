@@ -141,15 +141,8 @@ export const useFinancialQuery = () => {
       })
       .subscribe();
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(() => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-    });
-
     return () => {
       supabase.removeChannel(channel);
-      subscription.unsubscribe();
     };
   }, [queryClient]);
 
