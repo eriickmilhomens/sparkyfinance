@@ -100,10 +100,6 @@ export const useFinancialQuery = () => {
   const queryResult = useQuery({
     queryKey: QUERY_KEY,
     queryFn: fetchFinancialData,
-    staleTime: 10_000,
-    gcTime: 5 * 60_000,
-    refetchOnWindowFocus: true,
-    refetchInterval: 30_000,
     placeholderData: defaultData,
   });
 
