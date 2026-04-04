@@ -378,9 +378,9 @@ export const useFinancialQuery = () => {
       const toDelete = data.transactions.filter((transaction) => !newIds.has(transaction.id));
 
       const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.user) return;
 
       for (const transaction of toInsert) {
         await supabase.from("transactions").insert({
