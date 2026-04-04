@@ -50,9 +50,10 @@ async function fetchFinancialData(): Promise<FinancialData> {
   }
 
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ...defaultData };
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session?.user) return { ...defaultData };
+  const user = session.user;
 
   const { data: txs, error } = await supabase
     .from("transactions")
