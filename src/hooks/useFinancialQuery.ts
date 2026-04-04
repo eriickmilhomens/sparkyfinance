@@ -384,7 +384,7 @@ export const useFinancialQuery = () => {
 
       for (const transaction of toInsert) {
         await supabase.from("transactions").insert({
-          user_id: user.id,
+          user_id: session.user.id,
           date: transaction.date,
           description: transaction.description,
           amount: transaction.amount,
