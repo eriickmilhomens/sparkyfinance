@@ -151,7 +151,7 @@ export const usePoints = () => {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user) return 0;
 
-        const { error } = await (supabase as any).rpc("update_user_points", { _user_id: user.id, _points: newTotal });
+        const { error } = await (supabase as any).rpc("update_user_points", { _user_id: session.user.id, _points: newTotal });
         if (error) throw error;
 
         syncPointsInCache(newTotal);
