@@ -243,15 +243,15 @@ export const useFinancialQuery = () => {
         return newTx.id;
       }
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session?.user) throw new Error("Not authenticated");
 
       const { data: inserted, error } = await supabase
         .from("transactions")
         .insert({
-          user_id: user.id,
+          user_id: session.user.id,
           date: tx.date,
           description: tx.description,
           amount: tx.amount,
