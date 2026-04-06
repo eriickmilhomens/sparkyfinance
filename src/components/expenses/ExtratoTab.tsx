@@ -263,6 +263,15 @@ const ExtratoTab = () => {
           </div>
         </div>
       ))}
+
+      {hasMore && (
+        <button
+          onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+          className="w-full rounded-xl border border-border bg-muted/50 py-3 text-xs font-medium text-muted-foreground hover:text-foreground active:scale-[0.98] transition-all"
+        >
+          Carregar mais ({allFiltered.length - visibleCount} restantes)
+        </button>
+      )}
     </div>
   );
 };
