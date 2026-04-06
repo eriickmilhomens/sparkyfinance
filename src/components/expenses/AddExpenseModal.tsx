@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { handleBRLChange, parseBRLInput } from "@/lib/brlInput";
-import { X, Receipt, Wifi, ShoppingCart, UtensilsCrossed, CreditCard, ChevronUp, ChevronDown, ArrowLeftRight, Sparkles, Heart, MoreHorizontal, CalendarDays, Repeat, Users } from "lucide-react";
+import { X, Receipt, Wifi, ShoppingCart, UtensilsCrossed, CreditCard, ChevronUp, ChevronDown, ArrowLeftRight, Sparkles, Heart, MoreHorizontal, CalendarDays, Repeat, Users, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useFinancialData } from "@/hooks/useFinancialData";
@@ -79,6 +79,7 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
   const [expDay, setExpDay] = useState(String(now.getDate()));
   const [expMonth, setExpMonth] = useState(String(now.getMonth()));
   const [expYear, setExpYear] = useState(String(now.getFullYear()));
+  const [scheduled, setScheduled] = useState(false);
 
   const { data, addTransaction } = useFinancialData();
 
@@ -92,7 +93,9 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
   const isCardCategory = selectedCategory === "Cartão";
   const isOthers = selectedCategory === "Outros";
   const title = isIncome ? "Adicionar Receita" : "Adicionar Despesa";
-  const saveLabel = isIncome ? "Salvar Receita • +10 pts" : isCardCategory ? "Lançar na Fatura • +10 pts" : "Salvar Despesa • +10 pts";
+  const saveLabel = scheduled
+    ? "Agendar • +10 pts"
+    : isIncome ? "Salvar Receita • +10 pts" : isCardCategory ? "Lançar na Fatura • +10 pts" : "Salvar Despesa • +10 pts";
 
   const finalCategory = isOthers && customCategory.trim() ? customCategory.trim() : selectedCategory || "Outros";
 
@@ -106,13 +109,20 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
 
     const expDate = new Date(parseInt(expYear), parseInt(expMonth), parseInt(expDay) || 1);
 
+    // When scheduled, override category to "Conta" so it appears in "A Pagar"
+    const resolvedCategory = scheduled ? "Conta" : finalCategory;
+    const resolvedDescription = name.trim()
+      + (split ? ` (÷${splitPeople})` : "")
+      + (recurring ? " 🔄" : "")
+      + (scheduled ? ` 📅` : "");
+
     try {
       await addTransaction({
         date: expDate.toISOString(),
-        description: name.trim() + (split ? ` (÷${splitPeople})` : "") + (recurring ? " 🔄" : ""),
+        description: resolvedDescription,
         amount: finalValue,
         type: (isIncome ? "income" : "expense") as "income" | "expense",
-        category: finalCategory,
+        category: resolvedCategory,
         cardId: isCardCategory ? selectedCardId : undefined,
       });
 
@@ -141,13 +151,16 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
     if (recurring) {
       try {
         const recurrings = JSON.parse(localStorage.getItem("sparky-recurrings") || "[]");
-        recurrings.push({ name: name.trim(), amount: finalValue, type: isIncome ? "income" : "expense", category: finalCategory, day: parseInt(recurringDay) || now.getDate() });
+        recurrings.push({ name: name.trim(), amount: finalValue, type: isIncome ? "income" : "expense", category: resolvedCategory, day: parseInt(recurringDay) || now.getDate() });
         localStorage.setItem("sparky-recurrings", JSON.stringify(recurrings));
       } catch {}
     }
 
-    toast.success(isIncome ? "Receita salva com sucesso!" : isCardCategory ? "Lançado na fatura!" : "Despesa salva com sucesso!");
-    setName(""); setValue("R$ 0,00"); setSelectedCategory(null); setCustomCategory(""); setInstallments(1); setSelectedCardId(""); setRecurring(false); setSplit(false); setSplitPeople(2);
+    const successMsg = scheduled
+      ? "Agendado com sucesso! Aparecerá em 'A Pagar'."
+      : isIncome ? "Receita salva com sucesso!" : isCardCategory ? "Lançado na fatura!" : "Despesa salva com sucesso!";
+    toast.success(successMsg);
+    setName(""); setValue("R$ 0,00"); setSelectedCategory(null); setCustomCategory(""); setInstallments(1); setSelectedCardId(""); setRecurring(false); setSplit(false); setSplitPeople(2); setScheduled(false);
     setExpDay(String(now.getDate())); setExpMonth(String(now.getMonth())); setExpYear(String(now.getFullYear()));
     onClose();
     } catch {
@@ -202,46 +215,44 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
             className="w-full rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm outline-none placeholder:text-muted-foreground focus:border-primary transition-all tabular-nums" />
         </div>
 
-        {/* Date picker */}
-        {!isIncome && (
-          <div className="mb-5">
-            <label className="text-[10px] text-muted-foreground font-medium mb-2 flex items-center gap-1.5">
-              <CalendarDays size={12} /> Data do lançamento
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              <div>
-                <label className="text-[9px] text-muted-foreground font-medium mb-1 block">Dia</label>
-                <div className="relative">
-                  <select value={expDay} onChange={(e) => setExpDay(e.target.value)}
-                    className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-xs font-medium text-foreground outline-none focus:border-primary transition-all appearance-none cursor-pointer">
-                    {Array.from({ length: 31 }, (_, i) => <option key={i + 1} value={i + 1}>{String(i + 1).padStart(2, "0")}</option>)}
-                  </select>
-                  <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                </div>
+        {/* Date picker — shown for both income and expense */}
+        <div className="mb-5">
+          <label className="text-[10px] text-muted-foreground font-medium mb-2 flex items-center gap-1.5">
+            <CalendarDays size={12} /> Data do lançamento
+          </label>
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <label className="text-[9px] text-muted-foreground font-medium mb-1 block">Dia</label>
+              <div className="relative">
+                <select value={expDay} onChange={(e) => setExpDay(e.target.value)}
+                  className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-xs font-medium text-foreground outline-none focus:border-primary transition-all appearance-none cursor-pointer">
+                  {Array.from({ length: 31 }, (_, i) => <option key={i + 1} value={i + 1}>{String(i + 1).padStart(2, "0")}</option>)}
+                </select>
+                <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               </div>
-              <div>
-                <label className="text-[9px] text-muted-foreground font-medium mb-1 block">Mês</label>
-                <div className="relative">
-                  <select value={expMonth} onChange={(e) => setExpMonth(e.target.value)}
-                    className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-xs font-medium text-foreground outline-none focus:border-primary transition-all appearance-none cursor-pointer">
-                    {MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}
-                  </select>
-                  <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                </div>
+            </div>
+            <div>
+              <label className="text-[9px] text-muted-foreground font-medium mb-1 block">Mês</label>
+              <div className="relative">
+                <select value={expMonth} onChange={(e) => setExpMonth(e.target.value)}
+                  className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-xs font-medium text-foreground outline-none focus:border-primary transition-all appearance-none cursor-pointer">
+                  {MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}
+                </select>
+                <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               </div>
-              <div>
-                <label className="text-[9px] text-muted-foreground font-medium mb-1 block">Ano</label>
-                <div className="relative">
-                  <select value={expYear} onChange={(e) => setExpYear(e.target.value)}
-                    className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-xs font-medium text-foreground outline-none focus:border-primary transition-all appearance-none cursor-pointer">
-                    {[now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1].map(y => <option key={y} value={y}>{y}</option>)}
-                  </select>
-                  <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                </div>
+            </div>
+            <div>
+              <label className="text-[9px] text-muted-foreground font-medium mb-1 block">Ano</label>
+              <div className="relative">
+                <select value={expYear} onChange={(e) => setExpYear(e.target.value)}
+                  className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-xs font-medium text-foreground outline-none focus:border-primary transition-all appearance-none cursor-pointer">
+                  {[now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1].map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+                <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               </div>
             </div>
           </div>
-        )}
+        </div>
 
         {isCardCategory && (
           <div className="space-y-3 mb-5 card-zelo !bg-purple-500/5 !border-purple-500/20">
@@ -312,8 +323,8 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
           </>
         )}
 
-        {/* Recurring & Split - Modern Cards */}
-        <div className="grid grid-cols-2 gap-2 mb-5">
+        {/* Recurring, Split & Schedule - Modern Cards */}
+        <div className={cn("grid gap-2 mb-5", isIncome ? "grid-cols-2" : "grid-cols-3")}>
           <button onClick={() => setRecurring(!recurring)}
             className={cn("rounded-xl border p-3 text-left transition-all active:scale-[0.97] flex items-center gap-2.5",
               recurring ? "border-primary bg-primary/10" : "border-border bg-muted/30")}>
@@ -321,10 +332,24 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
               <Repeat size={14} className={recurring ? "text-primary" : "text-muted-foreground"} />
             </div>
             <div>
-              <p className="text-xs font-bold">{isIncome ? "Recorrente" : "Recorrente"}</p>
+              <p className="text-xs font-bold">Recorrente</p>
               <p className="text-[9px] text-muted-foreground">Todo mês</p>
             </div>
           </button>
+
+          {/* Schedule button — available for both income and expense */}
+          <button onClick={() => setScheduled(!scheduled)}
+            className={cn("rounded-xl border p-3 text-left transition-all active:scale-[0.97] flex items-center gap-2.5",
+              scheduled ? "border-warning bg-warning/10" : "border-border bg-muted/30")}>
+            <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center", scheduled ? "bg-warning/20" : "bg-muted")}>
+              <Clock size={14} className={scheduled ? "text-warning" : "text-muted-foreground"} />
+            </div>
+            <div>
+              <p className="text-xs font-bold">Agendar</p>
+              <p className="text-[9px] text-muted-foreground">Vai p/ A Pagar</p>
+            </div>
+          </button>
+
           {!isIncome && (
             <button onClick={() => setSplit(!split)}
               className={cn("rounded-xl border p-3 text-left transition-all active:scale-[0.97] flex items-center gap-2.5",
@@ -339,6 +364,19 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
             </button>
           )}
         </div>
+
+        {/* Schedule info */}
+        {scheduled && (
+          <div className="mb-5 card-zelo !bg-warning/5 !border-warning/20">
+            <div className="flex items-center gap-2">
+              <Clock size={14} className="text-warning" />
+              <p className="text-xs font-semibold text-warning">Agendado</p>
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-1">
+              Este lançamento será adicionado ao painel "A Pagar" como pendente na data selecionada. Você poderá marcá-lo como pago ou estorná-lo depois.
+            </p>
+          </div>
+        )}
 
         {/* Recurring day selector */}
         {recurring && (
@@ -395,7 +433,7 @@ const AddExpenseModal = ({ open, onClose, type = "expense" }: AddExpenseModalPro
 
         <button onClick={handleSave}
           className={cn("w-full rounded-xl py-3.5 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] pulse-glow",
-            isIncome ? "bg-success" : isCardCategory ? "bg-purple-600" : "bg-primary")}>
+            scheduled ? "bg-warning" : isIncome ? "bg-success" : isCardCategory ? "bg-purple-600" : "bg-primary")}>
           {saveLabel}
         </button>
       </div>
