@@ -57,9 +57,10 @@ async function fetchFinancialData(): Promise<FinancialData> {
 
   const { data: txs, error } = await supabase
     .from("transactions")
-    .select("*")
+    .select("id, date, description, amount, type, category, card_id")
     .eq("user_id", user.id)
-    .order("date", { ascending: false });
+    .order("date", { ascending: false })
+    .limit(500);
 
   if (error) {
     console.error("Transactions fetch error:", error.message);
