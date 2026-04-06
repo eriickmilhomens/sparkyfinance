@@ -329,7 +329,33 @@ export const useFinancialQuery = () => {
       const { error } = await supabase.from("transactions").update(dbUpdates).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onMutate: async ({ id, updates }) => {
+      if (isDemo()) return;
+      await queryClient.cancelQueries({ queryKey: QUERY_KEY });
+      const previous = queryClient.getQueryData<FinancialData>(QUERY_KEY);
+      queryClient.setQueryData<FinancialData>(QUERY_KEY, (old) => {
+        if (!old) return old!;
+        const oldTx = old.transactions.find((t) => t.id === id);
+        if (!oldTx) return old;
+        const newAmount = updates.amount ?? oldTx.amount;
+        const diff = newAmount - oldTx.amount;
+        const newTransactions = old.transactions.map((t) =>
+          t.id === id ? { ...t, ...updates } : t,
+        );
+        let newIncome = old.income;
+        let newExpenses = old.expenses;
+        if (oldTx.type === "income") newIncome += diff;
+        else if (oldTx.type === "expense") newExpenses += diff;
+        return { ...old, transactions: newTransactions, income: Math.max(0, newIncome), expenses: Math.max(0, newExpenses), balance: Math.max(0, newIncome) - Math.max(0, newExpenses) };
+      });
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (!isDemo() && context?.previous) {
+        queryClient.setQueryData(QUERY_KEY, context.previous);
+      }
+    },
+    onSettled: () => {
       if (!isDemo()) {
         queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       }
