@@ -27,6 +27,8 @@ const parseBRL = (str: string): number => {
   return parseFloat(clean) || 0;
 };
 
+const PAGE_SIZE = 30;
+
 const ExtratoTab = () => {
   const [filter, setFilter] = useState("Todos");
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -38,16 +40,20 @@ const ExtratoTab = () => {
   const [editDesc, setEditDesc] = useState("");
   const [editAmount, setEditAmount] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const { data, deleteTransaction, updateTransaction } = useFinancialData();
 
-  const filtered = data.transactions.filter((t) => {
+  const allFiltered = data.transactions.filter((t) => {
     const d = new Date(t.date);
     if (d.getMonth() !== selectedMonth || d.getFullYear() !== selectedYear) return false;
     if (filter === "Receitas") return t.type === "income";
     if (filter === "Despesas") return t.type === "expense" && !isGoalDepositTransaction(t);
     return true;
   });
+
+  const filtered = allFiltered.slice(0, visibleCount);
+  const hasMore = allFiltered.length > visibleCount;
 
   const totalIn = filtered.filter(t => t.type === "income").reduce((s, t) => s + t.amount, 0);
   const totalOut = filtered.filter(t => t.type === "expense" && !isGoalDepositTransaction(t)).reduce((s, t) => s + t.amount, 0);
