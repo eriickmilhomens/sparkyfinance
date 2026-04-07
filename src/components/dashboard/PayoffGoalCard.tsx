@@ -78,8 +78,7 @@ const PayoffGoalCard = ({ hideValues }: { hideValues?: boolean }) => {
         style={{ maxHeight: showInfo ? "80px" : "0px", opacity: showInfo ? 1 : 0 }}
       >
         <p className="text-[11px] text-muted-foreground mb-2 leading-relaxed">
-          Este valor é calculado dividindo o total de suas contas pendentes pelos dias restantes do
-          mês, ajudando você a planejar seus ganhos diários.
+          Total de contas pendentes dividido pelos dias restantes do mês.
         </p>
       </div>
 

@@ -51,15 +51,15 @@ const StatusCards = () => {
   const infoTexts: Record<string, { title: string; message: string }> = {
     saldo: {
       title: "Saldo Real",
-      message: "O Saldo Real representa o valor total que você possui em conta neste momento. Ele é atualizado automaticamente conforme você registra receitas, despesas, pagamentos de faturas e ajustes manuais.",
+      message: "Valor total em conta agora. Atualizado a cada receita, despesa ou ajuste.",
     },
     apagar: {
       title: "Contas a Pagar",
-      message: "O valor A Pagar representa apenas contas planejadas, assinaturas e faturas ainda pendentes no mês atual. Essas pendências não reduzem o saldo real até o pagamento ser confirmado.",
+      message: "Contas pendentes do mês. Não reduzem o saldo até serem pagas.",
     },
     disponivel: {
       title: "Saldo Disponível",
-      message: "O Saldo Disponível é o valor que sobra após descontar contas pendentes e valores já reservados em metas do seu saldo real. Reservar para metas reduz o disponível, mas nunca o saldo real.",
+      message: "Sobra após descontar contas pendentes e metas reservadas.",
     },
   };
 

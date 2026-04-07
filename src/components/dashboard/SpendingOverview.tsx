@@ -241,10 +241,10 @@ const SpendingOverview = ({ hideValues = false }: SpendingOverviewProps) => {
           title={infoPopup === "receita" ? "Receita Mensal" : infoPopup === "gasto" ? "Gasto Mensal" : "Pode Gastar Hoje"}
           message={
             infoPopup === "receita"
-              ? "A Receita Mensal representa o total de entradas financeiras registradas no mês atual. Inclui salários, freelances, rendimentos e qualquer outra fonte de renda que você tenha adicionado. Esse valor é atualizado automaticamente a cada novo lançamento de receita."
+              ? "Total de entradas no mês: salários, freelances e rendimentos."
               : infoPopup === "gasto"
-              ? "O Gasto Mensal representa o total de despesas registradas no mês atual. Inclui contas fixas, compras, assinaturas e qualquer saída de dinheiro que você tenha lançado. Acompanhe esse valor para manter o controle do seu orçamento."
-              : `O 'Pode Gastar Hoje' calcula quanto você pode gastar de forma segura hoje. Ele pega ${spendPercent}% do seu saldo disponível (uma reserva de segurança) e divide pelos dias restantes do mês.`
+              ? "Total de despesas no mês: contas, compras e assinaturas."
+              : `${spendPercent}% do saldo dividido pelos dias restantes do mês.`
           }
           onClose={() => setInfoPopup(null)}
         />
