@@ -7,7 +7,7 @@ import BiggestExpenseCard from "@/components/dashboard/BiggestExpenseCard";
 import { useFinancialData } from "@/hooks/useFinancialData";
 
 const SkeletonCard = () => (
-  <div className="card-zelo animate-pulse">
+  <div className="card-zelo animate-pulse" style={{ minHeight: 100 }}>
     <div className="h-3 w-24 bg-muted rounded-lg mb-3" />
     <div className="h-8 w-40 bg-muted rounded-lg mb-2" />
     <div className="h-2 w-32 bg-muted/60 rounded-lg" />
