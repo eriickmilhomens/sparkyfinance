@@ -32,7 +32,11 @@ const CACHE_KEYS_TO_CLEAR = [
   "sparky-sync-status",
 ];
 
-const Header = () => {
+interface HeaderProps {
+  hidden?: boolean;
+}
+
+const Header = ({ hidden = false }: HeaderProps) => {
   const { theme, toggleTheme } = useTheme();
   const queryClient = useQueryClient();
   const [syncing, setSyncing] = useState(false);
