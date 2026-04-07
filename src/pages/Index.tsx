@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import TabBar from "@/components/layout/TabBar";
 import { syncLocalDataOwner } from "@/lib/userLocalData";
+import { cn } from "@/lib/utils";
 import GlobalNotificationPopup from "@/components/layout/GlobalNotificationPopup";
 import { Settings, Timer, Eye, X } from "lucide-react";
 
