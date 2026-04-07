@@ -583,7 +583,7 @@ const ChatView = () => {
       {/* Messages */}
       <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 space-y-3 pb-4" style={{ touchAction: 'pan-y' }}>
         {messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-center">
+          <div className="flex flex-col items-center text-center pt-16">
             <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
               <Bot size={28} className="text-primary" />
             </div>
