@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { ArrowDownLeft, ArrowUpRight, ChevronDown, Calendar, Pencil, Trash2, Check, X, PiggyBank } from "lucide-react";
+import { useState, useMemo, useCallback, useRef } from "react";
+import { ArrowDownLeft, ArrowUpRight, ChevronDown, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFinancialData, fmt } from "@/hooks/useFinancialData";
-import { toast } from "sonner";
 import { isGoalDepositTransaction } from "@/lib/financialCalculations";
+import TransactionRow from "./TransactionRow";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 const filterOptions = ["Todos", "Receitas", "Despesas"];
 const months = [
@@ -14,21 +15,6 @@ const months = [
 ];
 const years = [2024, 2025, 2026];
 
-const parseBRL = (str: string): number => {
-  const clean = str.replace(/[^\d.,]/g, "");
-  if (clean.includes(",")) {
-    const parts = clean.split(",");
-    const intPart = parts[0].replace(/\./g, "");
-    return parseFloat(`${intPart}.${parts[1]}`) || 0;
-  }
-  if ((clean.match(/\./g) || []).length > 1) {
-    return parseFloat(clean.replace(/\./g, "")) || 0;
-  }
-  return parseFloat(clean) || 0;
-};
-
-const PAGE_SIZE = 30;
-
 const ExtratoTab = () => {
   const [filter, setFilter] = useState("Todos");
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -36,59 +22,55 @@ const ExtratoTab = () => {
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [datePickerOpen, setDatePickerOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editDesc, setEditDesc] = useState("");
-  const [editAmount, setEditAmount] = useState("");
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const { data, deleteTransaction, updateTransaction } = useFinancialData();
 
-  const allFiltered = data.transactions.filter((t) => {
+  const allFiltered = useMemo(() => data.transactions.filter((t) => {
     const d = new Date(t.date);
     if (d.getMonth() !== selectedMonth || d.getFullYear() !== selectedYear) return false;
     if (filter === "Receitas") return t.type === "income";
     if (filter === "Despesas") return t.type === "expense" && !isGoalDepositTransaction(t);
     return true;
-  });
+  }), [data.transactions, selectedMonth, selectedYear, filter]);
 
-  const filtered = allFiltered.slice(0, visibleCount);
-  const hasMore = allFiltered.length > visibleCount;
+  const totalIn = useMemo(() => allFiltered.filter(t => t.type === "income").reduce((s, t) => s + t.amount, 0), [allFiltered]);
+  const totalOut = useMemo(() => allFiltered.filter(t => t.type === "expense" && !isGoalDepositTransaction(t)).reduce((s, t) => s + t.amount, 0), [allFiltered]);
 
-  const totalIn = filtered.filter(t => t.type === "income").reduce((s, t) => s + t.amount, 0);
-  const totalOut = filtered.filter(t => t.type === "expense" && !isGoalDepositTransaction(t)).reduce((s, t) => s + t.amount, 0);
+  // Flat list with day headers for virtualization
+  type VirtualItem = { type: "header"; label: string } | { type: "tx"; tx: typeof allFiltered[0] };
+  const flatList = useMemo<VirtualItem[]>(() => {
+    const grouped: Record<string, typeof allFiltered> = {};
+    allFiltered.forEach((t) => {
+      const d = new Date(t.date);
+      const dayLabel = d.toLocaleDateString("pt-BR", { day: "numeric", month: "long" }).toUpperCase().replace(" DE ", " DE ");
+      if (!grouped[dayLabel]) grouped[dayLabel] = [];
+      grouped[dayLabel].push(t);
+    });
+    const items: VirtualItem[] = [];
+    Object.entries(grouped).forEach(([day, txs]) => {
+      items.push({ type: "header", label: day });
+      txs.forEach(tx => items.push({ type: "tx", tx }));
+    });
+    return items;
+  }, [allFiltered]);
 
-  const grouped: Record<string, typeof filtered> = {};
-  filtered.forEach((t) => {
-    const d = new Date(t.date);
-    const dayLabel = d.toLocaleDateString("pt-BR", { day: "numeric", month: "long" }).toUpperCase().replace(" DE ", " DE ");
-    if (!grouped[dayLabel]) grouped[dayLabel] = [];
-    grouped[dayLabel].push(t);
+  const parentRef = useRef<HTMLDivElement>(null);
+  const virtualizer = useVirtualizer({
+    count: flatList.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: (i) => flatList[i].type === "header" ? 32 : 56,
+    overscan: 10,
   });
 
   const selectedMonthLabel = months.find(m => m.value === selectedMonth)?.label || "";
 
-  const handleDelete = async (id: string) => {
-    try {
-      await deleteTransaction(id);
-      setDeleteConfirm(null);
-      toast.success("Transação excluída e saldo recalculado");
-    } catch {
-      toast.error("Erro ao excluir transação");
-    }
-  };
+  const handleDelete = useCallback(async (id: string) => {
+    await deleteTransaction(id);
+  }, [deleteTransaction]);
 
-  const handleEdit = async (id: string) => {
-    const newAmount = parseBRL(editAmount);
-    if (newAmount <= 0) { toast.error("Valor inválido"); return; }
-    try {
-      await updateTransaction(id, { description: editDesc, amount: newAmount });
-      setEditingId(null);
-      toast.success("Transação atualizada");
-    } catch {
-      toast.error("Erro ao atualizar transação");
-    }
-  };
+  const handleUpdate = useCallback(async (id: string, updates: { description: string; amount: number }) => {
+    await updateTransaction(id, updates);
+  }, [updateTransaction]);
 
   return (
     <div className="space-y-3">
@@ -97,7 +79,7 @@ const ExtratoTab = () => {
         <div className="relative">
           <button
             onClick={() => setDatePickerOpen(!datePickerOpen)}
-            className="flex items-center gap-2 rounded-xl border border-border bg-muted/50 px-3 py-2 text-sm font-bold active:scale-95 transition-all"
+            className="flex items-center gap-2 rounded-xl border border-border bg-muted/50 px-3 py-2 text-sm font-bold active:scale-95 transition-transform will-change-transform"
           >
             <Calendar size={14} className="text-primary" />
             {selectedMonthLabel} {selectedYear}
@@ -130,7 +112,7 @@ const ExtratoTab = () => {
 
         <div className="relative">
           <button onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="flex items-center gap-1.5 rounded-lg border border-border bg-muted/50 px-3 py-1.5 text-xs font-medium text-muted-foreground active:scale-95 transition-all">
+            className="flex items-center gap-1.5 rounded-lg border border-border bg-muted/50 px-3 py-1.5 text-xs font-medium text-muted-foreground active:scale-95 transition-transform will-change-transform">
             {filter}<ChevronDown size={12} />
           </button>
           {dropdownOpen && (
@@ -148,14 +130,14 @@ const ExtratoTab = () => {
 
       {/* Summary */}
       <div className="grid grid-cols-2 gap-2">
-        <div className="card-zelo fade-in-up stagger-1 border-l-4 border-l-success">
+        <div className="card-zelo border-l-4 border-l-success" style={{ minHeight: 68 }}>
           <div className="flex items-center gap-2 mb-1">
             <ArrowUpRight size={14} className="text-success" />
             <span className="text-[10px] text-muted-foreground font-medium">Entradas</span>
           </div>
           <p className="text-base font-bold tabular-nums text-success">{fmt(totalIn)}</p>
         </div>
-        <div className="card-zelo fade-in-up stagger-2 border-l-4 border-l-destructive">
+        <div className="card-zelo border-l-4 border-l-destructive" style={{ minHeight: 68 }}>
           <div className="flex items-center gap-2 mb-1">
             <ArrowDownLeft size={14} className="text-destructive" />
             <span className="text-[10px] text-muted-foreground font-medium">Saídas</span>
@@ -164,113 +146,45 @@ const ExtratoTab = () => {
         </div>
       </div>
 
-      {/* Grouped transaction list */}
-      {Object.keys(grouped).length === 0 && (
-        <div className="card-zelo text-center py-8 fade-in-up">
+      {/* Virtualized transaction list */}
+      {flatList.length === 0 ? (
+        <div className="card-zelo text-center py-8">
           <p className="text-sm text-muted-foreground">Nenhuma transação neste período</p>
         </div>
-      )}
-      {Object.entries(grouped).map(([day, items]) => (
-        <div key={day} className="fade-in-up">
-          <p className="text-label px-1 mb-2">{day}</p>
-          <div className="card-zelo !p-0 divide-y divide-border">
-            {items.map((t) => (
-              <div key={t.id} className="relative">
-                {(() => {
-                  const isIncomeTx = t.type === "income";
-                  const isGoalTx = isGoalDepositTransaction(t);
-
-                  return editingId === t.id ? (
-                  <div className="px-4 py-3 space-y-2">
-                    <input
-                      type="text"
-                      value={editDesc}
-                      onChange={(e) => setEditDesc(e.target.value)}
-                      className="w-full rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm outline-none focus:border-primary"
-                      placeholder="Descrição"
-                    />
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={editAmount}
-                      onChange={(e) => setEditAmount(e.target.value)}
-                      className="w-full rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm outline-none focus:border-primary tabular-nums"
-                      placeholder="Valor"
-                    />
-                    <div className="flex gap-2">
-                      <button onClick={() => handleEdit(t.id)} className="flex-1 flex items-center justify-center gap-1 rounded-lg bg-success/15 py-2 text-xs font-medium text-success active:scale-95">
-                        <Check size={14} /> Salvar
-                      </button>
-                      <button onClick={() => setEditingId(null)} className="flex-1 flex items-center justify-center gap-1 rounded-lg bg-muted py-2 text-xs font-medium text-muted-foreground active:scale-95">
-                        <X size={14} /> Cancelar
-                      </button>
+      ) : (
+        <div ref={parentRef} className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 340px)' }}>
+          <div style={{ height: `${virtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}>
+            {virtualizer.getVirtualItems().map((virtualRow) => {
+              const item = flatList[virtualRow.index];
+              return (
+                <div
+                  key={virtualRow.key}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: `${virtualRow.size}px`,
+                    transform: `translateY(${virtualRow.start}px)`,
+                    willChange: 'transform',
+                  }}
+                >
+                  {item.type === "header" ? (
+                    <p className="text-label px-1 py-1.5">{item.label}</p>
+                  ) : (
+                    <div className="card-zelo !p-0 !rounded-xl">
+                      <TransactionRow
+                        transaction={item.tx}
+                        onDelete={handleDelete}
+                        onUpdate={handleUpdate}
+                      />
                     </div>
-                  </div>
-                ) : deleteConfirm === t.id ? (
-                  <div className="px-4 py-3">
-                    <p className="text-xs text-muted-foreground mb-2">Excluir "{t.description}"? O saldo será recalculado.</p>
-                    <div className="flex gap-2">
-                      <button onClick={() => handleDelete(t.id)} className="flex-1 rounded-lg bg-destructive/15 py-2 text-xs font-medium text-destructive active:scale-95">
-                        Confirmar
-                      </button>
-                      <button onClick={() => setDeleteConfirm(null)} className="flex-1 rounded-lg bg-muted py-2 text-xs font-medium text-muted-foreground active:scale-95">
-                        Cancelar
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-3 px-4 py-3">
-                    <div className={cn(
-                      "flex h-8 w-8 items-center justify-center rounded-xl",
-                      isIncomeTx ? "bg-success/15" : isGoalTx ? "bg-primary/15" : "bg-destructive/15"
-                    )}>
-                      {isIncomeTx
-                        ? <ArrowUpRight size={14} className="text-success" />
-                        : isGoalTx
-                          ? <PiggyBank size={14} className="text-primary" />
-                          : <ArrowDownLeft size={14} className="text-destructive" />
-                      }
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{t.description}</p>
-                      <p className="text-[10px] text-muted-foreground">{t.category}</p>
-                    </div>
-                    <span className={cn(
-                      "text-sm font-bold tabular-nums mr-2",
-                      isIncomeTx ? "text-success" : isGoalTx ? "text-primary" : "text-foreground"
-                    )}>
-                      {isIncomeTx ? "+" : isGoalTx ? "•" : "−"} {fmt(t.amount)}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => { setEditingId(t.id); setEditDesc(t.description); setEditAmount(t.amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })); }}
-                        className="p-1.5 rounded-lg text-muted-foreground hover:text-primary active:scale-95 transition-all"
-                      >
-                        <Pencil size={13} />
-                      </button>
-                      <button
-                        onClick={() => setDeleteConfirm(t.id)}
-                        className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive active:scale-95 transition-all"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-                  </div>
-                );
-                })()}
-              </div>
-            ))}
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
-      ))}
-
-      {hasMore && (
-        <button
-          onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
-          className="w-full rounded-xl border border-border bg-muted/50 py-3 text-xs font-medium text-muted-foreground hover:text-foreground active:scale-[0.98] transition-all"
-        >
-          Carregar mais ({allFiltered.length - visibleCount} restantes)
-        </button>
       )}
     </div>
   );

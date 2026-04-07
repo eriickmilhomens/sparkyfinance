@@ -1,14 +1,25 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, lazy, Suspense } from "react";
 import { Plus, Settings, CreditCard } from "lucide-react";
-import AddExpenseModal from "@/components/expenses/AddExpenseModal";
-import FinancialSettingsModal from "@/components/expenses/FinancialSettingsModal";
-import CreditCardManager from "@/components/expenses/CreditCardManager";
-import VisaoGeralTab from "@/components/expenses/VisaoGeralTab";
-import ExtratoTab from "@/components/expenses/ExtratoTab";
-import PlanejamentoTab from "@/components/expenses/PlanejamentoTab";
 import { cn } from "@/lib/utils";
 
-const tabs = ["Visão Geral", "Extrato", "Planejamento"];
+const AddExpenseModal = lazy(() => import("@/components/expenses/AddExpenseModal"));
+const FinancialSettingsModal = lazy(() => import("@/components/expenses/FinancialSettingsModal"));
+const CreditCardManager = lazy(() => import("@/components/expenses/CreditCardManager"));
+const VisaoGeralTab = lazy(() => import("@/components/expenses/VisaoGeralTab"));
+const ExtratoTab = lazy(() => import("@/components/expenses/ExtratoTab"));
+const PlanejamentoTab = lazy(() => import("@/components/expenses/PlanejamentoTab"));
+
+const tabNames = ["Visão Geral", "Extrato", "Planejamento"];
+
+const TabSkeleton = () => (
+  <div className="space-y-3 animate-pulse">
+    <div className="grid grid-cols-2 gap-2">
+      <div className="h-[68px] bg-muted rounded-2xl" />
+      <div className="h-[68px] bg-muted rounded-2xl" />
+    </div>
+    <div className="h-[200px] bg-muted rounded-2xl" />
+  </div>
+);
 
 const ExpensesView = () => {
   const [modalOpen, setModalOpen] = useState(false);
@@ -37,52 +48,45 @@ const ExpensesView = () => {
         <div className="flex items-center justify-between pt-3">
           <h1 className="text-xl font-display font-bold">Despesas</h1>
           <div className="flex items-center gap-0.5">
-            <button
-              onClick={() => setSettingsOpen(true)}
-              className="rounded-xl p-2.5 text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95 transition-all"
-            >
+            <button onClick={() => setSettingsOpen(true)}
+              className="rounded-xl p-2.5 text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95 transition-transform will-change-transform">
               <Settings size={17} />
             </button>
-            <button
-              onClick={() => setCardsOpen(true)}
-              className="rounded-xl p-2.5 text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95 transition-all"
-            >
+            <button onClick={() => setCardsOpen(true)}
+              className="rounded-xl p-2.5 text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95 transition-transform will-change-transform">
               <CreditCard size={17} />
             </button>
           </div>
         </div>
 
         <div className="flex gap-1 rounded-2xl bg-muted/40 p-1 border border-border/50">
-          {tabs.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
+          {tabNames.map((tab) => (
+            <button key={tab} onClick={() => setActiveTab(tab)}
               className={cn(
-                "flex-1 rounded-xl py-2.5 text-xs font-display font-medium transition-all active:scale-[0.97]",
+                "flex-1 rounded-xl py-2.5 text-xs font-display font-medium transition-all active:scale-[0.97] will-change-transform",
                 activeTab === tab
                   ? "bg-card text-foreground shadow-sm border border-border/50"
                   : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {tab}
-            </button>
+              )}>{tab}</button>
           ))}
         </div>
 
-        {renderTab()}
+        <Suspense fallback={<TabSkeleton />}>
+          {renderTab()}
+        </Suspense>
       </div>
 
-      <button
-        onClick={() => setModalOpen(true)}
-        className="fixed right-5 z-50 flex h-13 w-13 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/25 text-primary-foreground transition-all active:scale-90 pulse-glow"
-        style={{ bottom: 'calc(112px + env(safe-area-inset-bottom, 0px))' }}
-      >
+      <button onClick={() => setModalOpen(true)}
+        className="fixed right-5 z-50 flex h-13 w-13 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/25 text-primary-foreground transition-transform active:scale-90 pulse-glow will-change-transform"
+        style={{ bottom: 'calc(112px + env(safe-area-inset-bottom, 0px))' }}>
         <Plus size={22} strokeWidth={2.5} />
       </button>
 
-      <AddExpenseModal open={modalOpen} onClose={() => setModalOpen(false)} type="expense" />
-      <FinancialSettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
-      <CreditCardManager open={cardsOpen} onClose={() => setCardsOpen(false)} />
+      <Suspense fallback={null}>
+        {modalOpen && <AddExpenseModal open={modalOpen} onClose={() => setModalOpen(false)} type="expense" />}
+        {settingsOpen && <FinancialSettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />}
+        {cardsOpen && <CreditCardManager open={cardsOpen} onClose={() => setCardsOpen(false)} />}
+      </Suspense>
     </>
   );
 };
