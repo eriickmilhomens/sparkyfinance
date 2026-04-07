@@ -111,7 +111,7 @@ const TabBar = ({ activeTab, onTabChange }: TabBarProps) => {
       {/* Full-bleed safe area background — always visible, pinned to absolute bottom */}
       <div
         className="pointer-events-none fixed bottom-0 left-0 right-0 z-[59]"
-        style={{ height: 'calc(env(safe-area-inset-bottom, 0px) + 20px)', background: '#0a0a0a' }}
+        style={{ height: 'calc(env(safe-area-inset-bottom, 0px) + 20px)', background: '#0e1420' }}
       />
     </>
   );
