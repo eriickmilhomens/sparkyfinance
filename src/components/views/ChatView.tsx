@@ -548,7 +548,7 @@ const ChatView = () => {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden" style={{ paddingTop: 'env(safe-area-inset-top, 20px)' }}>
+    <div className="flex flex-col overflow-hidden" style={{ height: '100%', minHeight: 0, paddingTop: 'env(safe-area-inset-top, 20px)' }}>
       {showNewChatConfirm && <NewChatConfirmPopup />}
       {/* Header - fixed at top */}
       <div className="flex-shrink-0 px-4 pt-3 pb-2 flex items-center justify-between border-b border-border bg-background">
