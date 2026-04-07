@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import Header from "@/components/layout/Header";
 import BalanceCard from "@/components/dashboard/BalanceCard";
 import SpendingOverview from "@/components/dashboard/SpendingOverview";
@@ -16,6 +16,8 @@ const SkeletonCard = () => (
 
 const DashboardView = () => {
   const [hideValues, setHideValues] = useState(false);
+  const [headerHidden, setHeaderHidden] = useState(false);
+  const lastScrollY = useRef(0);
   const { loading } = useFinancialData();
   const now = new Date();
   const dayNames = ["Domingo", "Segunda-Feira", "Terça-Feira", "Quarta-Feira", "Quinta-Feira", "Sexta-Feira", "Sábado"];
@@ -24,6 +26,27 @@ const DashboardView = () => {
 
   const handleVisibilityChange = useCallback((visible: boolean) => {
     setHideValues(!visible);
+  }, []);
+
+  // Hide header on scroll down, show on scroll up
+  useEffect(() => {
+    const scrollEl = document.querySelector('[data-main-scroll]');
+    if (!scrollEl) return;
+
+    const handleScroll = () => {
+      const currentY = scrollEl.scrollTop;
+      if (currentY <= 10) {
+        setHeaderHidden(false);
+      } else if (currentY > lastScrollY.current + 8) {
+        setHeaderHidden(true);
+      } else if (currentY < lastScrollY.current - 8) {
+        setHeaderHidden(false);
+      }
+      lastScrollY.current = currentY;
+    };
+
+    scrollEl.addEventListener('scroll', handleScroll, { passive: true });
+    return () => scrollEl.removeEventListener('scroll', handleScroll);
   }, []);
 
   if (loading) {
@@ -48,7 +71,7 @@ const DashboardView = () => {
       <div className="pointer-events-none absolute -top-20 right-[-20%] h-[300px] w-[300px] rounded-full bg-primary/6 blur-[100px]" />
       <div className="pointer-events-none absolute top-[40%] left-[-15%] h-[200px] w-[200px] rounded-full bg-primary/4 blur-[80px]" />
 
-      <Header />
+      <Header hidden={headerHidden} />
       <div className="text-center space-y-1.5 fade-in-up relative z-10">
         <h1 className="text-xl sm:text-2xl font-display font-bold">Resumo De Hoje</h1>
         <p className="text-xs sm:text-sm text-muted-foreground">{dateStr}</p>
