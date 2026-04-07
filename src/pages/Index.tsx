@@ -237,10 +237,11 @@ const Index = () => {
     <div
       className="bg-background relative mx-auto flex w-full max-w-lg flex-col lg:max-w-4xl xl:max-w-6xl"
       style={{
-        height: '100dvh',
-        minHeight: '100dvh',
-        maxHeight: '100dvh',
+        height: '100svh',
+        minHeight: '100svh',
+        maxHeight: '100svh',
         paddingTop: activeTab === 'chat' ? '0' : 'env(safe-area-inset-top, 20px)',
+        paddingBottom: '0',
         overflow: 'hidden',
         overscrollBehavior: 'none',
       }}

@@ -77,34 +77,39 @@ const TabBar = ({ activeTab, onTabChange }: TabBarProps) => {
 
       <nav
         className={cn(
-          "pointer-events-none fixed inset-x-0 z-[60] flex justify-center px-4 transition-all duration-300",
+          "pointer-events-none fixed inset-x-0 z-[60] flex flex-col items-center transition-all duration-300",
           hidden && !adjusting && "translate-y-[200%] opacity-0"
         )}
-        style={{ bottom: `calc(${currentBottom}px + env(safe-area-inset-bottom, 0px))` }}
+        style={{ bottom: 0 }}
       >
-        <div className="liquid-dock pointer-events-auto mx-auto flex w-full max-w-lg items-center justify-around rounded-3xl px-2 py-2">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => onTabChange(tab.id)}
-                className={cn(
-                  "flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-2xl px-2 py-2 transition-all duration-300",
-                  isActive
-                    ? "bg-primary/15 text-primary shadow-sm shadow-primary/10"
-                    : "text-muted-foreground active:scale-95 hover:text-foreground"
-                )}
-              >
-                <Icon size={18} strokeWidth={isActive ? 2.5 : 1.5} />
-                <span className={cn("text-[9px] font-display tabular-nums", isActive ? "font-bold" : "font-medium")}>
-                  {tab.label}
-                </span>
-              </button>
-            );
-          })}
+        {/* Dock pill */}
+        <div className="w-full flex justify-center px-4" style={{ marginBottom: `${currentBottom}px` }}>
+          <div className="liquid-dock pointer-events-auto mx-auto flex w-full max-w-lg items-center justify-around rounded-3xl px-2 py-2">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => onTabChange(tab.id)}
+                  className={cn(
+                    "flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-2xl px-2 py-2 transition-all duration-300",
+                    isActive
+                      ? "bg-primary/15 text-primary shadow-sm shadow-primary/10"
+                      : "text-muted-foreground active:scale-95 hover:text-foreground"
+                  )}
+                >
+                  <Icon size={18} strokeWidth={isActive ? 2.5 : 1.5} />
+                  <span className={cn("text-[9px] font-display tabular-nums", isActive ? "font-bold" : "font-medium")}>
+                    {tab.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
+        {/* Safe area fill — extends bg to physical screen edge */}
+        <div className="pointer-events-auto w-full bg-background" style={{ height: 'env(safe-area-inset-bottom, 0px)' }} />
       </nav>
     </>
   );
