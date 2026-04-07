@@ -102,9 +102,10 @@ const Login = () => {
 
   return (
     <div className="bg-background flex flex-col items-center justify-center px-6 relative overflow-hidden" style={{ minHeight: '100dvh', paddingTop: 'env(safe-area-inset-top, 20px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-      {/* Gradient orbs */}
-      <div className="absolute top-[-20%] right-[-15%] w-[50vw] h-[50vw] rounded-full bg-gradient-to-br from-primary/8 to-primary/2 blur-3xl pointer-events-none" />
-      <div className="absolute bottom-[-10%] left-[-10%] w-[40vw] h-[40vw] rounded-full bg-gradient-to-tr from-primary/5 to-transparent blur-3xl pointer-events-none" />
+      {/* Gradient orbs — navy blue aesthetic */}
+      <div className="absolute top-[-20%] right-[-15%] w-[50vw] h-[50vw] rounded-full bg-gradient-to-br from-primary/10 to-primary/3 blur-3xl pointer-events-none" />
+      <div className="absolute bottom-[-10%] left-[-10%] w-[40vw] h-[40vw] rounded-full bg-gradient-to-tr from-primary/6 to-transparent blur-3xl pointer-events-none" />
+      <div className="absolute top-[30%] left-[50%] w-[30vw] h-[30vw] rounded-full bg-primary/4 blur-[80px] pointer-events-none" />
 
       <div className="flex flex-col items-center gap-5 mb-10 fade-in-up relative z-10">
         <button
