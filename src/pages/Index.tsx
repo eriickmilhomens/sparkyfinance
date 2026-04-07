@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import TabBar from "@/components/layout/TabBar";
 import { syncLocalDataOwner } from "@/lib/userLocalData";
-import { cn } from "@/lib/utils";
 import GlobalNotificationPopup from "@/components/layout/GlobalNotificationPopup";
 import { Settings, Timer, Eye, X } from "lucide-react";
 
@@ -236,16 +235,21 @@ const Index = () => {
 
   return (
     <div
-      className="bg-background relative mx-auto flex min-h-[100dvh] w-full max-w-lg flex-col lg:max-w-4xl xl:max-w-6xl"
+      className="bg-background relative mx-auto flex w-full max-w-lg flex-col lg:max-w-4xl xl:max-w-6xl"
       style={{
-        minHeight: '100dvh',
+        height: '100svh',
+        minHeight: '100svh',
+        maxHeight: '100svh',
         paddingTop: activeTab === 'chat' ? '0' : 'env(safe-area-inset-top, 20px)',
+        paddingBottom: '0',
         overflow: 'hidden',
         overscrollBehavior: 'none',
       }}
     >
+      {/* Global Notification Popup */}
       <GlobalNotificationPopup />
 
+      {/* Impersonate floating bar */}
       {impersonating && (
         <div className="shrink-0 flex items-center gap-2 px-4 py-2 bg-yellow-500/10 border-b border-yellow-500/30" style={{ zIndex: 55 }}>
           <Eye size={14} className="text-yellow-500 shrink-0" />
@@ -263,6 +267,7 @@ const Index = () => {
         </div>
       )}
 
+      {/* Maintenance countdown bar for admin */}
       {isAdmin && maintenanceCountdown && !maintenanceActive && (
         <div className="shrink-0 flex items-center justify-center gap-2 px-4 py-1.5 bg-yellow-500/10 border-b border-yellow-500/30">
           <Timer size={12} className="text-yellow-500" />
@@ -272,17 +277,7 @@ const Index = () => {
         </div>
       )}
 
-      <main
-        data-main-scroll
-        className={cn(
-          "relative flex-1 min-h-0 overflow-x-hidden",
-          activeTab === 'chat' ? 'overflow-hidden' : 'overflow-y-auto'
-        )}
-        style={{
-          overscrollBehavior: 'none',
-          paddingBottom: activeTab === 'chat' ? '0' : 'calc(88px + env(safe-area-inset-bottom, 0px))',
-        }}
-      >
+      <div data-main-scroll className={`relative flex-1 min-h-0 overflow-x-hidden ${activeTab === 'chat' ? 'overflow-hidden' : 'overflow-y-auto'}`} style={{ overscrollBehavior: 'none', paddingBottom: activeTab === 'chat' ? '0' : 'calc(100px + env(safe-area-inset-bottom, 0px))' }}>
         <Suspense fallback={
           <div className="space-y-3 px-4 pt-4">
             <div className="h-10 w-40 bg-muted rounded-xl animate-pulse" />
@@ -295,8 +290,7 @@ const Index = () => {
             {renderView()}
           </div>
         </Suspense>
-      </main>
-
+      </div>
       {activeTab !== 'chat' && <TabBar activeTab={activeTab} onTabChange={handleTabChange} />}
     </div>
   );
