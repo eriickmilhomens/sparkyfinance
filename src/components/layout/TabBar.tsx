@@ -83,7 +83,7 @@ const TabBar = ({ activeTab, onTabChange }: TabBarProps) => {
         style={{ bottom: 0 }}
       >
         {/* Dock pill */}
-        <div className="w-full flex justify-center px-4" style={{ marginBottom: `${currentBottom}px` }}>
+        <div className="w-full flex justify-center px-4" style={{ paddingBottom: `env(safe-area-inset-bottom, 0px)`, marginBottom: `${currentBottom}px` }}>
           <div className="liquid-dock pointer-events-auto mx-auto flex w-full max-w-lg items-center justify-around rounded-3xl px-2 py-2">
             {tabs.map((tab) => {
               const Icon = tab.icon;
@@ -108,8 +108,8 @@ const TabBar = ({ activeTab, onTabChange }: TabBarProps) => {
             })}
           </div>
         </div>
-        {/* Safe area fill — extends bg to physical screen edge */}
-        <div className="pointer-events-auto w-full bg-background" style={{ height: 'env(safe-area-inset-bottom, 0px)' }} />
+        {/* Safe area fill — extends bg color behind gesture area */}
+        <div className="pointer-events-auto w-full" style={{ background: '#0d0f14', height: 'env(safe-area-inset-bottom, 0px)' }} />
       </nav>
     </>
   );
