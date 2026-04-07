@@ -196,7 +196,7 @@ const Index = () => {
   // Maintenance blocking screen — only for non-admins
   if (maintenanceActive && !isAdmin) {
     return (
-      <div className="bg-background flex flex-col items-center justify-center text-center px-8" style={{ height: '100dvh' }}>
+      <div className="bg-background flex flex-col items-center justify-center text-center px-8" style={{ height: '100svh' }}>
         <div className="rounded-2xl border border-yellow-500/30 bg-yellow-500/5 p-8 max-w-sm w-full space-y-4">
           <div className="h-16 w-16 rounded-2xl bg-yellow-500/20 flex items-center justify-center mx-auto">
             <Settings size={32} className="text-yellow-500 animate-spin" style={{ animationDuration: "3s" }} />
