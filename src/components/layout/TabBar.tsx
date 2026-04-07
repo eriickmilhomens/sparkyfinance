@@ -77,13 +77,12 @@ const TabBar = ({ activeTab, onTabChange }: TabBarProps) => {
 
       <nav
         className={cn(
-          "pointer-events-none fixed inset-x-0 z-[60] flex flex-col items-center transition-all duration-300",
+          "pointer-events-none fixed inset-x-0 bottom-0 z-[60] flex flex-col items-center transition-all duration-300",
           hidden && !adjusting && "translate-y-[200%] opacity-0"
         )}
-        style={{ bottom: 0 }}
       >
         {/* Dock pill */}
-        <div className="w-full flex justify-center px-4" style={{ paddingBottom: `env(safe-area-inset-bottom, 0px)`, marginBottom: `${currentBottom}px` }}>
+        <div className="w-full flex justify-center px-4" style={{ marginBottom: `${currentBottom}px` }}>
           <div className="liquid-dock pointer-events-auto mx-auto flex w-full max-w-lg items-center justify-around rounded-3xl px-2 py-2">
             {tabs.map((tab) => {
               const Icon = tab.icon;
@@ -108,9 +107,12 @@ const TabBar = ({ activeTab, onTabChange }: TabBarProps) => {
             })}
           </div>
         </div>
-        {/* Safe area fill — extends bg color behind gesture area */}
-        <div className="pointer-events-auto w-full" style={{ background: '#0d0f14', height: 'env(safe-area-inset-bottom, 0px)' }} />
       </nav>
+      {/* Full-bleed safe area background — always visible, pinned to absolute bottom */}
+      <div
+        className="pointer-events-none fixed bottom-0 left-0 right-0 z-[59]"
+        style={{ height: 'calc(env(safe-area-inset-bottom, 0px) + 20px)', background: '#0d0f14' }}
+      />
     </>
   );
 };
