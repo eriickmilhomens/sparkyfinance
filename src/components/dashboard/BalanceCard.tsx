@@ -43,14 +43,17 @@ const BalanceCard = ({ onVisibilityChange }: BalanceCardProps) => {
     }
   };
 
+  const pctChange = data.income > 0 ? ((data.income - data.expenses) / data.income * 100) : 0;
+  const isPositive = pctChange >= 0;
+
   return (
     <div className="card-zelo fade-in-up relative overflow-hidden">
-      {/* Gradient accent orb */}
-      <div className="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-gradient-to-br from-primary/12 to-primary/4 blur-2xl pointer-events-none" />
-      <div className="absolute -bottom-8 -left-8 h-20 w-20 rounded-full bg-primary/6 blur-2xl pointer-events-none" />
+      {/* Gradient accent orbs — like reference */}
+      <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-gradient-to-br from-primary/15 to-primary/5 blur-2xl pointer-events-none" />
+      <div className="absolute -bottom-10 -left-10 h-24 w-24 rounded-full bg-primary/8 blur-2xl pointer-events-none" />
 
-      <div className="flex items-center justify-between mb-2 relative z-10">
-        <span className="text-label">Saldo Disponível</span>
+      <div className="flex items-center justify-between mb-1 relative z-10">
+        <span className="text-label">Saldo Total</span>
         <div className="flex items-center gap-1.5">
           <button onClick={() => setEditing(!editing)} className="rounded-xl p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95 transition-all duration-300" title="Ajustar saldo">
             <Pencil size={13} />
@@ -60,9 +63,20 @@ const BalanceCard = ({ onVisibilityChange }: BalanceCardProps) => {
           </button>
         </div>
       </div>
-      <p className="text-3xl font-display font-extrabold tracking-tight tabular-nums relative z-10">
+
+      <p className="text-[32px] font-display font-extrabold tracking-tight tabular-nums relative z-10 leading-tight">
         {visible ? fmt(available) : "••••••"}
       </p>
+
+      {visible && data.income > 0 && (
+        <div className="flex items-center gap-1.5 mt-1 relative z-10">
+          <span className={`text-[11px] font-semibold tabular-nums ${isPositive ? "text-success" : "text-destructive"}`}>
+            {isPositive ? "+" : ""}{pctChange.toFixed(1)}%
+          </span>
+          <span className="text-[11px] text-muted-foreground">este mês</span>
+        </div>
+      )}
+
       <div className="mt-3 relative z-10">
         <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
           <span className="flex items-center gap-1">
