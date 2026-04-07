@@ -6,33 +6,33 @@
 
 @layer base {
   :root {
-    --background: 220 18% 97%;
-    --foreground: 224 28% 12%;
+    --background: 200 40% 96%;
+    --foreground: 200 55% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 224 28% 12%;
+    --card-foreground: 200 55% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 224 28% 12%;
+    --popover-foreground: 200 55% 10%;
 
-    --primary: 172 66% 50%;
-    --primary-foreground: 224 28% 6%;
+    --primary: 190 55% 38%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 14% 94%;
-    --secondary-foreground: 224 20% 20%;
+    --secondary: 200 20% 92%;
+    --secondary-foreground: 200 30% 18%;
 
-    --muted: 220 14% 94%;
-    --muted-foreground: 224 10% 46%;
+    --muted: 200 18% 93%;
+    --muted-foreground: 200 12% 46%;
 
-    --accent: 220 14% 94%;
-    --accent-foreground: 224 20% 20%;
+    --accent: 200 18% 93%;
+    --accent-foreground: 200 30% 18%;
 
     --destructive: 0 72% 58%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 14% 90%;
-    --input: 220 14% 90%;
-    --ring: 172 66% 50%;
+    --border: 200 18% 88%;
+    --input: 200 18% 88%;
+    --ring: 190 55% 38%;
 
     --radius: 1.25rem;
 
@@ -40,46 +40,46 @@
     --warning: 36 90% 52%;
     --info: 200 80% 55%;
 
-    --glow-primary: 172 66% 50%;
+    --glow-primary: 190 55% 38%;
 
-    --sidebar-background: 220 18% 95%;
-    --sidebar-foreground: 224 28% 12%;
-    --sidebar-primary: 172 66% 50%;
-    --sidebar-primary-foreground: 224 28% 6%;
-    --sidebar-accent: 220 14% 94%;
-    --sidebar-accent-foreground: 224 20% 20%;
-    --sidebar-border: 220 14% 90%;
-    --sidebar-ring: 172 66% 50%;
+    --sidebar-background: 200 30% 94%;
+    --sidebar-foreground: 200 55% 10%;
+    --sidebar-primary: 190 55% 38%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 200 18% 93%;
+    --sidebar-accent-foreground: 200 30% 18%;
+    --sidebar-border: 200 18% 88%;
+    --sidebar-ring: 190 55% 38%;
   }
 
   .dark {
-    --background: 228 22% 6%;
-    --foreground: 210 20% 95%;
+    --background: 200 55% 9%;
+    --foreground: 200 15% 92%;
 
-    --card: 228 20% 9%;
-    --card-foreground: 210 20% 95%;
+    --card: 200 43% 12%;
+    --card-foreground: 200 15% 92%;
 
-    --popover: 228 20% 9%;
-    --popover-foreground: 210 20% 95%;
+    --popover: 200 43% 12%;
+    --popover-foreground: 200 15% 92%;
 
-    --primary: 172 66% 50%;
-    --primary-foreground: 228 22% 4%;
+    --primary: 190 55% 42%;
+    --primary-foreground: 200 55% 5%;
 
-    --secondary: 228 16% 13%;
-    --secondary-foreground: 210 15% 85%;
+    --secondary: 200 35% 16%;
+    --secondary-foreground: 200 12% 82%;
 
-    --muted: 228 16% 13%;
-    --muted-foreground: 224 10% 50%;
+    --muted: 200 35% 16%;
+    --muted-foreground: 200 12% 50%;
 
-    --accent: 228 16% 13%;
-    --accent-foreground: 210 15% 85%;
+    --accent: 200 35% 16%;
+    --accent-foreground: 200 12% 82%;
 
     --destructive: 0 72% 58%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 228 14% 15%;
-    --input: 228 14% 15%;
-    --ring: 172 66% 50%;
+    --border: 200 30% 18%;
+    --input: 200 30% 18%;
+    --ring: 190 55% 42%;
 
     --radius: 1.25rem;
 
@@ -87,16 +87,16 @@
     --warning: 36 90% 52%;
     --info: 200 80% 55%;
 
-    --glow-primary: 172 66% 50%;
+    --glow-primary: 190 55% 42%;
 
-    --sidebar-background: 228 22% 5%;
-    --sidebar-foreground: 210 20% 95%;
-    --sidebar-primary: 172 66% 50%;
-    --sidebar-primary-foreground: 228 22% 4%;
-    --sidebar-accent: 228 16% 13%;
-    --sidebar-accent-foreground: 210 15% 85%;
-    --sidebar-border: 228 14% 15%;
-    --sidebar-ring: 172 66% 50%;
+    --sidebar-background: 200 55% 7%;
+    --sidebar-foreground: 200 15% 92%;
+    --sidebar-primary: 190 55% 42%;
+    --sidebar-primary-foreground: 200 55% 5%;
+    --sidebar-accent: 200 35% 16%;
+    --sidebar-accent-foreground: 200 12% 82%;
+    --sidebar-border: 200 30% 18%;
+    --sidebar-ring: 190 55% 42%;
   }
 }
 
@@ -120,7 +120,7 @@
     -ms-content-zooming: none;
     padding: 0;
     margin: 0;
-    background-color: #0d0f14 !important;
+    background-color: #0a1922 !important;
   }
 
   html {
@@ -130,7 +130,7 @@
     overflow: hidden;
     padding: 0;
     margin: 0;
-    background-color: #0d0f14 !important;
+    background-color: #0a1922 !important;
   }
 
   #root {
