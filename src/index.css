@@ -120,7 +120,7 @@
     -ms-content-zooming: none;
     padding: 0;
     margin: 0;
-    background-color: #0e1420 !important;
+    background-color: hsl(var(--background)) !important;
   }
 
   html {
@@ -130,7 +130,7 @@
     overflow: hidden;
     padding: 0;
     margin: 0;
-    background-color: #0e1420 !important;
+    background-color: hsl(var(--background)) !important;
   }
 
   #root {

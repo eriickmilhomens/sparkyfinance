@@ -120,7 +120,7 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
   const [showCMS, setShowCMS] = useState(false);
   const [cmsColors, setCmsColors] = useState(() => {
     const saved = localStorage.getItem("sparky-cms-colors");
-    return saved ? JSON.parse(saved) : { primary: "#3b82f6", accent: "#8b5cf6" };
+    return saved ? JSON.parse(saved) : { primary: "#df0139", accent: "#8b5cf6" };
   });
 
   // Direct support chat
