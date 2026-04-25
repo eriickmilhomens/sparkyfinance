@@ -74,12 +74,7 @@ const CreditCardManager = ({ open, onClose }: Props) => {
     const bankName = capitalize(rawBankName);
     const limit = parseFloat(newLimit.replace(/\D/g, "")) / 100 || 0;
 
-    const isKnown = Object.keys(BANK_DATA).some(k => bankName.toLowerCase().includes(k));
-    if (!isKnown) {
-      const color = getRandomColor();
-      const abbr = bankName.slice(0, 2).toUpperCase();
-      BANK_DATA[bankName.toLowerCase()] = { color, abbr };
-    }
+    // (Bank brand info comes from the centralized helper — no need to register custom colors here.)
 
     const card: CreditCardData = {
       id: crypto.randomUUID(), bankName, cardName: capitalize(newName.trim()),
