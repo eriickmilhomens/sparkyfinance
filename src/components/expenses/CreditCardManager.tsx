@@ -6,42 +6,8 @@ import { cn } from "@/lib/utils";
 import { useDockVisibility } from "@/hooks/useDockVisibility";
 import { usePoints } from "@/hooks/usePoints";
 import { useFinancialData } from "@/hooks/useFinancialData";
-
-const BANK_DATA: Record<string, { color: string; abbr: string }> = {
-  "nubank": { color: "bg-purple-600", abbr: "NU" },
-  "inter": { color: "bg-orange-500", abbr: "IN" },
-  "itaú": { color: "bg-orange-600", abbr: "IT" },
-  "itau": { color: "bg-orange-600", abbr: "IT" },
-  "bradesco": { color: "bg-red-600", abbr: "BR" },
-  "santander": { color: "bg-red-700", abbr: "SA" },
-  "banco do brasil": { color: "bg-yellow-500", abbr: "BB" },
-  "bb": { color: "bg-yellow-500", abbr: "BB" },
-  "caixa": { color: "bg-blue-600", abbr: "CX" },
-  "c6": { color: "bg-gray-900", abbr: "C6" },
-  "c6 bank": { color: "bg-gray-900", abbr: "C6" },
-  "pan": { color: "bg-blue-500", abbr: "PN" },
-  "neon": { color: "bg-cyan-500", abbr: "NE" },
-  "next": { color: "bg-green-500", abbr: "NX" },
-  "picpay": { color: "bg-green-400", abbr: "PP" },
-  "mercado pago": { color: "bg-blue-400", abbr: "MP" },
-  "btg": { color: "bg-blue-900", abbr: "BT" },
-  "xp": { color: "bg-gray-800", abbr: "XP" },
-};
-
-const BANK_OPTIONS = [
-  { name: "Nubank", abbr: "NU", color: "bg-purple-600" },
-  { name: "Itaú", abbr: "IT", color: "bg-orange-600" },
-  { name: "Bradesco", abbr: "BR", color: "bg-red-600" },
-  { name: "Inter", abbr: "IN", color: "bg-orange-500" },
-  { name: "BB", abbr: "BB", color: "bg-yellow-500" },
-  { name: "Caixa", abbr: "CX", color: "bg-blue-600" },
-  { name: "Santander", abbr: "SA", color: "bg-red-700" },
-  { name: "C6 Bank", abbr: "C6", color: "bg-gray-900" },
-  { name: "BTG", abbr: "BT", color: "bg-blue-900" },
-  { name: "XP", abbr: "XP", color: "bg-gray-800" },
-  { name: "PicPay", abbr: "PP", color: "bg-green-400" },
-  { name: "Mercado Pago", abbr: "MP", color: "bg-blue-400" },
-];
+import BankLogo from "@/components/BankLogo";
+import { BANK_OPTIONS_LIST, getBankBrand } from "@/lib/bankLogos";
 
 const FLAG_OPTIONS = [
   { name: "Visa", color: "bg-blue-600" },
@@ -54,23 +20,7 @@ const FLAG_OPTIONS = [
 
 const CARD_TYPES = ["Crédito", "Débito", "Múltiplo"];
 
-const RANDOM_COLORS = [
-  "bg-emerald-600", "bg-violet-600", "bg-rose-600", "bg-amber-600",
-  "bg-cyan-600", "bg-indigo-600", "bg-teal-600", "bg-fuchsia-600",
-  "bg-lime-600", "bg-pink-600",
-];
-
-const getRandomColor = () => RANDOM_COLORS[Math.floor(Math.random() * RANDOM_COLORS.length)];
-
 const capitalize = (s: string) => s.split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
-
-const getBankInfo = (name: string) => {
-  const lower = name.toLowerCase();
-  for (const [key, val] of Object.entries(BANK_DATA)) {
-    if (lower.includes(key)) return val;
-  }
-  return { color: "bg-muted-foreground", abbr: name.slice(0, 2).toUpperCase() };
-};
 
 interface CardTransaction {
   id: string; desc: string; value: number; date: string; category: string;
