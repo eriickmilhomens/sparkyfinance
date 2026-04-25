@@ -1,13 +1,14 @@
-import { useState, useCallback, lazy, Suspense } from "react";
+import { useState, useCallback, Suspense } from "react";
 import { Plus, Settings, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { lazyWithRetry } from "@/lib/lazyWithRetry";
 
-const AddExpenseModal = lazy(() => import("@/components/expenses/AddExpenseModal"));
-const FinancialSettingsModal = lazy(() => import("@/components/expenses/FinancialSettingsModal"));
-const CreditCardManager = lazy(() => import("@/components/expenses/CreditCardManager"));
-const VisaoGeralTab = lazy(() => import("@/components/expenses/VisaoGeralTab"));
-const ExtratoTab = lazy(() => import("@/components/expenses/ExtratoTab"));
-const PlanejamentoTab = lazy(() => import("@/components/expenses/PlanejamentoTab"));
+const AddExpenseModal = lazyWithRetry(() => import("@/components/expenses/AddExpenseModal"));
+const FinancialSettingsModal = lazyWithRetry(() => import("@/components/expenses/FinancialSettingsModal"));
+const CreditCardManager = lazyWithRetry(() => import("@/components/expenses/CreditCardManager"));
+const VisaoGeralTab = lazyWithRetry(() => import("@/components/expenses/VisaoGeralTab"));
+const ExtratoTab = lazyWithRetry(() => import("@/components/expenses/ExtratoTab"));
+const PlanejamentoTab = lazyWithRetry(() => import("@/components/expenses/PlanejamentoTab"));
 
 const tabNames = ["Visão Geral", "Extrato", "Planejamento"];
 

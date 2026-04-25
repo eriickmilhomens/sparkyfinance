@@ -1,17 +1,18 @@
-import { useState, useEffect, useRef, lazy, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import TabBar from "@/components/layout/TabBar";
 import { syncLocalDataOwner } from "@/lib/userLocalData";
 import GlobalNotificationPopup from "@/components/layout/GlobalNotificationPopup";
 import { Settings, Timer, Eye, X } from "lucide-react";
+import { lazyWithRetry } from "@/lib/lazyWithRetry";
 
-const DashboardView = lazy(() => import("@/components/views/DashboardView"));
-const TasksView = lazy(() => import("@/components/views/TasksView"));
-const ExpensesView = lazy(() => import("@/components/views/ExpensesView"));
-const DocsView = lazy(() => import("@/components/views/DocsView"));
-const MembersView = lazy(() => import("@/components/views/MembersView"));
-const ChatView = lazy(() => import("@/components/views/ChatView"));
+const DashboardView = lazyWithRetry(() => import("@/components/views/DashboardView"));
+const TasksView = lazyWithRetry(() => import("@/components/views/TasksView"));
+const ExpensesView = lazyWithRetry(() => import("@/components/views/ExpensesView"));
+const DocsView = lazyWithRetry(() => import("@/components/views/DocsView"));
+const MembersView = lazyWithRetry(() => import("@/components/views/MembersView"));
+const ChatView = lazyWithRetry(() => import("@/components/views/ChatView"));
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("home");
