@@ -137,7 +137,7 @@ const CreditCardCarousel = () => {
 
   if (expandedCard) {
     const available = expandedCard.limit - expandedCard.usedAmount;
-    const bankInfo = getBankInfo(expandedCard.bankName);
+    // Bank brand resolved inline below via <BankLogo />.
     const usedPct = expandedCard.limit > 0 ? Math.round((expandedCard.usedAmount / expandedCard.limit) * 100) : 0;
     const now = new Date();
     const dueDate = new Date(now.getFullYear(), now.getMonth(), expandedCard.dueDay);
@@ -154,9 +154,7 @@ const CreditCardCarousel = () => {
               <ArrowLeft size={20} />
             </button>
             <div className="flex items-center gap-2.5 flex-1">
-              <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center text-white text-xs font-bold", bankInfo.color)}>
-                {bankInfo.abbr}
-              </div>
+              <BankLogo bankName={expandedCard.bankName} size={40} />
               <div>
                 <h2 className="text-base font-bold">{expandedCard.cardName}</h2>
                 <p className="text-[10px] text-muted-foreground">{expandedCard.bankName} • {expandedCard.cardType || "Crédito"}</p>
@@ -410,7 +408,7 @@ const CreditCardCarousel = () => {
       <p className="text-[10px] text-muted-foreground font-semibold tracking-wider px-0.5">CARTÕES DE CRÉDITO</p>
       <div className="space-y-2.5">
         {cards.map((card, idx) => {
-          const bankInfo = getBankInfo(card.bankName);
+          const brand = getBankBrand(card.bankName);
           const available = card.limit - card.usedAmount;
           const usedPct = card.limit > 0 ? Math.round((card.usedAmount / card.limit) * 100) : 0;
           const now = new Date();
@@ -422,25 +420,19 @@ const CreditCardCarousel = () => {
               key={card.id}
               onClick={() => setExpandedId(card.id)}
               className={cn(
-                "cursor-pointer rounded-2xl border border-border/50 p-4 relative overflow-hidden transition-all active:scale-[0.98] hover:border-primary/40",
-                `bg-gradient-to-br ${bankInfo.gradient}`,
+                "cursor-pointer rounded-2xl border border-border/50 p-4 relative overflow-hidden transition-all active:scale-[0.98] hover:border-primary/40 bg-card",
                 `fade-in-up stagger-${Math.min(idx + 1, 5)}`
               )}
             >
-              <div className="absolute -right-6 -top-6 h-20 w-20 rounded-full bg-white/5" />
-              
+              <div className={cn("absolute -right-6 -top-6 h-20 w-20 rounded-full opacity-20", brand.bg)} />
+
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2.5">
-                  <div className={cn("h-9 w-9 rounded-lg flex items-center justify-center text-white text-[10px] font-bold shadow-sm", bankInfo.color)}>
-                    {bankInfo.abbr}
-                  </div>
+                  <BankLogo brand={brand} size={36} rounded="rounded-lg" />
                   <div className="min-w-0">
                     <p className="text-sm font-bold truncate">{card.cardName}</p>
-                    <p className="text-[9px] text-muted-foreground">{card.cardType || "Crédito"}</p>
+                    <p className="text-[9px] text-muted-foreground">{brand.name} • {card.cardType || "Crédito"}</p>
                   </div>
-                </div>
-                <div className={cn("px-2 py-0.5 rounded-md text-[9px] font-bold text-white", bankInfo.color)}>
-                  {bankInfo.abbr}
                 </div>
               </div>
 
