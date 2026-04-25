@@ -6,97 +6,99 @@
 
 @layer base {
   :root {
-    --background: 220 20% 96%;
-    --foreground: 222 30% 12%;
+    /* Light mode — neutro claro #e2e2e2 com acento vermelho #df0139 */
+    --background: 0 0% 95%;
+    --foreground: 240 14% 13%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222 30% 12%;
+    --card-foreground: 240 14% 13%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 30% 12%;
+    --popover-foreground: 240 14% 13%;
 
-    --primary: 222 80% 56%;
+    --primary: 346 99% 44%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 15% 91%;
-    --secondary-foreground: 222 20% 22%;
+    --secondary: 0 0% 89%;
+    --secondary-foreground: 240 14% 13%;
 
-    --muted: 220 15% 92%;
-    --muted-foreground: 222 10% 46%;
+    --muted: 0 0% 91%;
+    --muted-foreground: 240 6% 40%;
 
-    --accent: 220 15% 92%;
-    --accent-foreground: 222 20% 22%;
+    --accent: 346 99% 44%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 55%;
+    --destructive: 346 99% 44%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 14% 88%;
-    --input: 220 14% 88%;
-    --ring: 222 80% 56%;
+    --border: 0 0% 85%;
+    --input: 0 0% 85%;
+    --ring: 346 99% 44%;
 
     --radius: 1.25rem;
 
     --success: 160 65% 40%;
     --warning: 36 90% 52%;
-    --info: 210 80% 55%;
+    --info: 346 99% 44%;
 
-    --glow-primary: 222 80% 56%;
+    --glow-primary: 346 99% 44%;
 
-    --sidebar-background: 220 20% 94%;
-    --sidebar-foreground: 222 30% 12%;
-    --sidebar-primary: 222 80% 56%;
+    --sidebar-background: 0 0% 93%;
+    --sidebar-foreground: 240 14% 13%;
+    --sidebar-primary: 346 99% 44%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 15% 91%;
-    --sidebar-accent-foreground: 222 20% 22%;
-    --sidebar-border: 220 14% 88%;
-    --sidebar-ring: 222 80% 56%;
+    --sidebar-accent: 0 0% 89%;
+    --sidebar-accent-foreground: 240 14% 13%;
+    --sidebar-border: 0 0% 85%;
+    --sidebar-ring: 346 99% 44%;
   }
 
   .dark {
-    --background: 224 35% 7%;
-    --foreground: 215 20% 90%;
+    /* Dark mode — base #1e1e27, surface #28242a, acento #df0139 */
+    --background: 240 14% 10%;
+    --foreground: 0 0% 89%;
 
-    --card: 224 30% 11%;
-    --card-foreground: 215 20% 90%;
+    --card: 285 4% 16%;
+    --card-foreground: 0 0% 89%;
 
-    --popover: 224 30% 11%;
-    --popover-foreground: 215 20% 90%;
+    --popover: 285 4% 16%;
+    --popover-foreground: 0 0% 89%;
 
-    --primary: 222 80% 58%;
+    --primary: 346 99% 48%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 224 25% 14%;
-    --secondary-foreground: 215 15% 78%;
+    --secondary: 285 4% 18%;
+    --secondary-foreground: 0 0% 89%;
 
-    --muted: 224 25% 14%;
-    --muted-foreground: 220 12% 48%;
+    --muted: 285 4% 18%;
+    --muted-foreground: 240 5% 55%;
 
-    --accent: 224 25% 14%;
-    --accent-foreground: 215 15% 78%;
+    --accent: 346 99% 48%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 55%;
+    --destructive: 346 99% 48%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 224 22% 16%;
-    --input: 224 22% 16%;
-    --ring: 222 80% 58%;
+    --border: 285 4% 22%;
+    --input: 285 4% 22%;
+    --ring: 346 99% 48%;
 
     --radius: 1.25rem;
 
-    --success: 160 65% 42%;
-    --warning: 36 90% 52%;
-    --info: 210 80% 55%;
+    --success: 160 60% 45%;
+    --warning: 36 90% 55%;
+    --info: 346 99% 48%;
 
-    --glow-primary: 222 80% 58%;
+    --glow-primary: 346 99% 48%;
 
-    --sidebar-background: 224 35% 5%;
-    --sidebar-foreground: 215 20% 90%;
-    --sidebar-primary: 222 80% 58%;
+    --sidebar-background: 240 14% 8%;
+    --sidebar-foreground: 0 0% 89%;
+    --sidebar-primary: 346 99% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 224 25% 14%;
-    --sidebar-accent-foreground: 215 15% 78%;
-    --sidebar-border: 224 22% 16%;
-    --sidebar-ring: 222 80% 58%;
+    --sidebar-accent: 285 4% 18%;
+    --sidebar-accent-foreground: 0 0% 89%;
+    --sidebar-border: 285 4% 22%;
+    --sidebar-ring: 346 99% 48%;
   }
 }
 
@@ -120,7 +122,7 @@
     -ms-content-zooming: none;
     padding: 0;
     margin: 0;
-    background-color: #0e1420 !important;
+    background-color: #1e1e27 !important;
   }
 
   html {
@@ -130,7 +132,7 @@
     overflow: hidden;
     padding: 0;
     margin: 0;
-    background-color: #0e1420 !important;
+    background-color: #1e1e27 !important;
   }
 
   #root {
@@ -182,23 +184,23 @@
   }
 
   .dark .card-zelo {
-    background: hsl(224 28% 13% / 0.7);
-    border: 1px solid hsl(224 20% 20% / 0.5);
+    background: hsl(285 4% 16% / 0.75);
+    border: 1px solid hsl(285 4% 24% / 0.5);
     box-shadow:
-      0 2px 8px hsl(0 0% 0% / 0.25),
-      0 12px 40px hsl(0 0% 0% / 0.2),
-      inset 0 1px 0 hsl(215 30% 50% / 0.04);
+      0 2px 8px hsl(0 0% 0% / 0.3),
+      0 12px 40px hsl(0 0% 0% / 0.25),
+      inset 0 1px 0 hsl(0 0% 100% / 0.03);
     backdrop-filter: blur(24px) saturate(180%);
     -webkit-backdrop-filter: blur(24px) saturate(180%);
   }
 
   .dark .card-zelo:hover {
-    border-color: hsl(222 60% 50% / 0.15);
+    border-color: hsl(var(--primary) / 0.25);
     box-shadow:
-      0 2px 8px hsl(0 0% 0% / 0.3),
-      0 16px 48px hsl(0 0% 0% / 0.25),
-      inset 0 1px 0 hsl(215 30% 50% / 0.06),
-      0 0 0 0.5px hsl(var(--primary) / 0.1);
+      0 2px 8px hsl(0 0% 0% / 0.35),
+      0 16px 48px hsl(0 0% 0% / 0.3),
+      inset 0 1px 0 hsl(0 0% 100% / 0.04),
+      0 0 0 0.5px hsl(var(--primary) / 0.15);
   }
 
   .text-value {
@@ -231,13 +233,13 @@
   }
 
   .dark .liquid-dock {
-    background: hsl(224 28% 13% / 0.6);
-    border: 1px solid hsl(224 20% 22% / 0.5);
+    background: hsl(285 4% 16% / 0.65);
+    border: 1px solid hsl(285 4% 24% / 0.5);
     box-shadow:
-      0 24px 48px -16px hsl(0 0% 0% / 0.6),
-      0 8px 20px -12px hsl(0 0% 0% / 0.4),
-      inset 0 1px 0 hsl(215 30% 50% / 0.05),
-      0 0 0 0.5px hsl(var(--primary) / 0.1);
+      0 24px 48px -16px hsl(0 0% 0% / 0.65),
+      0 8px 20px -12px hsl(0 0% 0% / 0.45),
+      inset 0 1px 0 hsl(0 0% 100% / 0.04),
+      0 0 0 0.5px hsl(var(--primary) / 0.12);
   }
 
   .stagger-1 { animation-delay: 60ms; }
