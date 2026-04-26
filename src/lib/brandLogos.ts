@@ -1,63 +1,64 @@
-// Logos de marcas para Assinaturas e serviços recorrentes.
-// Mesma estratégia de multi-fallback usada em bankLogos.ts.
-
-import { getLogoCandidates } from "./bankLogos";
+// Logos de marcas para Assinaturas e serviços recorrentes — via Simple Icons CDN.
+// Mesma estratégia do bankLogos.ts: slug oficial + cor da marca + fallback de avatar.
 
 export interface AppBrand {
   name: string;
-  domain: string;
-  bg: string;     // cor de fundo Tailwind (cor oficial da marca)
-  abbr: string;   // fallback se a imagem não carregar
+  /** Slug do Simple Icons. Vazio = sem logo, usa fallback de avatar. */
+  slug: string;
+  /** Cor hex da marca SEM o "#". */
+  hex: string;
+  /** Iniciais para o avatar de fallback. */
+  abbr: string;
 }
 
 export const APP_BRANDS: Record<string, AppBrand> = {
-  "netflix":           { name: "Netflix",           domain: "netflix.com",          bg: "bg-[#E50914]", abbr: "N"  },
-  "spotify":           { name: "Spotify",           domain: "spotify.com",          bg: "bg-[#1DB954]", abbr: "S"  },
-  "disney":            { name: "Disney+",           domain: "disneyplus.com",       bg: "bg-[#0E2A6B]", abbr: "D+" },
-  "disney+":           { name: "Disney+",           domain: "disneyplus.com",       bg: "bg-[#0E2A6B]", abbr: "D+" },
-  "amazon prime":      { name: "Amazon Prime",      domain: "primevideo.com",       bg: "bg-[#00A8E1]", abbr: "AP" },
-  "prime video":       { name: "Prime Video",       domain: "primevideo.com",       bg: "bg-[#00A8E1]", abbr: "PV" },
-  "amazon":            { name: "Amazon",            domain: "amazon.com.br",        bg: "bg-[#FF9900]", abbr: "AZ" },
-  "youtube premium":   { name: "YouTube Premium",   domain: "youtube.com",          bg: "bg-[#FF0000]", abbr: "YT" },
-  "youtube":           { name: "YouTube",           domain: "youtube.com",          bg: "bg-[#FF0000]", abbr: "YT" },
-  "icloud":            { name: "iCloud",            domain: "icloud.com",           bg: "bg-[#3693F3]", abbr: "iC" },
-  "apple":             { name: "Apple",             domain: "apple.com",            bg: "bg-[#000000]", abbr: "AP" },
-  "apple music":       { name: "Apple Music",       domain: "music.apple.com",      bg: "bg-[#FA243C]", abbr: "AM" },
-  "apple tv":          { name: "Apple TV+",         domain: "tv.apple.com",         bg: "bg-[#000000]", abbr: "TV" },
-  "adobe":             { name: "Adobe",             domain: "adobe.com",            bg: "bg-[#FA0F00]", abbr: "Ad" },
-  "hbo":               { name: "HBO Max",           domain: "max.com",              bg: "bg-[#0046FF]", abbr: "HB" },
-  "max":               { name: "Max",               domain: "max.com",              bg: "bg-[#0046FF]", abbr: "MX" },
-  "crunchyroll":       { name: "Crunchyroll",       domain: "crunchyroll.com",      bg: "bg-[#F47521]", abbr: "CR" },
-  "xbox":              { name: "Xbox Game Pass",    domain: "xbox.com",             bg: "bg-[#107C10]", abbr: "XB" },
-  "playstation":       { name: "PlayStation Plus",  domain: "playstation.com",      bg: "bg-[#003791]", abbr: "PS" },
-  "globoplay":         { name: "Globoplay",         domain: "globoplay.globo.com",  bg: "bg-[#FF1F1F]", abbr: "GP" },
-  "paramount":         { name: "Paramount+",        domain: "paramountplus.com",    bg: "bg-[#0064FF]", abbr: "P+" },
-  "deezer":            { name: "Deezer",            domain: "deezer.com",           bg: "bg-[#A238FF]", abbr: "DZ" },
-  "tidal":             { name: "Tidal",             domain: "tidal.com",            bg: "bg-[#000000]", abbr: "TD" },
-  "google one":        { name: "Google One",        domain: "one.google.com",       bg: "bg-[#4285F4]", abbr: "G1" },
-  "google":            { name: "Google",            domain: "google.com",           bg: "bg-[#4285F4]", abbr: "G"  },
-  "microsoft":         { name: "Microsoft 365",     domain: "microsoft.com",        bg: "bg-[#0078D4]", abbr: "M"  },
-  "office":            { name: "Office 365",        domain: "office.com",           bg: "bg-[#D83B01]", abbr: "OF" },
-  "github":            { name: "GitHub",            domain: "github.com",           bg: "bg-[#181717]", abbr: "GH" },
-  "openai":            { name: "ChatGPT",           domain: "openai.com",           bg: "bg-[#10A37F]", abbr: "AI" },
-  "chatgpt":           { name: "ChatGPT",           domain: "openai.com",           bg: "bg-[#10A37F]", abbr: "AI" },
-  "notion":            { name: "Notion",            domain: "notion.so",            bg: "bg-[#000000]", abbr: "NT" },
-  "canva":             { name: "Canva",             domain: "canva.com",            bg: "bg-[#00C4CC]", abbr: "CV" },
-  "figma":             { name: "Figma",             domain: "figma.com",            bg: "bg-[#F24E1E]", abbr: "FG" },
-  "duolingo":          { name: "Duolingo",          domain: "duolingo.com",         bg: "bg-[#58CC02]", abbr: "DL" },
-  "uber":              { name: "Uber One",          domain: "uber.com",             bg: "bg-[#000000]", abbr: "UB" },
-  "ifood":             { name: "iFood",             domain: "ifood.com.br",         bg: "bg-[#EA1D2C]", abbr: "iF" },
-  "rappi":             { name: "Rappi",             domain: "rappi.com.br",         bg: "bg-[#FF441F]", abbr: "RP" },
-  "claro":             { name: "Claro",             domain: "claro.com.br",         bg: "bg-[#E60000]", abbr: "CL" },
-  "vivo":              { name: "Vivo",              domain: "vivo.com.br",          bg: "bg-[#660099]", abbr: "VV" },
-  "tim":               { name: "TIM",               domain: "tim.com.br",           bg: "bg-[#003DA5]", abbr: "TM" },
-  "oi":                { name: "Oi",                domain: "oi.com.br",            bg: "bg-[#FFD700]", abbr: "OI" },
+  "netflix":           { name: "Netflix",           slug: "netflix",          hex: "E50914", abbr: "N"  },
+  "spotify":           { name: "Spotify",           slug: "spotify",          hex: "1DB954", abbr: "S"  },
+  "disney":            { name: "Disney+",           slug: "disneyplus",       hex: "0E2A6B", abbr: "D+" },
+  "disney+":           { name: "Disney+",           slug: "disneyplus",       hex: "0E2A6B", abbr: "D+" },
+  "amazon prime":      { name: "Amazon Prime",      slug: "primevideo",       hex: "00A8E1", abbr: "AP" },
+  "prime video":       { name: "Prime Video",       slug: "primevideo",       hex: "00A8E1", abbr: "PV" },
+  "amazon":            { name: "Amazon",            slug: "amazon",           hex: "FF9900", abbr: "AZ" },
+  "youtube premium":   { name: "YouTube Premium",   slug: "youtube",          hex: "FF0000", abbr: "YT" },
+  "youtube":           { name: "YouTube",           slug: "youtube",          hex: "FF0000", abbr: "YT" },
+  "icloud":            { name: "iCloud",            slug: "icloud",           hex: "3693F3", abbr: "iC" },
+  "apple":             { name: "Apple",             slug: "apple",            hex: "000000", abbr: "AP" },
+  "apple music":       { name: "Apple Music",       slug: "applemusic",       hex: "FA243C", abbr: "AM" },
+  "apple tv":          { name: "Apple TV+",         slug: "appletv",          hex: "000000", abbr: "TV" },
+  "adobe":             { name: "Adobe",             slug: "adobe",            hex: "FA0F00", abbr: "Ad" },
+  "hbo":               { name: "HBO Max",           slug: "hbo",              hex: "0046FF", abbr: "HB" },
+  "max":               { name: "Max",               slug: "max",              hex: "0046FF", abbr: "MX" },
+  "crunchyroll":       { name: "Crunchyroll",       slug: "crunchyroll",      hex: "F47521", abbr: "CR" },
+  "xbox":              { name: "Xbox Game Pass",    slug: "xbox",             hex: "107C10", abbr: "XB" },
+  "playstation":       { name: "PlayStation Plus",  slug: "playstation",      hex: "003791", abbr: "PS" },
+  "globoplay":         { name: "Globoplay",         slug: "globo",            hex: "FF1F1F", abbr: "GP" },
+  "paramount":         { name: "Paramount+",        slug: "paramountplus",    hex: "0064FF", abbr: "P+" },
+  "deezer":            { name: "Deezer",            slug: "deezer",           hex: "A238FF", abbr: "DZ" },
+  "tidal":             { name: "Tidal",             slug: "tidal",            hex: "000000", abbr: "TD" },
+  "google one":        { name: "Google One",        slug: "googleone",        hex: "4285F4", abbr: "G1" },
+  "google":            { name: "Google",            slug: "google",           hex: "4285F4", abbr: "G"  },
+  "microsoft":         { name: "Microsoft 365",     slug: "microsoft",        hex: "0078D4", abbr: "M"  },
+  "office":            { name: "Office 365",        slug: "microsoftoffice",  hex: "D83B01", abbr: "OF" },
+  "github":            { name: "GitHub",            slug: "github",           hex: "181717", abbr: "GH" },
+  "openai":            { name: "ChatGPT",           slug: "openai",           hex: "10A37F", abbr: "AI" },
+  "chatgpt":           { name: "ChatGPT",           slug: "openai",           hex: "10A37F", abbr: "AI" },
+  "notion":            { name: "Notion",            slug: "notion",           hex: "000000", abbr: "NT" },
+  "canva":             { name: "Canva",             slug: "canva",            hex: "00C4CC", abbr: "CV" },
+  "figma":             { name: "Figma",             slug: "figma",            hex: "F24E1E", abbr: "FG" },
+  "duolingo":          { name: "Duolingo",          slug: "duolingo",         hex: "58CC02", abbr: "DL" },
+  "uber":              { name: "Uber One",          slug: "uber",             hex: "000000", abbr: "UB" },
+  "ifood":             { name: "iFood",             slug: "ifood",            hex: "EA1D2C", abbr: "iF" },
+  "rappi":             { name: "Rappi",             slug: "rappi",            hex: "FF441F", abbr: "RP" },
+  "claro":             { name: "Claro",             slug: "claro",            hex: "E60000", abbr: "CL" },
+  "vivo":              { name: "Vivo",              slug: "vivo",             hex: "660099", abbr: "VV" },
+  "tim":               { name: "TIM",               slug: "",                 hex: "003DA5", abbr: "TM" },
+  "oi":                { name: "Oi",                slug: "",                 hex: "FFD700", abbr: "OI" },
 };
 
 const APP_FALLBACK: AppBrand = {
   name: "App",
-  domain: "",
-  bg: "bg-primary",
+  slug: "",
+  hex: "64748B",
   abbr: "",
 };
 
@@ -71,8 +72,10 @@ export const getAppBrand = (rawName: string): AppBrand => {
   return { ...APP_FALLBACK, abbr: rawName.slice(0, 2).toUpperCase() };
 };
 
-export const getAppLogoCandidates = (brand: AppBrand, size = 128): string[] => {
-  return getLogoCandidates(brand.domain, size);
+/** URL do logo via Simple Icons CDN. Null se não houver slug. */
+export const getAppLogoUrl = (brand: AppBrand): string | null => {
+  if (!brand.slug) return null;
+  return `https://cdn.simpleicons.org/${brand.slug}/${brand.hex}`;
 };
 
 // Lista para o seletor de assinaturas populares
