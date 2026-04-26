@@ -242,10 +242,9 @@ const SubscriptionsCard = () => {
                   <div className={cn("w-1 shrink-0 rounded-l-xl", sub.paid ? "bg-success" : isUrgent ? "bg-destructive" : "bg-warning")} />
                   <div className="flex-1 p-3.5">
                     <div className="flex items-center gap-3">
-                      {/* Logo */}
-                      <div className={cn("h-11 w-11 rounded-xl flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-sm", sub.color)}>
-                        {sub.logo}
-                      </div>
+                      {/* Logo oficial via BrandLogo */}
+                      <BrandLogo appName={sub.name} size={44} />
+
                       {/* Info */}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold truncate">{sub.name}</p>
@@ -351,7 +350,7 @@ const SubscriptionsCard = () => {
                     <button key={p.name} onClick={() => selectPreset(p)}
                       className={cn("flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-[10px] font-medium border transition-all active:scale-95",
                         newName === p.name ? "border-primary bg-primary/10" : "border-border bg-muted/20")}>
-                      <div className={cn("h-5 w-5 rounded flex items-center justify-center text-white text-[7px] font-bold", p.color)}>{p.logo}</div>
+                      <BrandLogo appName={p.name} size={20} rounded="rounded" />
                       {p.name}
                     </button>
                   ))}
