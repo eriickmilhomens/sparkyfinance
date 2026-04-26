@@ -122,7 +122,7 @@
     -ms-content-zooming: none;
     padding: 0;
     margin: 0;
-    background-color: #1e1e27 !important;
+    background-color: #1e202c !important;
   }
 
   html {
@@ -132,7 +132,7 @@
     overflow: hidden;
     padding: 0;
     margin: 0;
-    background-color: #1e1e27 !important;
+    background-color: #1e202c !important;
   }
 
   #root {
