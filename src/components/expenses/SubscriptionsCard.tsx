@@ -7,6 +7,8 @@ import { usePoints } from "@/hooks/usePoints";
 import { toast } from "sonner";
 import { useDockVisibility } from "@/hooks/useDockVisibility";
 import { useBillingSnapshot } from "@/hooks/useBillingSnapshot";
+import BrandLogo from "@/components/BrandLogo";
+import { POPULAR_APPS, getAppBrand } from "@/lib/brandLogos";
 import {
   addPaidBillIds,
   getSubscriptionPaymentId,
@@ -26,19 +28,12 @@ interface Subscription {
   color: string;
 }
 
-const PRESET_SUBS = [
-  { name: "Netflix", logo: "N", color: "bg-red-600" },
-  { name: "Spotify", logo: "S", color: "bg-green-500" },
-  { name: "Disney+", logo: "D+", color: "bg-blue-700" },
-  { name: "Amazon Prime", logo: "AP", color: "bg-sky-500" },
-  { name: "YouTube Premium", logo: "YT", color: "bg-red-500" },
-  { name: "iCloud", logo: "iC", color: "bg-gray-500" },
-  { name: "Adobe", logo: "Ad", color: "bg-red-700" },
-  { name: "HBO Max", logo: "HB", color: "bg-purple-700" },
-  { name: "Crunchyroll", logo: "CR", color: "bg-orange-500" },
-  { name: "Xbox Game Pass", logo: "XB", color: "bg-green-600" },
-  { name: "PlayStation Plus", logo: "PS", color: "bg-blue-600" },
-];
+// Pré-sets derivados do mapa centralizado (logos reais via BrandLogo)
+const PRESET_SUBS = POPULAR_APPS.map((b) => ({
+  name: b.name,
+  logo: b.abbr,
+  color: b.bg,
+}));
 
 const SubscriptionsCard = () => {
   const [showAdd, setShowAdd] = useState(false);
