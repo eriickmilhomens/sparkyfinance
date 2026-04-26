@@ -1,6 +1,6 @@
 import { useState, memo, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { getBankBrand, getBankLogoUrl, type BankBrand } from "@/lib/bankLogos";
+import { getBankBrand, getBankLogoCandidates, type BankBrand } from "@/lib/bankLogos";
 
 interface BankLogoProps {
   bankName?: string;
@@ -11,28 +11,37 @@ interface BankLogoProps {
 }
 
 /**
- * Logo oficial do banco via Simple Icons CDN (SVG vetorial, fundo transparente).
- * Se o slug não existir ou a imagem falhar, exibe um avatar circular com a inicial
- * sobre a cor sólida da marca — sem APIs externas, 100% determinístico.
+ * Logo do banco com cascata de fallbacks: logo.dev → Simple Icons → avatar com inicial.
+ * 100% determinístico, sem APIs de busca.
  */
 const BankLogo = memo(({ bankName = "", brand, size = 40, className, rounded = "rounded-xl" }: BankLogoProps) => {
   const resolved = brand ?? getBankBrand(bankName);
-  const url = getBankLogoUrl(resolved);
-  const [errored, setErrored] = useState(false);
+  const candidates = getBankLogoCandidates(resolved);
+  const [idx, setIdx] = useState(0);
+  const [allFailed, setAllFailed] = useState(candidates.length === 0);
 
   useEffect(() => {
-    setErrored(false);
-  }, [resolved.slug, resolved.hex]);
+    setIdx(0);
+    setAllFailed(candidates.length === 0);
+  }, [resolved.domain, resolved.slug, candidates.length]);
 
-  const showImage = !!url && !errored;
+  const currentUrl = candidates[idx];
+  const showImage = !allFailed && !!currentUrl;
+
+  const handleError = () => {
+    if (idx < candidates.length - 1) {
+      setIdx(idx + 1);
+    } else {
+      setAllFailed(true);
+    }
+  };
 
   return (
     <div
       className={cn(
         "flex items-center justify-center overflow-hidden shrink-0",
         rounded,
-        // Sem URL OU imagem errored: fundo sólido da marca. Com imagem: fundo claro neutro p/ contraste.
-        showImage ? "bg-white/95" : "",
+        showImage ? "bg-white" : "",
         className
       )}
       style={{
@@ -44,15 +53,16 @@ const BankLogo = memo(({ bankName = "", brand, size = 40, className, rounded = "
     >
       {showImage ? (
         <img
-          src={url!}
+          key={currentUrl}
+          src={currentUrl}
           alt={resolved.name || bankName}
           width={size}
           height={size}
           loading="lazy"
           decoding="async"
           referrerPolicy="no-referrer"
-          onError={() => setErrored(true)}
-          className="h-full w-full p-1.5"
+          onError={handleError}
+          className="h-full w-full p-1"
           style={{ objectFit: "contain" }}
         />
       ) : (
