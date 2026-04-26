@@ -1,29 +1,31 @@
-import { useState, memo } from "react";
+import { useState, memo, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { getBankBrand, getBankLogoUrl, type BankBrand } from "@/lib/bankLogos";
+import { getBankBrand, getLogoCandidates, type BankBrand } from "@/lib/bankLogos";
 
 interface BankLogoProps {
-  /** Nome bruto do banco OU brand já resolvida */
   bankName?: string;
   brand?: BankBrand;
-  /** Tamanho do tile em px */
   size?: number;
-  /** Tailwind extra (border-radius, shadow…) */
   className?: string;
-  /** Classe adicional para o tile */
   rounded?: string;
 }
 
 /**
- * Renderiza o logotipo oficial do banco (via Clearbit) sobre um tile com a cor da marca.
- * Faz fallback para a sigla caso a imagem não carregue (sem rede, banco desconhecido…).
+ * Renderiza o logotipo oficial do banco com cascata de fontes:
+ *   DuckDuckGo → Google FaviconV2 → icon.horse → fallback (sigla colorida).
+ * Cada fonte é tentada quando a anterior falha em carregar.
  */
 const BankLogo = memo(({ bankName = "", brand, size = 40, className, rounded = "rounded-xl" }: BankLogoProps) => {
   const resolved = brand ?? getBankBrand(bankName);
-  const logoUrl = getBankLogoUrl(resolved, size * 2);
-  const [errored, setErrored] = useState(false);
+  const candidates = getLogoCandidates(resolved.domain, size * 2);
+  const [idx, setIdx] = useState(0);
 
-  const showImage = logoUrl && !errored;
+  // Reset quando o banco muda
+  useEffect(() => {
+    setIdx(0);
+  }, [resolved.domain]);
+
+  const showImage = candidates.length > 0 && idx < candidates.length;
 
   return (
     <div
@@ -38,13 +40,15 @@ const BankLogo = memo(({ bankName = "", brand, size = 40, className, rounded = "
     >
       {showImage ? (
         <img
-          src={logoUrl}
+          key={candidates[idx]}
+          src={candidates[idx]}
           alt={resolved.name || bankName}
           width={size}
           height={size}
           loading="lazy"
           decoding="async"
-          onError={() => setErrored(true)}
+          referrerPolicy="no-referrer"
+          onError={() => setIdx((i) => i + 1)}
           className="h-full w-full object-contain p-1"
           style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.15))" }}
         />

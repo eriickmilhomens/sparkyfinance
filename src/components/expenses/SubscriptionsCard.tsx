@@ -7,6 +7,8 @@ import { usePoints } from "@/hooks/usePoints";
 import { toast } from "sonner";
 import { useDockVisibility } from "@/hooks/useDockVisibility";
 import { useBillingSnapshot } from "@/hooks/useBillingSnapshot";
+import BrandLogo from "@/components/BrandLogo";
+import { POPULAR_APPS, getAppBrand } from "@/lib/brandLogos";
 import {
   addPaidBillIds,
   getSubscriptionPaymentId,
@@ -26,19 +28,12 @@ interface Subscription {
   color: string;
 }
 
-const PRESET_SUBS = [
-  { name: "Netflix", logo: "N", color: "bg-red-600" },
-  { name: "Spotify", logo: "S", color: "bg-green-500" },
-  { name: "Disney+", logo: "D+", color: "bg-blue-700" },
-  { name: "Amazon Prime", logo: "AP", color: "bg-sky-500" },
-  { name: "YouTube Premium", logo: "YT", color: "bg-red-500" },
-  { name: "iCloud", logo: "iC", color: "bg-gray-500" },
-  { name: "Adobe", logo: "Ad", color: "bg-red-700" },
-  { name: "HBO Max", logo: "HB", color: "bg-purple-700" },
-  { name: "Crunchyroll", logo: "CR", color: "bg-orange-500" },
-  { name: "Xbox Game Pass", logo: "XB", color: "bg-green-600" },
-  { name: "PlayStation Plus", logo: "PS", color: "bg-blue-600" },
-];
+// Pré-sets derivados do mapa centralizado (logos reais via BrandLogo)
+const PRESET_SUBS = POPULAR_APPS.map((b) => ({
+  name: b.name,
+  logo: b.abbr,
+  color: b.bg,
+}));
 
 const SubscriptionsCard = () => {
   const [showAdd, setShowAdd] = useState(false);
@@ -247,10 +242,9 @@ const SubscriptionsCard = () => {
                   <div className={cn("w-1 shrink-0 rounded-l-xl", sub.paid ? "bg-success" : isUrgent ? "bg-destructive" : "bg-warning")} />
                   <div className="flex-1 p-3.5">
                     <div className="flex items-center gap-3">
-                      {/* Logo */}
-                      <div className={cn("h-11 w-11 rounded-xl flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-sm", sub.color)}>
-                        {sub.logo}
-                      </div>
+                      {/* Logo oficial via BrandLogo */}
+                      <BrandLogo appName={sub.name} size={44} />
+
                       {/* Info */}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold truncate">{sub.name}</p>
@@ -356,7 +350,7 @@ const SubscriptionsCard = () => {
                     <button key={p.name} onClick={() => selectPreset(p)}
                       className={cn("flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-[10px] font-medium border transition-all active:scale-95",
                         newName === p.name ? "border-primary bg-primary/10" : "border-border bg-muted/20")}>
-                      <div className={cn("h-5 w-5 rounded flex items-center justify-center text-white text-[7px] font-bold", p.color)}>{p.logo}</div>
+                      <BrandLogo appName={p.name} size={20} rounded="rounded" />
                       {p.name}
                     </button>
                   ))}
