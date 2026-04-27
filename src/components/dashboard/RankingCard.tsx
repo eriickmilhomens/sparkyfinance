@@ -2,6 +2,7 @@ import { Crown, TrendingUp, Users } from "lucide-react";
 import { usePoints } from "@/hooks/usePoints";
 import { useProfile } from "@/hooks/useProfile";
 import { useGroupMembers } from "@/hooks/useGroupMembers";
+import InfoButton from "@/components/InfoButton";
 
 const RankingCard = () => {
   const { currentPoints, monthlyEarnings } = usePoints();
@@ -24,7 +25,14 @@ const RankingCard = () => {
             <Crown size={18} className="text-warning" />
           </div>
           <div>
-            <p className="text-sm font-semibold">Ranking</p>
+            <div className="flex items-center gap-0.5">
+              <p className="text-sm font-semibold">Ranking</p>
+              <InfoButton
+                title="Ranking de Pontos"
+                description="Você ganha pontos por boas práticas financeiras: pagar contas em dia, registrar despesas, atingir metas. Compare seu desempenho com outros membros do grupo."
+                align="left"
+              />
+            </div>
             <p className="text-xs text-muted-foreground">{profile.name} • {roleLabel}</p>
           </div>
         </div>

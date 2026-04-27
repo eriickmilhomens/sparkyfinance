@@ -1,5 +1,6 @@
 import { Eye, EyeOff, Pencil, Plus, Minus } from "lucide-react";
 import { useState, useEffect } from "react";
+import InfoButton from "@/components/InfoButton";
 import { useFinancialData, fmt } from "@/hooks/useFinancialData";
 import { toast } from "sonner";
 
@@ -53,7 +54,14 @@ const BalanceCard = ({ onVisibilityChange }: BalanceCardProps) => {
       <div className="absolute -bottom-10 -left-10 h-24 w-24 rounded-full bg-primary/8 blur-2xl pointer-events-none" />
 
       <div className="flex items-center justify-between mb-1 relative z-10">
-        <span className="text-label">Saldo Total</span>
+        <div className="flex items-center gap-1">
+          <span className="text-label">Saldo Total</span>
+          <InfoButton
+            title="Saldo Total"
+            description="Soma de todas as suas receitas menos as despesas registradas. Representa quanto você efetivamente possui agora. Use o ícone de lápis para adicionar ajustes manuais."
+            align="left"
+          />
+        </div>
         <div className="flex items-center gap-1.5">
           <button onClick={() => setEditing(!editing)} className="rounded-xl p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95 transition-all duration-300" title="Ajustar saldo">
             <Pencil size={13} />

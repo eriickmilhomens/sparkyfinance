@@ -1,4 +1,5 @@
 import { ShoppingBag, ChevronRight } from "lucide-react";
+import InfoButton from "@/components/InfoButton";
 
 const ShoppingCard = () => {
   return (
@@ -9,7 +10,14 @@ const ShoppingCard = () => {
             <ShoppingBag size={18} className="text-primary" />
           </div>
           <div>
-            <p className="text-sm font-semibold">Compras</p>
+            <div className="flex items-center gap-0.5">
+              <p className="text-sm font-semibold">Compras</p>
+              <InfoButton
+                title="Lista de Compras"
+                description="Centralize itens que você precisa comprar. Útil para planejar idas ao mercado e evitar gastos por impulso. (Recurso em desenvolvimento)"
+                align="left"
+              />
+            </div>
             <p className="text-xs text-muted-foreground">3 itens pendentes</p>
           </div>
         </div>
