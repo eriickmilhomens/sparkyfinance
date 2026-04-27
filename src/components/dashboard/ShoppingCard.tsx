@@ -1,7 +1,10 @@
+import { useState } from "react";
 import { ShoppingBag, ChevronRight } from "lucide-react";
-import InfoButton from "@/components/InfoButton";
+import { InfoButton, InfoPanel } from "@/components/InfoButton";
 
 const ShoppingCard = () => {
+  const [showInfo, setShowInfo] = useState(false);
+
   return (
     <div className="card-zelo fade-in-up stagger-1">
       <div className="flex items-center justify-between">
@@ -12,11 +15,7 @@ const ShoppingCard = () => {
           <div>
             <div className="flex items-center gap-0.5">
               <p className="text-sm font-semibold">Compras</p>
-              <InfoButton
-                title="Lista de Compras"
-                description="Centralize itens que você precisa comprar. Útil para planejar idas ao mercado e evitar gastos por impulso. (Recurso em desenvolvimento)"
-                align="left"
-              />
+              <InfoButton expanded={showInfo} onToggle={setShowInfo} />
             </div>
             <p className="text-xs text-muted-foreground">3 itens pendentes</p>
           </div>
@@ -25,6 +24,9 @@ const ShoppingCard = () => {
           Ver lista <ChevronRight size={14} />
         </button>
       </div>
+      <InfoPanel expanded={showInfo}>
+        Centralize itens que você precisa comprar. Útil para planejar idas ao mercado e evitar gastos por impulso. (Recurso em desenvolvimento)
+      </InfoPanel>
     </div>
   );
 };

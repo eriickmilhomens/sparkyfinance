@@ -1,20 +1,21 @@
+import { useState } from "react";
 import { Crown, TrendingUp, Users } from "lucide-react";
 import { usePoints } from "@/hooks/usePoints";
 import { useProfile } from "@/hooks/useProfile";
 import { useGroupMembers } from "@/hooks/useGroupMembers";
-import InfoButton from "@/components/InfoButton";
+import { InfoButton, InfoPanel } from "@/components/InfoButton";
 
 const RankingCard = () => {
   const { currentPoints, monthlyEarnings } = usePoints();
   const { profile } = useProfile();
   const { members, currentUserRank, isLeader } = useGroupMembers();
+  const [showInfo, setShowInfo] = useState(false);
 
   if (!profile) return null;
 
   const isUserLeader = members.length > 0 && members.find(m => m.user_id === profile.user_id && isLeader(m));
   const roleLabel = isUserLeader ? "Líder" : currentUserRank > 0 ? `${currentUserRank}º lugar` : "Líder";
 
-  // Show leader info even when alone
   const displayMembers = members.length > 0 ? members : [];
 
   return (
@@ -27,11 +28,7 @@ const RankingCard = () => {
           <div>
             <div className="flex items-center gap-0.5">
               <p className="text-sm font-semibold">Ranking</p>
-              <InfoButton
-                title="Ranking de Pontos"
-                description="Você ganha pontos por boas práticas financeiras: pagar contas em dia, registrar despesas, atingir metas. Compare seu desempenho com outros membros do grupo."
-                align="left"
-              />
+              <InfoButton expanded={showInfo} onToggle={setShowInfo} />
             </div>
             <p className="text-xs text-muted-foreground">{profile.name} • {roleLabel}</p>
           </div>
@@ -41,6 +38,11 @@ const RankingCard = () => {
           <span className="text-xs font-bold text-warning tabular-nums">{currentPoints} pts</span>
         </div>
       </div>
+
+      <InfoPanel expanded={showInfo}>
+        Você ganha pontos por boas práticas financeiras: pagar contas em dia, registrar despesas e atingir metas. Compare seu desempenho com outros membros do grupo.
+      </InfoPanel>
+
       <div className="flex items-center justify-between mt-2">
         {monthlyEarnings > 0 && (
           <p className="text-[10px] text-success font-medium">+{monthlyEarnings} pontos este mês</p>
