@@ -5,6 +5,7 @@ import { useFinancialData, fmt } from "@/hooks/useFinancialData";
 import PayoffGoalCard from "@/components/dashboard/PayoffGoalCard";
 import PaceBar from "@/components/expenses/PaceBar";
 import { useDockVisibility } from "@/hooks/useDockVisibility";
+import InfoButton from "@/components/InfoButton";
 
 const CalculatorIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0">
@@ -92,11 +93,18 @@ const SpendingOverview = ({ hideValues = false }: SpendingOverviewProps) => {
     <div className="card-zelo fade-in-up relative overflow-hidden">
       <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-gradient-to-br from-success/10 to-success/3 blur-2xl pointer-events-none" />
 
-      <div className="flex items-center gap-2 mb-2 relative z-10">
-        <div className="flex h-8 w-8 items-center justify-center rounded-2xl bg-success/12 border border-success/15">
-          <Wallet size={15} className="text-success" />
+      <div className="flex items-center justify-between mb-2 relative z-10">
+        <div className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-2xl bg-success/12 border border-success/15">
+            <Wallet size={15} className="text-success" />
+          </div>
+          <p className="text-label">Pode Gastar Hoje</p>
         </div>
-        <p className="text-label">Pode Gastar Hoje</p>
+        <InfoButton
+          title="Pode Gastar Hoje"
+          description="Calcula automaticamente quanto você pode gastar por dia até o fim do mês, reservando uma % do saldo. Ajuste a reserva no lápis e simule cortes no botão Simular."
+          align="right"
+        />
       </div>
 
       <div className="flex items-end gap-3 mb-1 relative z-10">

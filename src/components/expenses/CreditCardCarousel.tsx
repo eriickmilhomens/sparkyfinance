@@ -32,6 +32,7 @@ interface CreditCardData {
 }
 
 import BankLogo from "@/components/BankLogo";
+import InfoButton from "@/components/InfoButton";
 import { getBankBrand } from "@/lib/bankLogos";
 
 const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
@@ -405,7 +406,14 @@ const CreditCardCarousel = () => {
   // Dashboard card list
   return (
     <div className="space-y-2 fade-in-up stagger-2">
-      <p className="text-[10px] text-muted-foreground font-semibold tracking-wider px-0.5">CARTÕES DE CRÉDITO</p>
+      <div className="flex items-center justify-between px-0.5">
+        <p className="text-[10px] text-muted-foreground font-semibold tracking-wider">CARTÕES DE CRÉDITO</p>
+        <InfoButton
+          title="Cartões de Crédito"
+          description="Gerencie seus cartões: limite, uso atual, fatura e vencimento. Toque em um cartão para ver detalhes e pagar a fatura (total ou parcial). +3 pts ao quitar."
+          align="right"
+        />
+      </div>
       <div className="space-y-2.5">
         {cards.map((card, idx) => {
           const brand = getBankBrand(card.bankName);

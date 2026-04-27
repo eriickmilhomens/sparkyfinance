@@ -1,9 +1,8 @@
 import { useState, memo, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { getAppBrand, getAppLogoUrl, type AppBrand } from "@/lib/brandLogos";
+import { getAppBrand, type AppBrand } from "@/lib/brandLogos";
 
 interface BrandLogoProps {
-  /** Nome bruto do app/serviço (ex: "Netflix") OU brand já resolvida */
   appName?: string;
   brand?: AppBrand;
   size?: number;
@@ -12,32 +11,34 @@ interface BrandLogoProps {
 }
 
 /**
- * Logo de aplicativos/serviços (assinaturas) via Simple Icons CDN.
- * Fallback: avatar circular com inicial sobre cor sólida da marca.
+ * Logo de aplicativos/serviços (assinaturas).
+ * Estratégia: SVG branco do Simple Icons sobre tile com cor sólida da marca.
+ * Visual padronizado, nítido em qualquer tamanho, sem desalinhamento.
  */
-const BrandLogo = memo(({ appName = "", brand, size = 44, className, rounded = "rounded-xl" }: BrandLogoProps) => {
+const BrandLogo = memo(({ appName = "", brand, size = 40, className, rounded = "rounded-xl" }: BrandLogoProps) => {
   const resolved = brand ?? getAppBrand(appName);
-  const url = getAppLogoUrl(resolved);
+  // Sempre renderizamos o glifo em branco sobre o tile colorido
+  const url = resolved.slug ? `https://cdn.simpleicons.org/${resolved.slug}/ffffff` : null;
   const [errored, setErrored] = useState(false);
 
   useEffect(() => {
     setErrored(false);
-  }, [resolved.slug, resolved.hex]);
+  }, [resolved.slug]);
 
   const showImage = !!url && !errored;
+  const padding = Math.max(6, Math.round(size * 0.22));
 
   return (
     <div
       className={cn(
-        "flex items-center justify-center overflow-hidden shrink-0 shadow-sm",
+        "relative flex items-center justify-center overflow-hidden shrink-0 shadow-sm",
         rounded,
-        showImage ? "bg-white/95" : "",
         className
       )}
       style={{
         width: size,
         height: size,
-        backgroundColor: showImage ? undefined : `#${resolved.hex}`,
+        backgroundColor: `#${resolved.hex}`,
       }}
       aria-label={resolved.name || appName}
     >
@@ -45,19 +46,21 @@ const BrandLogo = memo(({ appName = "", brand, size = 44, className, rounded = "
         <img
           src={url!}
           alt={resolved.name || appName}
-          width={size}
-          height={size}
           loading="lazy"
           decoding="async"
           referrerPolicy="no-referrer"
           onError={() => setErrored(true)}
-          className="h-full w-full p-1.5"
-          style={{ objectFit: "contain" }}
+          style={{
+            width: size - padding * 2,
+            height: size - padding * 2,
+            objectFit: "contain",
+            display: "block",
+          }}
         />
       ) : (
         <span
           className="font-bold tracking-tight text-white"
-          style={{ fontSize: Math.max(10, size * 0.34) }}
+          style={{ fontSize: Math.max(11, size * 0.4), lineHeight: 1 }}
         >
           {resolved.abbr || appName.slice(0, 2).toUpperCase()}
         </span>

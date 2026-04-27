@@ -1,6 +1,6 @@
 import { useState, memo, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { getBankBrand, getBankLogoUrl, type BankBrand } from "@/lib/bankLogos";
+import { getBankBrand, type BankBrand } from "@/lib/bankLogos";
 
 interface BankLogoProps {
   bankName?: string;
@@ -11,34 +11,33 @@ interface BankLogoProps {
 }
 
 /**
- * Logo oficial do banco via Simple Icons CDN (SVG vetorial, fundo transparente).
- * Se o slug não existir ou a imagem falhar, exibe um avatar circular com a inicial
- * sobre a cor sólida da marca — sem APIs externas, 100% determinístico.
+ * Logo do banco em estilo "tile" iOS:
+ * SVG branco do Simple Icons sobre fundo da cor oficial da marca.
+ * Nítido, alinhado e padronizado em todos os tamanhos.
  */
 const BankLogo = memo(({ bankName = "", brand, size = 40, className, rounded = "rounded-xl" }: BankLogoProps) => {
   const resolved = brand ?? getBankBrand(bankName);
-  const url = getBankLogoUrl(resolved);
+  const url = resolved.slug ? `https://cdn.simpleicons.org/${resolved.slug}/ffffff` : null;
   const [errored, setErrored] = useState(false);
 
   useEffect(() => {
     setErrored(false);
-  }, [resolved.slug, resolved.hex]);
+  }, [resolved.slug]);
 
   const showImage = !!url && !errored;
+  const padding = Math.max(6, Math.round(size * 0.22));
 
   return (
     <div
       className={cn(
-        "flex items-center justify-center overflow-hidden shrink-0",
+        "relative flex items-center justify-center overflow-hidden shrink-0 shadow-sm",
         rounded,
-        // Sem URL OU imagem errored: fundo sólido da marca. Com imagem: fundo claro neutro p/ contraste.
-        showImage ? "bg-white/95" : "",
         className
       )}
       style={{
         width: size,
         height: size,
-        backgroundColor: showImage ? undefined : `#${resolved.hex}`,
+        backgroundColor: `#${resolved.hex}`,
       }}
       aria-label={resolved.name || bankName}
     >
@@ -46,19 +45,21 @@ const BankLogo = memo(({ bankName = "", brand, size = 40, className, rounded = "
         <img
           src={url!}
           alt={resolved.name || bankName}
-          width={size}
-          height={size}
           loading="lazy"
           decoding="async"
           referrerPolicy="no-referrer"
           onError={() => setErrored(true)}
-          className="h-full w-full p-1.5"
-          style={{ objectFit: "contain" }}
+          style={{
+            width: size - padding * 2,
+            height: size - padding * 2,
+            objectFit: "contain",
+            display: "block",
+          }}
         />
       ) : (
         <span
           className="font-bold tracking-tight text-white"
-          style={{ fontSize: Math.max(10, size * 0.34) }}
+          style={{ fontSize: Math.max(11, size * 0.4), lineHeight: 1 }}
         >
           {resolved.abbr || bankName.slice(0, 2).toUpperCase()}
         </span>

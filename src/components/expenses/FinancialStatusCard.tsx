@@ -1,5 +1,6 @@
 import { useFinancialData } from "@/hooks/useFinancialData";
 import { ShieldCheck, AlertTriangle, ShieldAlert } from "lucide-react";
+import InfoButton from "@/components/InfoButton";
 
 const FinancialStatusCard = () => {
   const { data, available } = useFinancialData();
@@ -62,7 +63,14 @@ const FinancialStatusCard = () => {
           <Icon size={18} className={c.iconColor} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className={`text-sm font-display font-bold ${c.titleColor}`}>{c.title}</p>
+          <div className="flex items-center gap-0.5">
+            <p className={`text-sm font-display font-bold ${c.titleColor}`}>{c.title}</p>
+            <InfoButton
+              title="Status Financeiro"
+              description="Avalia automaticamente sua saúde financeira comparando despesas com receita. Saudável (<60%), Atenção (60–85%) ou Crítico (>85%)."
+              align="left"
+            />
+          </div>
           <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{c.message}</p>
         </div>
       </div>
