@@ -1,6 +1,6 @@
 import { Eye, EyeOff, Pencil, Plus, Minus } from "lucide-react";
 import { useState, useEffect } from "react";
-import InfoButton from "@/components/InfoButton";
+import { InfoButton, InfoPanel } from "@/components/InfoButton";
 import { useFinancialData, fmt } from "@/hooks/useFinancialData";
 import { toast } from "sonner";
 
@@ -11,6 +11,7 @@ interface BalanceCardProps {
 const BalanceCard = ({ onVisibilityChange }: BalanceCardProps) => {
   const [visible, setVisible] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
   const [adjustType, setAdjustType] = useState<"add" | "sub">("add");
   const [adjustValue, setAdjustValue] = useState("");
   const [adjustDesc, setAdjustDesc] = useState("");
@@ -56,11 +57,7 @@ const BalanceCard = ({ onVisibilityChange }: BalanceCardProps) => {
       <div className="flex items-center justify-between mb-1 relative z-10">
         <div className="flex items-center gap-1">
           <span className="text-label">Saldo Total</span>
-          <InfoButton
-            title="Saldo Total"
-            description="Soma de todas as suas receitas menos as despesas registradas. Representa quanto você efetivamente possui agora. Use o ícone de lápis para adicionar ajustes manuais."
-            align="left"
-          />
+          <InfoButton expanded={showInfo} onToggle={setShowInfo} />
         </div>
         <div className="flex items-center gap-1.5">
           <button onClick={() => setEditing(!editing)} className="rounded-xl p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95 transition-all duration-300" title="Ajustar saldo">
@@ -71,6 +68,10 @@ const BalanceCard = ({ onVisibilityChange }: BalanceCardProps) => {
           </button>
         </div>
       </div>
+
+      <InfoPanel expanded={showInfo} className="relative z-10">
+        Soma de todas as suas receitas menos as despesas registradas. Representa quanto você efetivamente possui agora. Use o lápis para fazer ajustes manuais.
+      </InfoPanel>
 
       <p className="text-[32px] font-display font-extrabold tracking-tight tabular-nums relative z-10 leading-tight">
         {visible ? fmt(available) : "••••••"}
