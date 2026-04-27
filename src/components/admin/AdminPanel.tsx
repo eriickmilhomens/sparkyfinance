@@ -167,7 +167,7 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
     if (savedFlags) setFeatureFlags(JSON.parse(savedFlags));
     else {
       const defaults: FeatureFlag[] = [
-        { id: "1", name: "Sparky AI Chat", description: "Habilita o chatbot de IA", enabled: true, targetGroup: "all" },
+        { id: "1", name: "Spark AI Chat", description: "Habilita o chatbot de IA", enabled: true, targetGroup: "all" },
         { id: "2", name: "Modo Escuro", description: "Tema dark mode", enabled: true, targetGroup: "all" },
         { id: "3", name: "Cartões de Crédito", description: "Gerenciamento de cartões", enabled: true, targetGroup: "all" },
         { id: "4", name: "Beta: Analytics", description: "Dashboard avançado de analytics", enabled: false, targetGroup: "admins" },

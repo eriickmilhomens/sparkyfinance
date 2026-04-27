@@ -700,7 +700,7 @@ const ProfileSwitcher = () => {
                 <p className="text-xs font-medium">19/03/2026</p>
               </div>
               <p className="text-[10px] text-muted-foreground/70 italic text-center pt-1">
-                🐱 Sparky (Faísca) — inspirado no gatinho que dá nome ao projeto.
+                ⚡ Spark — assistente financeiro do projeto.
               </p>
             </div>
           </div>
