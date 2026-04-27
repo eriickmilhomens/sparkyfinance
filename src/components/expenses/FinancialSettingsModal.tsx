@@ -261,9 +261,9 @@ const FinancialSettingsModal = ({ open, onClose }: FinancialSettingsModalProps) 
                 <h3 className="text-base font-bold">Reserva de Segurança</h3>
               </div>
               <div className="space-y-2 text-sm text-muted-foreground leading-relaxed">
-                <p>A Reserva de Segurança define uma porcentagem (ou valor fixo) do seu saldo que o Sparky vai proteger automaticamente.</p>
+                <p>A Reserva de Segurança define uma porcentagem (ou valor fixo) do seu saldo que o Spark vai proteger automaticamente.</p>
                 <p>Esse valor fica guardado e não entra no cálculo de "quanto posso gastar hoje", ajudando você a manter uma reserva para emergências.</p>
-                <p>Por exemplo, com 10% de reserva sobre R$ 5.000, o Sparky vai considerar apenas R$ 4.500 como disponível para gastos diários.</p>
+                <p>Por exemplo, com 10% de reserva sobre R$ 5.000, o Spark vai considerar apenas R$ 4.500 como disponível para gastos diários.</p>
               </div>
               <button onClick={() => setShowReserveInfo(false)}
                 className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground active:scale-[0.98] transition-all">

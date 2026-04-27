@@ -5,24 +5,15 @@ import ProfileSwitcher from "@/components/layout/ProfileSwitcher";
 import { useTheme } from "@/hooks/useTheme";
 import { toast } from "sonner";
 
-const CatIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M4 6l2 6" />
-    <path d="M20 6l-2 6" />
-    <circle cx="12" cy="14" r="7" />
-    <circle cx="9.5" cy="13" r="0.8" fill="hsl(var(--primary))" />
-    <circle cx="14.5" cy="13" r="0.8" fill="hsl(var(--primary))" />
-    <path d="M12 15.5l-0.8 0.5h1.6L12 15.5z" fill="hsl(var(--primary))" />
-    <path d="M6 14h2.5M15.5 14H18M6 16h2.5M15.5 16H18" strokeWidth="1" />
-  </svg>
+const SparkBadge = () => (
+  <span className="font-display font-extrabold text-base text-primary leading-none select-none">S</span>
 );
 
 const EASTER_EGG_MESSAGES = [
-  "Miau! Você me encontrou!",
-  "Psst... eu sou o Sparky, o gato financeiro!",
-  "Dica secreta: economize 30% do salário todo mês!",
-  "Estou de olho nas suas finanças...",
-  "Você é persistente! Aqui vai um biscoito virtual",
+  "Você encontrou um easter egg!",
+  "Dica: economize 30% do salário todo mês.",
+  "De olho nas suas finanças.",
+  "Persistente, hein? Continue assim.",
 ];
 
 const CACHE_KEYS_TO_CLEAR = [
@@ -94,14 +85,15 @@ const Header = ({ hidden = false }: HeaderProps) => {
         <button
           onClick={handleCatClick}
           className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 glow-ring active:scale-90 transition-all duration-300"
+          aria-label="Spark"
         >
-          <CatIcon />
+          <SparkBadge />
         </button>
         <span
           onClick={handleNameClick}
           className="text-lg font-display font-bold tracking-tight select-none cursor-default active:scale-95 transition-all duration-300 bg-gradient-to-r from-foreground to-foreground/60 bg-clip-text"
         >
-          SPARKY
+          SPARK
         </span>
       </div>
       <div className="flex items-center gap-1">

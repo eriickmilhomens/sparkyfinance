@@ -117,7 +117,7 @@ const SuggestionsCard = () => {
                 <MessageCircle size={28} className="text-muted-foreground" />
               </div>
               <h3 className="text-base font-bold">Em desenvolvimento</h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">O assistente no WhatsApp ainda não está disponível. Em breve teremos novidades! Por enquanto, use o Sparky IA dentro do app.</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">O assistente no WhatsApp ainda não está disponível. Em breve teremos novidades! Por enquanto, use o Spark IA dentro do app.</p>
               <button onClick={() => setWhatsappPopup(false)} className="w-full rounded-2xl border border-border py-3 text-xs font-medium text-muted-foreground active:scale-[0.98] transition-all duration-300 mt-1">
                 <ArrowLeft size={12} className="inline mr-1" /> Voltar
               </button>

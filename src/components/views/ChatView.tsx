@@ -566,7 +566,7 @@ const ChatView = () => {
             <Bot size={16} className="text-primary" />
           </div>
           <div>
-            <h1 className="text-lg font-bold">Sparky AI</h1>
+            <h1 className="text-lg font-bold">Spark AI</h1>
             <p className="text-[10px] text-muted-foreground">Seu assistente financeiro inteligente</p>
           </div>
         </div>
@@ -587,7 +587,7 @@ const ChatView = () => {
             <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
               <Bot size={28} className="text-primary" />
             </div>
-            <p className="text-sm font-semibold mb-1">Olá! Sou o Sparky</p>
+            <p className="text-sm font-semibold mb-1">Olá! Sou o Spark</p>
             <p className="text-xs text-muted-foreground max-w-[260px] mb-4">
               Pergunte sobre finanças, envie imagens de extratos ou documentos para análise!
             </p>
@@ -722,7 +722,7 @@ const ChatView = () => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && send()}
-            placeholder="Pergunte ao Sparky..."
+            placeholder="Pergunte ao Spark..."
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
           <button

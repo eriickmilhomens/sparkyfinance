@@ -204,7 +204,7 @@ const Index = () => {
           </div>
           <h1 className="text-xl font-bold text-foreground">Em Manutenção</h1>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            O Sparky está passando por uma manutenção programada. Voltaremos em breve!
+            O Spark está passando por uma manutenção programada. Voltaremos em breve!
           </p>
           {maintenanceCountdown && (
             <div className="rounded-xl bg-muted/50 py-3 px-4">

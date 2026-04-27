@@ -98,7 +98,7 @@ const ImportModal = ({ open, onClose }: ImportModalProps) => {
       transactions: [...newTxs, ...data.transactions],
     });
 
-    toast.success(`Sucesso! ${selected.length} transações foram integradas ao seu Sparky e o saldo foi atualizado.`);
+    toast.success(`Sucesso! ${selected.length} transações foram integradas ao seu Spark e o saldo foi atualizado.`);
     handleClose();
   };
 
