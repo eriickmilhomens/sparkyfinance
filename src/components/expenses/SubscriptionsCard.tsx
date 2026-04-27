@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useDockVisibility } from "@/hooks/useDockVisibility";
 import { useBillingSnapshot } from "@/hooks/useBillingSnapshot";
 import BrandLogo from "@/components/BrandLogo";
+import InfoButton from "@/components/InfoButton";
 import { POPULAR_APPS, getAppBrand } from "@/lib/brandLogos";
 import {
   addPaidBillIds,
@@ -208,7 +209,14 @@ const SubscriptionsCard = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-bold">Assinaturas</p>
+          <div className="flex items-center gap-0.5">
+            <p className="text-sm font-bold">Assinaturas</p>
+            <InfoButton
+              title="Assinaturas Recorrentes"
+              description="Gerencie todos os seus serviços pagos mensalmente (streaming, apps, planos). Marque como pago e gere automaticamente uma transação no extrato. +3 pts ao pagar."
+              align="left"
+            />
+          </div>
           <p className="text-[10px] text-muted-foreground">
             {subs.length} serviço{subs.length !== 1 ? "s" : ""} · {fmt(totalMonthly)}/mês
             {subs.length > 0 && ` · ${paidCount}/${subs.length} pagas`}
