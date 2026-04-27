@@ -50,6 +50,7 @@ const CreditCardCarousel = () => {
   const [editingTx, setEditingTx] = useState<string | null>(null);
   const [editDesc, setEditDesc] = useState("");
   const [editValue, setEditValue] = useState("");
+  const [showCardsInfo, setShowCardsInfo] = useState(false);
 
   // Re-read from localStorage when data changes (e.g. demo mode activation)
   useEffect(() => {
@@ -408,12 +409,11 @@ const CreditCardCarousel = () => {
     <div className="space-y-2 fade-in-up stagger-2">
       <div className="flex items-center justify-between px-0.5">
         <p className="text-[10px] text-muted-foreground font-semibold tracking-wider">CARTÕES DE CRÉDITO</p>
-        <InfoButton
-          title="Cartões de Crédito"
-          description="Gerencie seus cartões: limite, uso atual, fatura e vencimento. Toque em um cartão para ver detalhes e pagar a fatura (total ou parcial). +3 pts ao quitar."
-          align="right"
-        />
+        <InfoButton expanded={showCardsInfo} onToggle={setShowCardsInfo} />
       </div>
+      <InfoPanel expanded={showCardsInfo} className="px-0.5">
+        Gerencie seus cartões: limite, uso atual, fatura e vencimento. Toque em um cartão para ver detalhes e pagar a fatura (total ou parcial). +3 pts ao quitar.
+      </InfoPanel>
       <div className="space-y-2.5">
         {cards.map((card, idx) => {
           const brand = getBankBrand(card.bankName);
