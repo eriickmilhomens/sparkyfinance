@@ -5,6 +5,7 @@ import { InfoButton, InfoPanel } from "@/components/InfoButton";
 
 const FinancialStatusCard = () => {
   const { data, available } = useFinancialData();
+  const [showInfo, setShowInfo] = useState(false);
 
   const hasData = data.balance > 0 || data.income > 0 || data.expenses > 0;
   if (!hasData) return null;
