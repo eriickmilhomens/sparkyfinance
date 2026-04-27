@@ -67,13 +67,12 @@ const FinancialStatusCard = () => {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-0.5">
             <p className={`text-sm font-display font-bold ${c.titleColor}`}>{c.title}</p>
-            <InfoButton
-              title="Status Financeiro"
-              description="Avalia automaticamente sua saúde financeira comparando despesas com receita. Saudável (<60%), Atenção (60–85%) ou Crítico (>85%)."
-              align="left"
-            />
+            <InfoButton expanded={showInfo} onToggle={setShowInfo} />
           </div>
           <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{c.message}</p>
+          <InfoPanel expanded={showInfo}>
+            Avalia automaticamente sua saúde financeira comparando despesas com receita: Saudável (&lt;60%), Atenção (60–85%) ou Crítico (&gt;85%).
+          </InfoPanel>
         </div>
       </div>
     </div>
